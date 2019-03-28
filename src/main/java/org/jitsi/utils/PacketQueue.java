@@ -47,6 +47,22 @@ public abstract class PacketQueue<T>
     private final static int DEFAULT_CAPACITY = 256;
 
     /**
+     * The default value for the {@code enableStatistics} constructor argument.
+     */
+    private static boolean enableStatisticsDefault = false;
+
+    /**
+     * Sets the default value for the {@code enableStatistics} constructor
+     * parameter.
+     *
+     * @param enable the value to set.
+     */
+    public static void setEnableStatisticsDefault(boolean enable)
+    {
+        enableStatisticsDefault = enable;
+    }
+
+    /**
      * Returns true if a warning should be logged after a queue has dropped
      * {@code numDroppedPackets} packets.
      * @param numDroppedPackets the number of dropped packets.
@@ -109,14 +125,14 @@ public abstract class PacketQueue<T>
      */
     public PacketQueue()
     {
-        this(false, "PacketQueue", null);
+        this(null, "PacketQueue", null);
     }
 
     /**
      * Initializes a new {@link PacketQueue} instance.
-     * @param enableStatistics whether detailed statistics should be calculated
-     * and printed. WARNING: this will produce copious output (one line per
-     * packet added or removed).
+     * @param enableStatistics whether detailed statistics should be gathered.
+     * This might affect performance. A value of {@code null} indicates that
+     * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
      * @param packetHandler An optional handler to be used by the queue for
      * packets read from it. If a non-null value is passed the queue will
@@ -126,7 +142,7 @@ public abstract class PacketQueue<T>
      * {@link #get()} and {@link #poll()}.
      */
     public PacketQueue(
-        boolean enableStatistics, String id, PacketHandler<T> packetHandler)
+        Boolean enableStatistics, String id, PacketHandler<T> packetHandler)
     {
         this(DEFAULT_CAPACITY, true, enableStatistics, id, packetHandler);
     }
@@ -136,9 +152,9 @@ public abstract class PacketQueue<T>
      * @param capacity the capacity of the queue.
      * @param copy whether the queue is to store the instances it is given via
      * the various {@code add} methods, or create a copy.
-     * @param enableStatistics whether detailed statistics should be calculated
-     * and printed. WARNING: this will produce copious output (one line per
-     * packet added or removed).
+     * @param enableStatistics whether detailed statistics should be gathered.
+     * This might affect performance. A value of {@code null} indicates that
+     * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
      * @param packetHandler An optional handler to be used by the queue for
      * packets read from it. If a non-null value is passed the queue will
@@ -148,7 +164,7 @@ public abstract class PacketQueue<T>
      * {@link #get()} and {@link #poll()}.
      */
     public PacketQueue(int capacity, boolean copy,
-                       boolean enableStatistics, String id,
+                       Boolean enableStatistics, String id,
                        PacketHandler<T> packetHandler)
     {
         this(capacity, copy, enableStatistics, id, packetHandler, null);
@@ -159,9 +175,9 @@ public abstract class PacketQueue<T>
      * @param capacity the capacity of the queue.
      * @param copy whether the queue is to store the instances it is given via
      * the various {@code add} methods, or create a copy.
-     * @param enableStatistics whether detailed statistics should be calculated
-     * and printed. WARNING: this will produce copious output (one line per
-     * packet added or removed).
+     * @param enableStatistics whether detailed statistics should be gathered.
+     * This might affect performance. A value of {@code null} indicates that
+     * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
      * @param packetHandler An optional handler to be used by the queue for
      * packets read from it. If a non-null value is passed the queue will
@@ -175,7 +191,7 @@ public abstract class PacketQueue<T>
     public PacketQueue(
         int capacity,
         boolean copy,
-        boolean enableStatistics,
+        Boolean enableStatistics,
         String id,
         PacketHandler<T> packetHandler,
         ExecutorService executor)
@@ -184,6 +200,10 @@ public abstract class PacketQueue<T>
         this.id = id;
         queue = new ArrayBlockingQueue<>(capacity);
 
+        if (enableStatistics == null)
+        {
+            enableStatistics = enableStatisticsDefault;
+        }
         queueStatistics
             = enableStatistics ? QueueStatistics.get(id) : null;
 
