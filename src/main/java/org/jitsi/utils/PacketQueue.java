@@ -185,7 +185,7 @@ public abstract class PacketQueue<T>
         queue = new ArrayBlockingQueue<>(capacity);
 
         queueStatistics
-            = enableStatistics ? new QueueStatistics(id) : null;
+            = enableStatistics ? QueueStatistics.get(id) : null;
 
         if (packetHandler != null)
         {
@@ -283,7 +283,7 @@ public abstract class PacketQueue<T>
             {
                 if (queueStatistics != null)
                 {
-                    queueStatistics.remove(System.currentTimeMillis());
+                    queueStatistics.drop(System.currentTimeMillis());
                 }
                 final int numDroppedPackets =
                     this.numDroppedPackets.incrementAndGet();
