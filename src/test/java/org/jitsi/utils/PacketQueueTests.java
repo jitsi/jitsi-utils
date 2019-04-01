@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import java.util.logging.*;
 
 /**
  * Test various aspects of {@link PacketQueue} implementation.
@@ -30,13 +29,6 @@ import java.util.logging.*;
  */
 public class PacketQueueTests
 {
-    /**
-     * The <tt>Logger</tt> used by the <tt>PacketQueueTests</tt> class and
-     * its instances for logging output.
-     */
-    private static final java.util.logging.Logger logger
-        = Logger.getLogger(PacketQueueTests.class.getName());
-
     @Test
     public void testAddingItemToQueueNotifiesBlockedThreadsImmediately()
         throws Exception

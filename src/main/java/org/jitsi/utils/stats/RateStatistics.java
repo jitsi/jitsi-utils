@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jitsi.utils;
+package org.jitsi.utils.stats;
 
 /**
  * This originally comes from webrtc.org but has been moved here so that it can

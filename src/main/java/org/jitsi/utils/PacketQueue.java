@@ -15,9 +15,11 @@
  */
 package org.jitsi.utils;
 
+import org.jitsi.utils.logging.*;
+import org.jitsi.utils.stats.*;
+
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.logging.*;
 
 /**
  * An abstract queue of packets. This is meant to eventually be able to be used
@@ -221,7 +223,7 @@ public abstract class PacketQueue<T>
             asyncQueueHandler = null;
         }
 
-        logger.fine("Initialized a PacketQueue instance with ID " + id);
+        logger.debug("Initialized a PacketQueue instance with ID " + id);
     }
 
     /**
@@ -309,7 +311,7 @@ public abstract class PacketQueue<T>
                     this.numDroppedPackets.incrementAndGet();
                 if (logDroppedPacket(numDroppedPackets))
                 {
-                    logger.warning(
+                    logger.warn(
                         "Packets dropped (id=" + id + "): " + numDroppedPackets);
                 }
 

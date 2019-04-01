@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils;
+package org.jitsi.utils.concurrent;
 
 import java.util.concurrent.*;
 

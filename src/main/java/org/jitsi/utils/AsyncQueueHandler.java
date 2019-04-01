@@ -16,9 +16,11 @@
 
 package org.jitsi.utils;
 
+import org.jitsi.utils.concurrent.*;
+import org.jitsi.utils.logging.*;
+
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.logging.*;
 
 /**
  * Asynchronously reads items from provided {@link #queue} on separate thread
@@ -36,7 +38,7 @@ public final class AsyncQueueHandler<T>
      * The {@link java.util.logging.Logger} used by the
      * {@link AsyncQueueHandler} class and its instances for logging output.
      */
-    private static final java.util.logging.Logger logger
+    private static final Logger logger
         = Logger.getLogger(AsyncQueueHandler.class.getName());
 
     /**
@@ -140,7 +142,7 @@ public final class AsyncQueueHandler<T>
                 }
                 catch (Throwable e)
                 {
-                    logger.warning("Failed to handle item: " + e);
+                    logger.warn("Failed to handle item: " + e);
                 }
             }
         }
@@ -231,9 +233,9 @@ public final class AsyncQueueHandler<T>
      */
     private void onYield()
     {
-        if (logger.isLoggable(java.util.logging.Level.FINE))
+        if (logger.isDebugEnabled())
         {
-            logger.fine("Yielding AsyncQueueHandler with ID = " + id);
+            logger.debug("Yielding AsyncQueueHandler with ID = " + id);
         }
 
         rescheduleReader();

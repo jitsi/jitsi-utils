@@ -20,7 +20,6 @@ import org.junit.*;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
 
 /**
  * Contains test for checking performance aspects of various
@@ -31,13 +30,6 @@ import java.util.logging.*;
 @Ignore("Check only performance aspect of PacketQueue")
 public class PacketQueueBenchmarkTests
 {
-    /**
-     * The <tt>Logger</tt> used by the <tt>PacketQueueBenchmarkTests</tt> class
-     * and its instances for logging output.
-     */
-    private static final java.util.logging.Logger logger
-        = Logger.getLogger(PacketQueueBenchmarkTests.class.getName());
-
     /**
      * Number of iteration to run benchmark and compute
      * average execution time.
