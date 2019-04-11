@@ -15,8 +15,6 @@
  */
 package org.jitsi.utils.concurrent;
 
-import org.jitsi.utils.concurrent.*;
-
 /**
  * Implements a {@link PeriodicRunnable} associated with an {@code Object}.
  *
