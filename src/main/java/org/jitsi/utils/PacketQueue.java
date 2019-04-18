@@ -17,6 +17,7 @@ package org.jitsi.utils;
 
 import org.jitsi.utils.logging.*;
 import org.jitsi.utils.stats.*;
+import org.json.simple.*;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -117,6 +118,12 @@ public abstract class PacketQueue<T>
     private volatile boolean closed = false;
 
     /**
+     * The maximum number of items the queue can contain before it starts
+     * dropping items.
+     */
+    private final int capacity;
+
+    /**
      * The number of packets which were dropped from this {@link PacketQueue} as
      * a result of a packet being added while the queue is at full capacity.
      */
@@ -200,6 +207,7 @@ public abstract class PacketQueue<T>
     {
         this.copy = copy;
         this.id = id;
+        this.capacity = capacity;
         queue = new ArrayBlockingQueue<>(capacity);
 
         if (enableStatistics == null)
@@ -562,5 +570,25 @@ public abstract class PacketQueue<T>
                 releasePacket(item);
             }
         }
+    }
+
+    /**
+     * Gets a JSON representation of the parts of this object's state that
+     * are deemed useful for debugging.
+     */
+    public JSONObject getDebugState()
+    {
+        JSONObject debugState = new JSONObject();
+        debugState.put("id", id);
+        debugState.put("capacity", capacity);
+        debugState.put("copy", copy);
+        debugState.put("closed", closed);
+        debugState.put(
+                "statistics",
+                queueStatistics == null
+                        ? null : queueStatistics.getInstanceStats());
+        debugState.put("num_dropped_packets", numDroppedPackets.get());
+
+        return debugState;
     }
 }
