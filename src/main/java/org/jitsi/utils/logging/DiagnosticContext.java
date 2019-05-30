@@ -15,7 +15,6 @@
  */
 package org.jitsi.utils.logging;
 
-import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -37,7 +36,7 @@ public class DiagnosticContext
      */
     public TimeSeriesPoint makeTimeSeriesPoint(String timeSeriesName)
     {
-        return makeTimeSeriesPoint(timeSeriesName, Instant.now());
+        return makeTimeSeriesPoint(timeSeriesName, System.currentTimeMillis());
     }
 
     /**
@@ -49,24 +48,9 @@ public class DiagnosticContext
      */
     public TimeSeriesPoint makeTimeSeriesPoint(String timeSeriesName, long tsMs)
     {
-        return makeTimeSeriesPoint(
-            timeSeriesName, Instant.ofEpochMilli(tsMs));
-    }
-
-    /**
-     * Makes a new time series point with a timestamp. This is recommended for
-     * time series where it's important to have the exact timestamp value.
-     *
-     * @param timeSeriesName the name of the time series
-     * @param instant the timestamp of the time series point (in millis)
-     */
-    public TimeSeriesPoint makeTimeSeriesPoint(
-        String timeSeriesName, Instant instant)
-    {
         return new TimeSeriesPoint(this)
             .addField("series", timeSeriesName)
-            .addField("time",
-                instant.getEpochSecond() + "." + instant.getNano());
+            .addField("time", tsMs);
     }
 
     public static class TimeSeriesPoint
