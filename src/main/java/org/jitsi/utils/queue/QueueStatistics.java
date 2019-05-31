@@ -67,6 +67,11 @@ public class QueueStatistics
     private AtomicInteger totalPacketsDropped = new AtomicInteger();
 
     /**
+     * The time the first packet was added.
+     */
+    private long firstPacketAddedMs = -1;
+
+    /**
      * Initializes a new {@link QueueStatistics} instance.
      * 
      * @param id Identifier to distinguish the log output of multiple
@@ -89,6 +94,9 @@ public class QueueStatistics
         stats.put("add_rate", addRate.getRate(now));
         stats.put("remove_rate", removeRate.getRate(now));
         stats.put("drop_rate", dropRate.getRate(now));
+        double duration = (now - firstPacketAddedMs) / 1000;
+        stats.put("duration_s", duration);
+        stats.put("average_remove_rate_pps", totalPacketsRemoved.get() / duration);
 
         return stats;
     }
@@ -100,6 +108,10 @@ public class QueueStatistics
      */
     void add(long now)
     {
+        if (firstPacketAddedMs < 0)
+        {
+            firstPacketAddedMs = now;
+        }
         addRate.update(1, now);
         totalPacketsAdded.incrementAndGet();
     }
