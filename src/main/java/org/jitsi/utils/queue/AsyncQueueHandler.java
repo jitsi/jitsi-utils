@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils;
+package org.jitsi.utils.queue;
 
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.*;
  *
  * @author Yura Yaroshevich
  */
-public final class AsyncQueueHandler<T>
+final class AsyncQueueHandler<T>
 {
     /**
      * The {@link java.util.logging.Logger} used by the
@@ -158,7 +158,7 @@ public final class AsyncQueueHandler<T>
      * @param id optional identifier of current handler for debug purpose
      * @param executor optional executor service to borrow threads from
      */
-    public AsyncQueueHandler(
+    AsyncQueueHandler(
         BlockingQueue<T> queue,
         Handler<T> handler,
         String id,
@@ -180,7 +180,7 @@ public final class AsyncQueueHandler<T>
      * handled on thread borrowed from {@link #executor} before temporary
      * releasing thread and re-acquiring it from {@link #executor}.
      */
-    public AsyncQueueHandler(
+    AsyncQueueHandler(
         BlockingQueue<T> queue,
         Handler<T> handler,
         String id,
@@ -207,7 +207,7 @@ public final class AsyncQueueHandler<T>
     /**
      * Attempts to stop execution of {@link #reader} if running
      */
-    public void cancel()
+    void cancel()
     {
         cancel(true);
     }
@@ -216,7 +216,7 @@ public final class AsyncQueueHandler<T>
      * Checks if {@link #reader} is running on one of {@link #executor}
      * thread and if no submits execution of {@link #reader} on executor.
      */
-    public void handleQueueItemsUntilEmpty()
+    void handleQueueItemsUntilEmpty()
     {
         synchronized (syncRoot)
         {
@@ -276,7 +276,7 @@ public final class AsyncQueueHandler<T>
      * A simple interface to handle enqueued {@link T} items.
      * @param <T> the type of the item.
      */
-    public interface Handler<T>
+    interface Handler<T>
     {
         /**
          * Does something with an item.

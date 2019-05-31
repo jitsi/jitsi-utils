@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jitsi.utils.stats;
+package org.jitsi.utils.queue;
 
+import org.jitsi.utils.stats.*;
 import org.json.simple.*;
 
 import java.util.concurrent.atomic.*;
@@ -97,7 +98,7 @@ public class QueueStatistics
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was added.
      */
-    public void add(long now)
+    void add(long now)
     {
         addRate.update(1, now);
         totalPacketsAdded.incrementAndGet();
@@ -108,7 +109,7 @@ public class QueueStatistics
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was removed.
      */
-    public void remove(long now)
+    void remove(long now)
     {
         removeRate.update(1, now);
         totalPacketsRemoved.incrementAndGet();
@@ -119,7 +120,7 @@ public class QueueStatistics
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was dropped.
      */
-    public void drop(long now)
+    void drop(long now)
     {
         dropRate.update(1, now);
         totalPacketsDropped.incrementAndGet();
