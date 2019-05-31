@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jitsi.utils;
+package org.jitsi.utils.queue;
 
 import org.jitsi.utils.logging.*;
-import org.jitsi.utils.stats.*;
 import org.json.simple.*;
 import org.jetbrains.annotations.*;
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 
 /**
  * An abstract queue of packets.
@@ -576,78 +574,6 @@ public abstract class PacketQueue<T>
             {
                 releasePacket(item);
             }
-        }
-    }
-
-    /**
-     * An interface for handling the two types of error conditions from a queue.
-     */
-    public interface ErrorHandler
-    {
-        /**
-         * Called when a packet is dropped from the queue because a new packet
-         * was added while it was full.
-         */
-        default void packetDropped() {}
-
-        /**
-         * Called when handling of a packet produces an exception.
-         * @param t
-         */
-        default void packetHandlingFailed(Throwable t) {}
-    }
-
-    /**
-     * An {@link ErrorHandler} implementation which counts the number of
-     * dropped packets and exceptions.
-     */
-    public class CountingErrorHandler implements ErrorHandler
-    {
-        /**
-         * The number of dropped packets.
-         */
-        private final AtomicLong numPacketsDropped = new AtomicLong();
-
-        /**
-         * The number of exceptions.
-         */
-        private final AtomicLong numExceptions = new AtomicLong();
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void packetDropped()
-        {
-            numPacketsDropped.incrementAndGet();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void packetHandlingFailed(Throwable t)
-        {
-            numExceptions.incrementAndGet();
-            logger.warn("Failed to handle a packet: ", t);
-        }
-
-        /**
-         * Get the number of dropped packets.
-         * @return
-         */
-        public long getNumPacketsDropped()
-        {
-            return numPacketsDropped.get();
-        }
-
-        /**
-         * Get the number of exceptions.
-         * @return
-         */
-        public long getNumExceptions()
-        {
-            return numExceptions.get();
         }
     }
 }
