@@ -17,40 +17,10 @@ package org.jitsi.utils.stats;
 
 import org.json.simple.*;
 
-import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 public class QueueStatistics
 {
-    /**
-     * Gets the {@link QueueStatistics} instance for a given ID.
-     * @param id the ID.
-     */
-    public static QueueStatistics get(String id)
-    {
-        return statisticsMap.computeIfAbsent(id, x -> new QueueStatistics());
-    }
-
-    /**
-     * Gets a snapshot of all queue statistics in JSON format.
-     * @return
-     */
-    public static JSONObject getStatsJson()
-    {
-        JSONObject stats = new JSONObject();
-        statisticsMap.forEach((id, queueStatistics) ->
-                stats.put(id, queueStatistics.getInstanceStats()));
-
-        return stats;
-    }
-
-    /**
-     * Maps an ID to a {@link QueueStatistics} instance.
-     */
-    private static Map<String, QueueStatistics> statisticsMap
-            = new ConcurrentHashMap<>();
-
     /**
      * The scale to use for {@link RateStatistics}. 1000 means units
      * (e.g. packets) per second.
@@ -108,7 +78,7 @@ public class QueueStatistics
     /**
      * Gets a snapshot of the stats in JSON format.
      */
-    public JSONObject getInstanceStats()
+    public JSONObject getStats()
     {
         JSONObject stats = new JSONObject();
         long now = System.currentTimeMillis();
