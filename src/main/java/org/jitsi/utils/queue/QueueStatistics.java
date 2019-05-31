@@ -94,7 +94,7 @@ public class QueueStatistics
         stats.put("add_rate", addRate.getRate(now));
         stats.put("remove_rate", removeRate.getRate(now));
         stats.put("drop_rate", dropRate.getRate(now));
-        double duration = (now - firstPacketAddedMs) / 1000;
+        double duration = (now - firstPacketAddedMs) / 1000d;
         stats.put("duration_s", duration);
         stats.put("average_remove_rate_pps", totalPacketsRemoved.get() / duration);
 
