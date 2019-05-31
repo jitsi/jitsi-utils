@@ -18,19 +18,13 @@ package org.jitsi.utils;
 import org.jitsi.utils.logging.*;
 import org.jitsi.utils.stats.*;
 import org.json.simple.*;
+import org.jetbrains.annotations.*;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 /**
- * An abstract queue of packets. This is meant to eventually be able to be used
- * in the following classes (in ice4j and libjitsi) in place of their ad-hoc
- * queue implementations (which is the reason the class is parameterized):
- *     <br> RTPConnectorOutputStream.Queue
- *     <br> PushSourceStreamImpl#readQ
- *     <br> OutputDataStreamImpl#writeQ
- *     <br> SinglePortHarvester.MySocket#queue
- *     <br> MultiplexingSocket#received (and the rest of Multiplex* classes).
+ * An abstract queue of packets.
  *
  * @author Boris Grozev
  * @author Yura Yaroshevich
@@ -63,20 +57,6 @@ public abstract class PacketQueue<T>
     public static void setEnableStatisticsDefault(boolean enable)
     {
         enableStatisticsDefault = enable;
-    }
-
-    /**
-     * Returns true if a warning should be logged after a queue has dropped
-     * {@code numDroppedPackets} packets.
-     * @param numDroppedPackets the number of dropped packets.
-     * @return {@code true} if a warning should be logged.
-     */
-    public static boolean logDroppedPacket(int numDroppedPackets)
-    {
-        return
-            numDroppedPackets == 1 ||
-                (numDroppedPackets <= 1000 && numDroppedPackets % 100 == 0) ||
-                numDroppedPackets % 1000 == 0;
     }
 
     /**
@@ -124,10 +104,10 @@ public abstract class PacketQueue<T>
     private final int capacity;
 
     /**
-     * The number of packets which were dropped from this {@link PacketQueue} as
-     * a result of a packet being added while the queue is at full capacity.
+     * Handles dropped packets and exceptions thrown while processing.
      */
-    private final AtomicInteger numDroppedPackets = new AtomicInteger();
+    @NotNull
+    private ErrorHandler errorHandler = new ErrorHandler(){};
 
     /**
      * Initializes a new {@link PacketQueue} instance.
@@ -215,11 +195,11 @@ public abstract class PacketQueue<T>
             enableStatistics = enableStatisticsDefault;
         }
         queueStatistics
-            = enableStatistics ? QueueStatistics.get(id) : null;
+            = enableStatistics ? new QueueStatistics() : null;
 
         if (packetHandler != null)
         {
-            asyncQueueHandler = new AsyncQueueHandler<T>(
+            asyncQueueHandler = new AsyncQueueHandler<>(
                 queue,
                 new HandlerAdapter(packetHandler),
                 id,
@@ -315,13 +295,7 @@ public abstract class PacketQueue<T>
                 {
                     queueStatistics.drop(System.currentTimeMillis());
                 }
-                final int numDroppedPackets =
-                    this.numDroppedPackets.incrementAndGet();
-                if (logDroppedPacket(numDroppedPackets))
-                {
-                    logger.warn(
-                        "Packets dropped (id=" + id + "): " + numDroppedPackets);
-                }
+                errorHandler.packetDropped();
 
                 // Call release on dropped packet to allow proper implementation
                 // of object pooling by PacketQueue users
@@ -501,6 +475,35 @@ public abstract class PacketQueue<T>
     }
 
     /**
+     * Gets a JSON representation of the parts of this object's state that
+     * are deemed useful for debugging.
+     */
+    public JSONObject getDebugState()
+    {
+        JSONObject debugState = new JSONObject();
+        debugState.put("id", id);
+        debugState.put("capacity", capacity);
+        debugState.put("copy", copy);
+        debugState.put("closed", closed);
+        debugState.put(
+                "statistics",
+                queueStatistics == null
+                        ? null : queueStatistics.getStats());
+
+        return debugState;
+    }
+
+    /**
+     * Sets the handler of errors (packets dropped or exceptions caught while
+     * processing).
+     * @param errorHandler the handler to set.
+     */
+    public void setErrorHandler(@NotNull ErrorHandler errorHandler)
+    {
+        this.errorHandler = errorHandler;
+    }
+
+    /**
      * A simple interface to handle packets.
      * @param <T> the type of the packets.
      */
@@ -565,6 +568,10 @@ public abstract class PacketQueue<T>
             {
                 handler.handlePacket(item);
             }
+            catch (Throwable t)
+            {
+                errorHandler.packetHandlingFailed(t);
+            }
             finally
             {
                 releasePacket(item);
@@ -573,22 +580,74 @@ public abstract class PacketQueue<T>
     }
 
     /**
-     * Gets a JSON representation of the parts of this object's state that
-     * are deemed useful for debugging.
+     * An interface for handling the two types of error conditions from a queue.
      */
-    public JSONObject getDebugState()
+    public interface ErrorHandler
     {
-        JSONObject debugState = new JSONObject();
-        debugState.put("id", id);
-        debugState.put("capacity", capacity);
-        debugState.put("copy", copy);
-        debugState.put("closed", closed);
-        debugState.put(
-                "statistics",
-                queueStatistics == null
-                        ? null : queueStatistics.getInstanceStats());
-        debugState.put("num_dropped_packets", numDroppedPackets.get());
+        /**
+         * Called when a packet is dropped from the queue because a new packet
+         * was added while it was full.
+         */
+        default void packetDropped() {}
 
-        return debugState;
+        /**
+         * Called when handling of a packet produces an exception.
+         * @param t
+         */
+        default void packetHandlingFailed(Throwable t) {}
+    }
+
+    /**
+     * An {@link ErrorHandler} implementation which counts the number of
+     * dropped packets and exceptions.
+     */
+    public class CountingErrorHandler implements ErrorHandler
+    {
+        /**
+         * The number of dropped packets.
+         */
+        private final AtomicLong numPacketsDropped = new AtomicLong();
+
+        /**
+         * The number of exceptions.
+         */
+        private final AtomicLong numExceptions = new AtomicLong();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void packetDropped()
+        {
+            numPacketsDropped.incrementAndGet();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void packetHandlingFailed(Throwable t)
+        {
+            numExceptions.incrementAndGet();
+            logger.warn("Failed to handle a packet: ", t);
+        }
+
+        /**
+         * Get the number of dropped packets.
+         * @return
+         */
+        public long getNumPacketsDropped()
+        {
+            return numPacketsDropped.get();
+        }
+
+        /**
+         * Get the number of exceptions.
+         * @return
+         */
+        public long getNumExceptions()
+        {
+            return numExceptions.get();
+        }
     }
 }
