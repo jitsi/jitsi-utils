@@ -56,7 +56,7 @@ public class DiagnosticContext
     public static class TimeSeriesPoint
         extends HashMap<String, Object>
     {
-        TimeSeriesPoint(Map<String, Object> m)
+        public TimeSeriesPoint(Map<String, Object> m)
         {
             super(m);
         }
