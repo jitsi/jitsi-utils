@@ -97,7 +97,10 @@ public class TimeSeriesLogger
      */
     public void trace(Map<String, Object> point)
     {
-        logger.trace(new JSONObject(point).toJSONString());
+        if (point != null && !point.isEmpty())
+        {
+            logger.trace(new JSONObject(point).toJSONString());
+        }
     }
 
     /**
@@ -107,7 +110,10 @@ public class TimeSeriesLogger
      */
     public void warn(Map<String, Object> point)
     {
-        logger.warn(new JSONObject(point).toJSONString());
+        if (point != null && !point.isEmpty())
+        {
+            logger.warn(new JSONObject(point).toJSONString());
+        }
     }
 
     /**
@@ -117,6 +123,9 @@ public class TimeSeriesLogger
      */
     public void info(Map<String, Object> point)
     {
-        logger.info(new JSONObject(point).toJSONString());
+        if (point != null && !point.isEmpty())
+        {
+            logger.info(new JSONObject(point).toJSONString());
+        }
     }
 }
