@@ -66,7 +66,7 @@ public class DiagnosticContext
          */
         public TimeSeriesPoint addField(String key, Object value)
         {
-            super.put(key, value);
+            put(key, value);
             return this;
         }
     }
