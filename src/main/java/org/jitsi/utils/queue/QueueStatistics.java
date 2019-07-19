@@ -106,7 +106,7 @@ public class QueueStatistics
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was added.
      */
-    void add(long now)
+    public void add(long now)
     {
         if (firstPacketAddedMs < 0)
         {
@@ -121,7 +121,7 @@ public class QueueStatistics
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was removed.
      */
-    void remove(long now)
+    public void remove(long now)
     {
         removeRate.update(1, now);
         totalPacketsRemoved.incrementAndGet();
@@ -132,7 +132,7 @@ public class QueueStatistics
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was dropped.
      */
-    void drop(long now)
+    public void drop(long now)
     {
         dropRate.update(1, now);
         totalPacketsDropped.incrementAndGet();
