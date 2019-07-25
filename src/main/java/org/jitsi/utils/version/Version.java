@@ -31,8 +31,7 @@ public interface Version
      * implementers of the <tt>VersionService</tt> and <tt>Version</tt>
      * interfaces.
      */
-    public static final String PNAME_APPLICATION_NAME
-        = "sip-communicator.application.name";
+    String PNAME_APPLICATION_NAME = "sip-communicator.application.name";
 
     /**
      * The name of the <tt>System</tt> property the value of which is equal to
@@ -40,8 +39,7 @@ public interface Version
      * implementers of the <tt>VersionService</tt> and <tt>Version</tt>
      * interfaces.
      */
-    public static final String PNAME_APPLICATION_VERSION
-        = "sip-communicator.version";
+    String PNAME_APPLICATION_VERSION = "sip-communicator.version";
 
     /**
      * Returns the version major of the current Jitsi version. In an
@@ -51,7 +49,7 @@ public interface Version
      *
      * @return the version major integer.
      */
-    public int getVersionMajor();
+    int getVersionMajor();
 
     /**
      * Returns the version minor of the current Jitsi version. In an
@@ -61,7 +59,7 @@ public interface Version
      *
      * @return the version minor integer.
      */
-    public int getVersionMinor();
+    int getVersionMinor();
 
     /**
      * Indicates if this Jitsi version corresponds to a nightly build
@@ -70,7 +68,7 @@ public interface Version
      * @return true if this is a build of a nightly repository snapshot and
      * false if this is an official Jitsi release.
      */
-    public boolean isNightly();
+    boolean isNightly();
 
     /**
      * If this is a nightly build, returns the build identifies (e.g.
@@ -79,14 +77,14 @@ public interface Version
      *
      * @return a String containing a nightly build identifier or null if
      */
-    public String getNightlyBuildID();
+    String getNightlyBuildID();
 
     /**
      * Indicates whether this version represents a prerelease (i.e. a
      * non-complete release like an alpha, beta or release candidate version).
      * @return true if this version represents a prerelease and false otherwise.
      */
-    public boolean isPreRelease();
+    boolean isPreRelease();
 
     /**
      * Returns the version prerelease ID of the current Jitsi version
@@ -97,7 +95,7 @@ public interface Version
      *
      * @return a String containing the version prerelease ID.
      */
-    public String getPreReleaseID();
+    String getPreReleaseID();
 
     /**
      * Compares another <tt>Version</tt> object to this one and returns a
@@ -112,7 +110,7 @@ public interface Version
      * represents a version that is earlier, same, or more recent than the one
      * referenced by the <tt>version</tt> parameter.
      */
-    public int compareTo(Version version);
+    int compareTo(Version version);
 
     /**
      * Compares the <tt>version</tt> parameter to this version and returns true
@@ -124,7 +122,7 @@ public interface Version
      * @return true if and only the version param references the same
      * Jitsi version as this Version instance and false otherwise.
      */
-    public boolean equals(Object version);
+    boolean equals(Object version);
 
     /**
      * Returns the name of the application that we're currently running. Default
@@ -133,7 +131,7 @@ public interface Version
      * @return the name of the application that we're currently running. Default
      * MUST be Jitsi.
      */
-    public String getApplicationName();
+    String getApplicationName();
 
     /**
      * Returns a String representation of this Version instance. If you'd just
@@ -144,5 +142,5 @@ public interface Version
      * @return a major.minor[.build] String containing the complete
      * Jitsi version.
      */
-    public String toString();
+    String toString();
 }

@@ -31,7 +31,7 @@ public interface VersionService
      * @return a <tt>Version</tt> object containing version details of the SIP
      * Communicator version that we're currently running.
      */
-    public Version getCurrentVersion();
+    Version getCurrentVersion();
 
     /**
      * Returns a Version instance corresponding to the <tt>version</tt> string.
@@ -42,5 +42,5 @@ public interface VersionService
      * @return the <tt>Version</tt> object corresponding to the <tt>version</tt>
      * string.
      */
-    public Version parseVersionString(String version);
+    Version parseVersionString(String version);
 }
