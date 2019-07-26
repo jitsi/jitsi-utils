@@ -16,20 +16,19 @@
 package org.jitsi.utils.version;
 
 /**
- * The version service keeps track of the SIP Communicator version that we are
- * currently running. Other modules (such as a Help->About dialog) query and
- * use this service in order to show the current application version.
+ * The version service keeps track of the application version that we are
+ * currently running.
  *
  * @author Emil Ivov
  */
 public interface VersionService
 {
     /**
-     * Returns a <tt>Version</tt> object containing version details of the SIP
-     * Communicator version that we're currently running.
+     * Returns a {@code Version} object containing version details of the
+     * application version that we're currently running.
      *
-     * @return a <tt>Version</tt> object containing version details of the SIP
-     * Communicator version that we're currently running.
+     * @return a {@code Version} object containing version details of the
+     * application version that we're currently running.
      */
     Version getCurrentVersion();
 

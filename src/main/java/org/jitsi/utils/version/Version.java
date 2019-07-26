@@ -26,22 +26,6 @@ public interface Version
     extends Comparable<Version>
 {
     /**
-     * The name of the <tt>System</tt> property the value of which is equal to
-     * the value of {@link #getApplicationName()}. Expected to be set by
-     * implementers of the <tt>VersionService</tt> and <tt>Version</tt>
-     * interfaces.
-     */
-    String PNAME_APPLICATION_NAME = "sip-communicator.application.name";
-
-    /**
-     * The name of the <tt>System</tt> property the value of which is equal to
-     * the value of {@link #toString()}. Expected to be set by
-     * implementers of the <tt>VersionService</tt> and <tt>Version</tt>
-     * interfaces.
-     */
-    String PNAME_APPLICATION_VERSION = "sip-communicator.version";
-
-    /**
      * Returns the version major of the current Jitsi version. In an
      * example 2.3.1 version string 2 is the version major. The version major
      * number changes when a relatively extensive set of new features and
@@ -132,15 +116,4 @@ public interface Version
      * MUST be Jitsi.
      */
     String getApplicationName();
-
-    /**
-     * Returns a String representation of this Version instance. If you'd just
-     * like to obtain the version of Jitsi so that you could display
-     * it (e.g. in a Help->About dialog) then all you need is calling this
-     * method.
-     *
-     * @return a major.minor[.build] String containing the complete
-     * Jitsi version.
-     */
-    String toString();
 }
