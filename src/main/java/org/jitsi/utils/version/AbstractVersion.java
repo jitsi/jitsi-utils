@@ -216,9 +216,9 @@ public abstract class AbstractVersion
     {
         StringBuffer versionStringBuff = new StringBuffer();
 
-        versionStringBuff.append(Integer.toString(getVersionMajor()));
+        versionStringBuff.append(getVersionMajor());
         versionStringBuff.append(".");
-        versionStringBuff.append(Integer.toString(getVersionMinor()));
+        versionStringBuff.append(getVersionMinor());
 
         if(isPreRelease())
         {
