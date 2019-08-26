@@ -13,6 +13,7 @@ public interface Logger
      * @return
      */
     Logger createChildLogger(String name, Map<String, String> context);
+    Logger createChildLogger(String name);
     /**
      * Check if a message with a TRACE level would actually be logged by this
      * logger.

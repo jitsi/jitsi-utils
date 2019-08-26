@@ -61,6 +61,12 @@ public class LoggerImpl implements Logger
         return new LoggerImpl(name, maxLogLevel, this.logContext.createSubContext(context));
     }
 
+    @Override
+    public Logger createChildLogger(String name)
+    {
+        return new LoggerImpl(name, maxLogLevel, this.logContext);
+    }
+
     private boolean isLoggable(Level level)
     {
         return loggerDelegate.isLoggable(level);
