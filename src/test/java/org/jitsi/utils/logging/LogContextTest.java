@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 
 public class LogContextTest
 {
-    private boolean containsData(String[] dataTokens, String expected)
+    public static boolean containsData(String[] dataTokens, String expected)
     {
         for (String dataToken : dataTokens)
         {
@@ -20,7 +20,7 @@ public class LogContextTest
         return false;
     }
 
-    private String[] getTokens(String formattedCtxString)
+    public static String[] getTokens(String formattedCtxString)
     {
         return formattedCtxString.substring(1, formattedCtxString.length() - 1).split(" ");
     }
