@@ -1,11 +1,9 @@
 package org.jitsi.utils.logging2;
 
-import org.jitsi.utils.logging.Logger;
-
 import java.util.*;
 import java.util.logging.*;
 
-public interface LoggerInterface
+public interface Logger
 {
     /**
      * Create a 'child' logger which derives from this one.  The child logger
@@ -14,7 +12,7 @@ public interface LoggerInterface
      * from this logger.
      * @return
      */
-    LoggerInterface createChildLogger(String name, Map<String, String> context);
+    Logger createChildLogger(String name, Map<String, String> context);
     /**
      * Check if a message with a TRACE level would actually be logged by this
      * logger.
@@ -145,7 +143,7 @@ public interface LoggerInterface
     void setLevel(Level level);
 
     /**
-     * @return the {@link Level} configured for this {@link Logger}.
+     * @return the {@link Level} configured for this {@link java.util.logging.Logger}.
      */
     Level getLevel();
 }

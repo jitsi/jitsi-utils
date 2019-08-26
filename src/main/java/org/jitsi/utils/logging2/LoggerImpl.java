@@ -3,13 +3,12 @@ package org.jitsi.utils.logging2;
 import java.util.*;
 import java.util.function.*;
 import java.util.logging.*;
-import java.util.logging.Logger;
 
 /**
- * Implements {@link LoggerInterface} by delegating to
+ * Implements {@link Logger} by delegating to
  * a {@link java.util.logging.Logger}.
  */
-public class BaseLogger implements LoggerInterface
+public class LoggerImpl implements Logger
 {
     private final java.util.logging.Logger loggerDelegate;
 
@@ -21,24 +20,24 @@ public class BaseLogger implements LoggerInterface
 
     private final LogContext logContext;
 
-    public BaseLogger(String name)
+    public LoggerImpl(String name)
     {
         this(name, Level.ALL);
     }
 
-    public BaseLogger(String name, Level maxLogLevel)
+    public LoggerImpl(String name, Level maxLogLevel)
     {
         this(name, maxLogLevel, LogContext.EMPTY);
     }
 
-    public BaseLogger(String name, LogContext logContext)
+    public LoggerImpl(String name, LogContext logContext)
     {
         this(name, Level.ALL, logContext);
     }
 
-    public BaseLogger(String name, Level maxLogLevel, LogContext logContext)
+    public LoggerImpl(String name, Level maxLogLevel, LogContext logContext)
     {
-        this.loggerDelegate = BaseLogger.loggerFactory.apply(name);
+        this.loggerDelegate = LoggerImpl.loggerFactory.apply(name);
         this.maxLogLevel = maxLogLevel;
         this.logContext = logContext;
         if (loggerDelegate.getLevel() == null || loggerDelegate.getLevel().intValue() < maxLogLevel.intValue())
@@ -57,9 +56,9 @@ public class BaseLogger implements LoggerInterface
      * @return
      */
     @Override
-    public LoggerInterface createChildLogger(String name, Map<String, String> context)
+    public Logger createChildLogger(String name, Map<String, String> context)
     {
-        return new BaseLogger(name, maxLogLevel, this.logContext.createSubContext(context));
+        return new LoggerImpl(name, maxLogLevel, this.logContext.createSubContext(context));
     }
 
     private boolean isLoggable(Level level)
@@ -214,5 +213,5 @@ public class BaseLogger implements LoggerInterface
     }
 
 
-    static Function<String, java.util.logging.Logger> loggerFactory = Logger::getLogger;
+    static Function<String, java.util.logging.Logger> loggerFactory = java.util.logging.Logger::getLogger;
 }

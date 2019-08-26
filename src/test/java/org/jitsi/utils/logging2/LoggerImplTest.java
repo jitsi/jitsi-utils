@@ -4,32 +4,31 @@ import org.junit.*;
 
 import java.util.*;
 import java.util.function.*;
-import java.util.logging.Logger;
 import java.util.logging.*;
 
 import static junit.framework.TestCase.*;
 
-public class BaseLoggerTest
+public class LoggerImplTest
 {
-    private static Function<String, Logger> oldLoggerFactoryFunction;
+    private static Function<String, java.util.logging.Logger> oldLoggerFactoryFunction;
     private FakeLogger fakeLogger = new FakeLogger("fake");
 
     @BeforeClass
     public static void beforeClass()
     {
-        oldLoggerFactoryFunction = BaseLogger.loggerFactory;
+        oldLoggerFactoryFunction = LoggerImpl.loggerFactory;
     }
 
     @AfterClass
     public static void afterClass()
     {
-        BaseLogger.loggerFactory = oldLoggerFactoryFunction;
+        LoggerImpl.loggerFactory = oldLoggerFactoryFunction;
     }
 
     @Before
     public void beforeTest()
     {
-        BaseLogger.loggerFactory = (name) -> fakeLogger;
+        LoggerImpl.loggerFactory = (name) -> fakeLogger;
     }
 
     @After
@@ -41,7 +40,7 @@ public class BaseLoggerTest
     @Test
     public void testBasicLogging()
     {
-        BaseLogger logger = new BaseLogger("test");
+        LoggerImpl logger = new LoggerImpl("test");
         logger.setLevelAll();
 
         logger.info("hello, world!");
@@ -77,7 +76,7 @@ public class BaseLoggerTest
     @Test
     public void testMaxLevel()
     {
-        BaseLogger logger = new BaseLogger("test", Level.WARNING);
+        LoggerImpl logger = new LoggerImpl("test", Level.WARNING);
 
         logger.info("hello, world!");
         assertEquals(0, fakeLogger.logLines.size());
@@ -86,9 +85,9 @@ public class BaseLoggerTest
     @Test
     public void testChildLoggerInheritsMaxLevel()
     {
-        BaseLogger logger = new BaseLogger("test", Level.WARNING);
+        LoggerImpl logger = new LoggerImpl("test", Level.WARNING);
 
-        LoggerInterface childLogger = logger.createChildLogger("child", Collections.emptyMap());
+        Logger childLogger = logger.createChildLogger("child", Collections.emptyMap());
 
         childLogger.info("hello, world!");
         assertEquals(0, fakeLogger.logLines.size());
@@ -102,7 +101,7 @@ public class BaseLoggerTest
         ctxData.put("keyTwo", "value2");
         LogContext ctx = new LogContext(ctxData);
 
-        BaseLogger logger = new BaseLogger("test", ctx);
+        LoggerImpl logger = new LoggerImpl("test", ctx);
 
         logger.info("hello, world!");
 
@@ -119,11 +118,11 @@ public class BaseLoggerTest
         ctxData.put("keyTwo", "value2");
         LogContext ctx = new LogContext(ctxData);
 
-        BaseLogger logger = new BaseLogger("test", ctx);
+        LoggerImpl logger = new LoggerImpl("test", ctx);
 
         Map<String, String> subCtxData = new HashMap<>();
         subCtxData.put("keyThree", "value3");
-        LoggerInterface childLogger = logger.createChildLogger("child", subCtxData);
+        Logger childLogger = logger.createChildLogger("child", subCtxData);
 
         childLogger.info("hello, world!");
 
@@ -141,13 +140,13 @@ public class BaseLoggerTest
     public void testParentChildLevelsIndependent()
     {
         FakeLogger parentLoggerDelegate = new FakeLogger("parent");
-        BaseLogger.loggerFactory = (name) -> parentLoggerDelegate;
-        BaseLogger logger = new BaseLogger("parent");
+        LoggerImpl.loggerFactory = (name) -> parentLoggerDelegate;
+        LoggerImpl logger = new LoggerImpl("parent");
         logger.setLevelError();
 
         FakeLogger childLoggerDelegate = new FakeLogger("child");
-        BaseLogger.loggerFactory = (name) -> childLoggerDelegate;
-        LoggerInterface childLogger = logger.createChildLogger("child", Collections.emptyMap());
+        LoggerImpl.loggerFactory = (name) -> childLoggerDelegate;
+        Logger childLogger = logger.createChildLogger("child", Collections.emptyMap());
         childLogger.setLevelDebug();
 
         logger.info("hello, world!");
@@ -159,7 +158,8 @@ public class BaseLoggerTest
 
 }
 
-class FakeLogger extends Logger {
+class FakeLogger extends java.util.logging.Logger
+{
     final List<LogLine> logLines = new ArrayList<>();
 
     public FakeLogger(String name)
