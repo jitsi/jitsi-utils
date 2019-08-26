@@ -1,6 +1,10 @@
 package org.jitsi.utils.logging;
 
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.*;
 import java.util.logging.*;
+import java.util.logging.Logger;
 
 /**
  * Implements {@link LoggerInterface} by delegating to
@@ -10,9 +14,49 @@ public class BaseLogger implements LoggerInterface
 {
     private final java.util.logging.Logger loggerDelegate;
 
-    public BaseLogger(java.util.logging.Logger logger)
+    /**
+     * The 'highest' log level this logger is allowed to log on.  Messages logged
+     * on a higher level than this will be ignored.
+     */
+    private final Level maxLogLevel;
+
+    private final LogContext logContext;
+
+    public BaseLogger(String name)
     {
-        this.loggerDelegate = logger;
+        this(name, Level.ALL);
+    }
+
+    public BaseLogger(String name, Level maxLogLevel)
+    {
+        this(name, maxLogLevel, LogContext.EMPTY);
+    }
+
+    public BaseLogger(String name, LogContext logContext)
+    {
+        this(name, Level.ALL, logContext);
+    }
+
+    public BaseLogger(String name, Level maxLogLevel, LogContext logContext)
+    {
+        this.loggerDelegate = BaseLogger.loggerFactory.apply(name);
+        this.maxLogLevel = maxLogLevel;
+        this.logContext = logContext;
+    }
+
+    /**
+     * Create a new logger with the given name.  The resulting logger's {@link LogContext}
+     * will be the result of merging the given {@link LogContext} with this logger's
+     * {@link LogContext}.
+     *
+     * @param name
+     * @param context
+     * @return
+     */
+    @Override
+    public LoggerInterface createChildLogger(String name, Map<String, String> context)
+    {
+        return new BaseLogger(name, maxLogLevel, this.logContext.createSubContext(context));
     }
 
     private boolean isLoggable(Level level)
@@ -22,17 +66,22 @@ public class BaseLogger implements LoggerInterface
 
     private void log(Level level, Object msg, Throwable thrown)
     {
-        loggerDelegate.log(level, msg != null ? msg.toString() : "null", thrown);
+        loggerDelegate.log(level, msg != null ? msg.toString() : "{null message}", thrown);
     }
 
     private void log(Level level, Object msg)
     {
-        loggerDelegate.log(level, msg != null ? msg.toString() : "null");
+        loggerDelegate.log(level, msg != null ? msg.toString() : "{null message}");
     }
 
     @Override
     public void setLevel(Level level)
     {
+        // Level can't be set higher than maxLogLevel
+        if (level.intValue() > maxLogLevel.intValue())
+        {
+            return;
+        }
         Handler[] handlers = loggerDelegate.getHandlers();
         for (Handler handler : handlers)
             handler.setLevel(level);
@@ -144,4 +193,7 @@ public class BaseLogger implements LoggerInterface
     {
         log(Level.SEVERE, msg);
     }
+
+
+    static Function<String, java.util.logging.Logger> loggerFactory = Logger::getLogger;
 }

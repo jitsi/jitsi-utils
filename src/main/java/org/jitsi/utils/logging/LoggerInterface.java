@@ -1,9 +1,18 @@
 package org.jitsi.utils.logging;
 
+import java.util.*;
 import java.util.logging.*;
 
 public interface LoggerInterface
 {
+    /**
+     * Create a 'child' logger which derives from this one.  The child logger
+     * will share the same log level setting as this one and its
+     * {@link LogContext} (given here) will inherit all the context
+     * from this logger.
+     * @return
+     */
+    LoggerInterface createChildLogger(String name, Map<String, String> context);
     /**
      * Check if a message with a TRACE level would actually be logged by this
      * logger.
