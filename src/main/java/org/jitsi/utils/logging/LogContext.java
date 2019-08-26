@@ -1,6 +1,7 @@
 package org.jitsi.utils.logging;
 
 import java.util.*;
+import java.util.stream.*;
 
 public class LogContext
 {
@@ -17,18 +18,19 @@ public class LogContext
     {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        context.forEach((key, value) -> {
-            sb.append(key).append("=").append(value);
-        });
+        String data = context.entrySet()
+                .stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(" "));
+        sb.append(data);
         sb.append("]");
         return sb.toString();
     }
 
-    public LogContext createSubContext(Map<String, String> subContext)
+    public LogContext createSubContext(Map<String, String> childContextData)
     {
-        //TODO(brian): order of args for merge correct?
-        context.forEach((key, value) -> subContext.merge(key, value, (v1, v2) -> v2));
-        return new LogContext(subContext);
+        context.forEach((key, value) -> childContextData.merge(key, value, (v1, v2) -> v1));
+        return new LogContext(childContextData);
     }
 
     @Override
