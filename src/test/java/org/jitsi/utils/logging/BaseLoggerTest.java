@@ -132,6 +132,31 @@ public class BaseLoggerTest
         assertTrue(LogContextTest.containsData(contextTokens, "keyTwo=value2"));
         assertTrue(LogContextTest.containsData(contextTokens, "keyThree=value3"));
     }
+
+    /**
+     * Although the max level is shared between parent and child, the current log
+     * level should not be
+     */
+    @Test
+    public void testParentChildLevelsIndependent()
+    {
+        FakeLogger parentLoggerDelegate = new FakeLogger("parent");
+        BaseLogger.loggerFactory = (name) -> parentLoggerDelegate;
+        BaseLogger logger = new BaseLogger("parent");
+        logger.setLevelError();
+
+        FakeLogger childLoggerDelegate = new FakeLogger("child");
+        BaseLogger.loggerFactory = (name) -> childLoggerDelegate;
+        LoggerInterface childLogger = logger.createChildLogger("child", Collections.emptyMap());
+        childLogger.setLevelDebug();
+
+        logger.info("hello, world!");
+        assertEquals(0, parentLoggerDelegate.logLines.size());
+
+        childLogger.debug("hello, world!");
+        assertEquals(1, childLoggerDelegate.logLines.size());
+    }
+
 }
 
 class FakeLogger extends Logger {

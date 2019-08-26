@@ -97,8 +97,8 @@ public class BaseLogger implements LoggerInterface
     @Override
     public void setLevel(Level level)
     {
-        // Level can't be set higher than maxLogLevel
-        if (level.intValue() > maxLogLevel.intValue())
+        // Level can't be set to a 'lower' logging level than max
+        if (level.intValue() < maxLogLevel.intValue())
         {
             return;
         }
