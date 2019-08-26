@@ -1,6 +1,5 @@
 package org.jitsi.utils.logging2;
 
-import org.jitsi.utils.logging2.*;
 import org.junit.*;
 
 import java.util.*;

@@ -36,8 +36,11 @@ public class LogContext
 
     public LogContext createSubContext(Map<String, String> childContextData)
     {
-        context.forEach((key, value) -> childContextData.merge(key, value, (v1, v2) -> v1));
-        return new LogContext(childContextData);
+        // We don't merge directly into the given map, as it may have come
+        // from Kotlin and be a read-only map
+        Map<String, String> resultingContext = new HashMap<>(this.context);
+        resultingContext.putAll(childContextData);
+        return new LogContext(resultingContext);
     }
 
     @Override
