@@ -20,6 +20,9 @@ public class LogContext
 
     protected String formatContext(Map<String, String> context)
     {
+        if (context.isEmpty()) {
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         sb.append(CONTEXT_START_TOKEN);
         String data = context.entrySet()

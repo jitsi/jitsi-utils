@@ -22,7 +22,9 @@ public class LogContextTest
 
     public static String[] getTokens(String formattedCtxString)
     {
-        return formattedCtxString.substring(1, formattedCtxString.length() - 1).split(" ");
+        int contextBlockStartIndex = formattedCtxString.indexOf(LogContext.CONTEXT_START_TOKEN);
+        int contextBlockStopIndex = formattedCtxString.indexOf(LogContext.CONTEXT_END_TOKEN, contextBlockStartIndex);
+        return formattedCtxString.substring(contextBlockStartIndex, contextBlockStopIndex).split(" ");
     }
     @Test
     public void logContextFormatIsCorrect()
