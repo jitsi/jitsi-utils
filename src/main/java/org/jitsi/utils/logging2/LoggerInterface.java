@@ -1,4 +1,6 @@
-package org.jitsi.utils.logging;
+package org.jitsi.utils.logging2;
+
+import org.jitsi.utils.logging.Logger;
 
 import java.util.*;
 import java.util.logging.*;

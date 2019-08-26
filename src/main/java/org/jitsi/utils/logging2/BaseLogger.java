@@ -1,7 +1,6 @@
-package org.jitsi.utils.logging;
+package org.jitsi.utils.logging2;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.logging.*;
 import java.util.logging.Logger;

@@ -1,4 +1,4 @@
-package org.jitsi.utils.logging;
+package org.jitsi.utils.logging2;
 
 import java.util.*;
 import java.util.stream.*;
