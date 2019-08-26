@@ -1,31 +1,40 @@
 package org.jitsi.utils.logging;
 
-import javafx.util.*;
 import org.junit.*;
 
 import java.util.*;
 import java.util.function.*;
-import java.util.logging.*;
 import java.util.logging.Logger;
+import java.util.logging.*;
 
-import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.*;
 
 public class BaseLoggerTest
 {
     private static Function<String, Logger> oldLoggerFactoryFunction;
-    private static FakeLogger fakeLogger = new FakeLogger("fake");
+    private FakeLogger fakeLogger = new FakeLogger("fake");
 
     @BeforeClass
     public static void beforeClass()
     {
         oldLoggerFactoryFunction = BaseLogger.loggerFactory;
-        BaseLogger.loggerFactory = (name) -> fakeLogger;
     }
 
     @AfterClass
     public static void afterClass()
     {
         BaseLogger.loggerFactory = oldLoggerFactoryFunction;
+    }
+
+    @Before
+    public void beforeTest()
+    {
+        BaseLogger.loggerFactory = (name) -> fakeLogger;
+    }
+
+    @After
+    public void afterTest()
+    {
         fakeLogger.reset();
     }
 
@@ -33,12 +42,95 @@ public class BaseLoggerTest
     public void testBasicLogging()
     {
         BaseLogger logger = new BaseLogger("test");
+        logger.setLevelAll();
 
         logger.info("hello, world!");
-
         assertEquals(1, fakeLogger.logLines.size());
         assertEquals(Level.INFO, fakeLogger.last().level);
         assertEquals("hello, world!", fakeLogger.lastMsg());
+
+        fakeLogger.reset();
+        logger.debug("hello, world!");
+        assertEquals(1, fakeLogger.logLines.size());
+        assertEquals(Level.FINE, fakeLogger.last().level);
+        assertEquals("hello, world!", fakeLogger.lastMsg());
+
+        fakeLogger.reset();
+        logger.warn("hello, world!");
+        assertEquals(1, fakeLogger.logLines.size());
+        assertEquals(Level.WARNING, fakeLogger.last().level);
+        assertEquals("hello, world!", fakeLogger.lastMsg());
+
+        fakeLogger.reset();
+        logger.error("hello, world!");
+        assertEquals(1, fakeLogger.logLines.size());
+        assertEquals(Level.SEVERE, fakeLogger.last().level);
+        assertEquals("hello, world!", fakeLogger.lastMsg());
+
+        fakeLogger.reset();
+        logger.trace("hello, world!");
+        assertEquals(1, fakeLogger.logLines.size());
+        assertEquals(Level.FINER, fakeLogger.last().level);
+        assertEquals("hello, world!", fakeLogger.lastMsg());
+    }
+
+    @Test
+    public void testMaxLevel()
+    {
+        BaseLogger logger = new BaseLogger("test", Level.WARNING);
+
+        logger.info("hello, world!");
+        assertEquals(0, fakeLogger.logLines.size());
+    }
+
+    @Test
+    public void testChildLoggerInheritsMaxLevel()
+    {
+        BaseLogger logger = new BaseLogger("test", Level.WARNING);
+
+        LoggerInterface childLogger = logger.createChildLogger("child", Collections.emptyMap());
+
+        childLogger.info("hello, world!");
+        assertEquals(0, fakeLogger.logLines.size());
+    }
+
+    @Test
+    public void testLoggingWithContext()
+    {
+        Map<String, String> ctxData = new HashMap<>();
+        ctxData.put("keyOne", "value1");
+        ctxData.put("keyTwo", "value2");
+        LogContext ctx = new LogContext(ctxData);
+
+        BaseLogger logger = new BaseLogger("test", ctx);
+
+        logger.info("hello, world!");
+
+        String[] contextTokens = fakeLogger.getLastLineContextTokens();
+        assertTrue(LogContextTest.containsData(contextTokens, "keyOne=value1"));
+        assertTrue(LogContextTest.containsData(contextTokens, "keyTwo=value2"));
+    }
+
+    @Test
+    public void testChildLoggerInheritsContext()
+    {
+        Map<String, String> ctxData = new HashMap<>();
+        ctxData.put("keyOne", "value1");
+        ctxData.put("keyTwo", "value2");
+        LogContext ctx = new LogContext(ctxData);
+
+        BaseLogger logger = new BaseLogger("test", ctx);
+
+        Map<String, String> subCtxData = new HashMap<>();
+        subCtxData.put("keyThree", "value3");
+        LoggerInterface childLogger = logger.createChildLogger("child", subCtxData);
+
+        childLogger.info("hello, world!");
+
+        String[] contextTokens = fakeLogger.getLastLineContextTokens();
+        assertTrue(LogContextTest.containsData(contextTokens, "keyOne=value1"));
+        assertTrue(LogContextTest.containsData(contextTokens, "keyTwo=value2"));
+        assertTrue(LogContextTest.containsData(contextTokens, "keyThree=value3"));
     }
 }
 
@@ -51,9 +143,14 @@ class FakeLogger extends Logger {
     }
 
     @Override
-    public void log(Level level, String msg)
+    public void log(LogRecord logRecord)
     {
-        logLines.add(new LogLine(level, msg));
+        logLines.add(new LogLine(logRecord.getLevel(), logRecord.getMessage()));
+    }
+
+    String[] getLastLineContextTokens()
+    {
+        return LogContextTest.getTokens(lastMsg());
     }
 
     LogLine last()

@@ -42,6 +42,10 @@ public class BaseLogger implements LoggerInterface
         this.loggerDelegate = BaseLogger.loggerFactory.apply(name);
         this.maxLogLevel = maxLogLevel;
         this.logContext = logContext;
+        if (loggerDelegate.getLevel() == null || loggerDelegate.getLevel().intValue() < maxLogLevel.intValue())
+        {
+            setLevel(maxLogLevel);
+        }
     }
 
     /**
@@ -71,7 +75,23 @@ public class BaseLogger implements LoggerInterface
 
     private void log(Level level, Object msg)
     {
-        loggerDelegate.log(level, msg != null ? msg.toString() : "{null message}");
+        String logMsg;
+        if (msg == null)
+        {
+            logMsg = logContext.formattedContext;
+        }
+        else
+        {
+            if (logContext.context.isEmpty())
+            {
+                logMsg = msg.toString();
+            }
+            else
+            {
+                logMsg = logContext.formattedContext + " " + msg;
+            }
+        }
+        loggerDelegate.log(level, logMsg);
     }
 
     @Override

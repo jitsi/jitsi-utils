@@ -24,7 +24,7 @@ public class LogContextTest
     {
         int contextBlockStartIndex = formattedCtxString.indexOf(LogContext.CONTEXT_START_TOKEN);
         int contextBlockStopIndex = formattedCtxString.indexOf(LogContext.CONTEXT_END_TOKEN, contextBlockStartIndex);
-        return formattedCtxString.substring(contextBlockStartIndex, contextBlockStopIndex).split(" ");
+        return formattedCtxString.substring(contextBlockStartIndex + 1, contextBlockStopIndex).split(" ");
     }
     @Test
     public void logContextFormatIsCorrect()
