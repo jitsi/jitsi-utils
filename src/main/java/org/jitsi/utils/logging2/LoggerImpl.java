@@ -13,10 +13,11 @@ public class LoggerImpl implements Logger
     private final java.util.logging.Logger loggerDelegate;
 
     /**
-     * The 'highest' log level this logger is allowed to log on.  Messages logged
-     * on a higher level than this will be ignored.
+     * The 'minimum' level a log statement must be to be logged by this Logger. For example, if this
+     * is set to {@link Level.WARNING}, then only log statements at the warning level or above
+     * will actually be logged.
      */
-    private final Level maxLogLevel;
+    private final Level minLogLevel;
 
     private final LogContext logContext;
 
@@ -25,9 +26,9 @@ public class LoggerImpl implements Logger
         this(name, Level.ALL);
     }
 
-    public LoggerImpl(String name, Level maxLogLevel)
+    public LoggerImpl(String name, Level minLogLevel)
     {
-        this(name, maxLogLevel, LogContext.EMPTY);
+        this(name, minLogLevel, LogContext.EMPTY);
     }
 
     public LoggerImpl(String name, LogContext logContext)
@@ -35,15 +36,11 @@ public class LoggerImpl implements Logger
         this(name, Level.ALL, logContext);
     }
 
-    public LoggerImpl(String name, Level maxLogLevel, LogContext logContext)
+    public LoggerImpl(String name, Level minLogLevel, LogContext logContext)
     {
         this.loggerDelegate = LoggerImpl.loggerFactory.apply(name);
-        this.maxLogLevel = maxLogLevel;
+        this.minLogLevel = minLogLevel;
         this.logContext = logContext;
-        if (loggerDelegate.getLevel() == null || loggerDelegate.getLevel().intValue() < maxLogLevel.intValue())
-        {
-            setLevel(maxLogLevel);
-        }
     }
 
     /**
@@ -58,18 +55,18 @@ public class LoggerImpl implements Logger
     @Override
     public Logger createChildLogger(String name, Map<String, String> context)
     {
-        return new LoggerImpl(name, maxLogLevel, this.logContext.createSubContext(context));
+        return new LoggerImpl(name, minLogLevel, this.logContext.createSubContext(context));
     }
 
     @Override
     public Logger createChildLogger(String name)
     {
-        return new LoggerImpl(name, maxLogLevel, this.logContext);
+        return new LoggerImpl(name, minLogLevel, this.logContext);
     }
 
     private boolean isLoggable(Level level)
     {
-        return loggerDelegate.isLoggable(level);
+        return level.intValue() >= minLogLevel.intValue() && loggerDelegate.isLoggable(level);
     }
 
     private void log(Level level, Object msg, Throwable thrown)
@@ -96,11 +93,6 @@ public class LoggerImpl implements Logger
     @Override
     public void setLevel(Level level)
     {
-        // Level can't be set to a 'lower' logging level than max
-        if (level.intValue() < maxLogLevel.intValue())
-        {
-            return;
-        }
         Handler[] handlers = loggerDelegate.getHandlers();
         for (Handler handler : handlers)
             handler.setLevel(level);
