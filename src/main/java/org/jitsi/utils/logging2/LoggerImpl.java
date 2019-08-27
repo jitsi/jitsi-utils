@@ -74,28 +74,23 @@ public class LoggerImpl implements Logger
 
     private void log(Level level, Object msg, Throwable thrown)
     {
-        loggerDelegate.log(level, msg != null ? msg.toString() : "{null message}", thrown);
+        if (!isLoggable(level))
+        {
+            return;
+        }
+        LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
+        lr.setThrown(thrown);
+        loggerDelegate.log(lr);
     }
 
     private void log(Level level, Object msg)
     {
-        String logMsg;
-        if (msg == null)
+        if (!isLoggable(level))
         {
-            logMsg = logContext.formattedContext;
+            return;
         }
-        else
-        {
-            if (logContext.context.isEmpty())
-            {
-                logMsg = msg.toString();
-            }
-            else
-            {
-                logMsg = logContext.formattedContext + " " + msg;
-            }
-        }
-        loggerDelegate.log(level, logMsg);
+        LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
+        loggerDelegate.log(lr);
     }
 
     @Override

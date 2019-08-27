@@ -45,31 +45,31 @@ public class LoggerImplTest
 
         logger.info("hello, world!");
         assertEquals(1, fakeLogger.logLines.size());
-        assertEquals(Level.INFO, fakeLogger.last().level);
+        assertEquals(Level.INFO, fakeLogger.last().getLevel());
         assertEquals("hello, world!", fakeLogger.lastMsg());
 
         fakeLogger.reset();
         logger.debug("hello, world!");
         assertEquals(1, fakeLogger.logLines.size());
-        assertEquals(Level.FINE, fakeLogger.last().level);
+        assertEquals(Level.FINE, fakeLogger.last().getLevel());
         assertEquals("hello, world!", fakeLogger.lastMsg());
 
         fakeLogger.reset();
         logger.warn("hello, world!");
         assertEquals(1, fakeLogger.logLines.size());
-        assertEquals(Level.WARNING, fakeLogger.last().level);
+        assertEquals(Level.WARNING, fakeLogger.last().getLevel());
         assertEquals("hello, world!", fakeLogger.lastMsg());
 
         fakeLogger.reset();
         logger.error("hello, world!");
         assertEquals(1, fakeLogger.logLines.size());
-        assertEquals(Level.SEVERE, fakeLogger.last().level);
+        assertEquals(Level.SEVERE, fakeLogger.last().getLevel());
         assertEquals("hello, world!", fakeLogger.lastMsg());
 
         fakeLogger.reset();
         logger.trace("hello, world!");
         assertEquals(1, fakeLogger.logLines.size());
-        assertEquals(Level.FINER, fakeLogger.last().level);
+        assertEquals(Level.FINER, fakeLogger.last().getLevel());
         assertEquals("hello, world!", fakeLogger.lastMsg());
     }
 
@@ -160,7 +160,7 @@ public class LoggerImplTest
 
 class FakeLogger extends java.util.logging.Logger
 {
-    final List<LogLine> logLines = new ArrayList<>();
+    final List<LogRecord> logLines = new ArrayList<>();
 
     public FakeLogger(String name)
     {
@@ -170,22 +170,27 @@ class FakeLogger extends java.util.logging.Logger
     @Override
     public void log(LogRecord logRecord)
     {
-        logLines.add(new LogLine(logRecord.getLevel(), logRecord.getMessage()));
+        logLines.add(logRecord);
     }
 
     String[] getLastLineContextTokens()
     {
-        return LogContextTest.getTokens(lastMsg());
+        return LogContextTest.getTokens(lastContext());
     }
 
-    LogLine last()
+    LogRecord last()
     {
         return logLines.get(logLines.size() - 1);
     }
 
     String lastMsg()
     {
-        return logLines.get(logLines.size() - 1).msg;
+        return last().getMessage();
+    }
+
+    String lastContext()
+    {
+        return ((ContextLogRecord)last()).getContext();
     }
 
     public void reset()
