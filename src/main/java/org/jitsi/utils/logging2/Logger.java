@@ -91,6 +91,14 @@ public interface Logger
     void warn(Object msg);
 
     /**
+     * Log a message, with associated Throwable information.
+     * <p>
+     * @param msg   The message to log
+     * @param t  Throwable associated with log message.
+     */
+    void warn(Object msg, Throwable t);
+
+    /**
      * Log a ERROR message.
      * <p>
      * If the logger is currently enabled for the ERROR message
@@ -100,6 +108,14 @@ public interface Logger
      * @param msg The message to log
      */
     void error(Object msg);
+
+    /**
+     * Log a message, with associated Throwable information.
+     * <p>
+     * @param msg   The message to log
+     * @param t  Throwable associated with log message.
+     */
+    void error(Object msg, Throwable t);
 
     /**
      * Set logging level for all handlers to ERROR

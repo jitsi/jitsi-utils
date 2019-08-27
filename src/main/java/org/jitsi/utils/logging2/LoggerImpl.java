@@ -208,11 +208,22 @@ public class LoggerImpl implements Logger
     }
 
     @Override
+    public void warn(Object msg, Throwable t)
+    {
+        log(Level.WARNING, msg, t);
+    }
+
+    @Override
     public void error(Object msg)
     {
         log(Level.SEVERE, msg);
     }
 
+    @Override
+    public void error(Object msg, Throwable t)
+    {
+        log(Level.SEVERE, msg, t);
+    }
 
     static Function<String, java.util.logging.Logger> loggerFactory = java.util.logging.Logger::getLogger;
 }
