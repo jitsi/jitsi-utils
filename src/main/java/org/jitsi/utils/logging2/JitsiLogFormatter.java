@@ -101,7 +101,11 @@ public class JitsiLogFormatter extends Formatter
 
         if (record instanceof ContextLogRecord)
         {
-            sb.append(((ContextLogRecord)record).getContext()).append(" ");
+            String context = ((ContextLogRecord)record).getContext();
+            if (!context.isEmpty())
+            {
+                sb.append(context).append(" ");
+            }
         }
 
         //caller method
