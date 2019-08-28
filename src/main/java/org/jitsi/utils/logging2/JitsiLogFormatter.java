@@ -140,7 +140,7 @@ public class JitsiLogFormatter extends Formatter
                 sb.append("#").append(lineNumber);
             }
         }
-        sb.append(" ");
+        sb.append(": ");
         sb.append(record.getMessage());
         sb.append(lineSeparator);
         if (record.getThrown() != null)
