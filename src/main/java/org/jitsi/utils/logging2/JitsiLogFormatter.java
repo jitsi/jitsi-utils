@@ -182,7 +182,8 @@ public class JitsiLogFormatter extends Formatter
         {
             StackTraceElement frame = stack[ix];
             String cname = frame.getClassName();
-            if (cname.equals("org.jitsi.utils.logging2.LoggerImpl"))
+            if (cname.equals("org.jitsi.utils.logging2.LoggerImpl") ||
+                cname.equals("org.jitsi.utils.logging.LoggerImpl"))
             {
                 break;
             }
