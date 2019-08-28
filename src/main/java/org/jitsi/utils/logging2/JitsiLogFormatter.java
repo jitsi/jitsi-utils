@@ -136,9 +136,9 @@ public class JitsiLogFormatter extends Formatter
 
             //include the line number if we have it.
             if(lineNumber != -1)
-                sb.append("().").append(Integer.toString(lineNumber));
-            else
-                sb.append("()");
+            {
+                sb.append("#").append(lineNumber);
+            }
         }
         sb.append(" ");
         sb.append(record.getMessage());
