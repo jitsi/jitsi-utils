@@ -24,11 +24,18 @@ public interface Logger
     /**
      * Create a 'child' logger which derives from this one.  The child logger
      * will share the same log level setting as this one and its
-     * {@link LogContext} (given here) will inherit all the context
-     * from this logger.
-     * @return
+     * {@link LogContext} (given here) will, in addition to the values
+     * it contains, have the parent logger's context merged into it (the child's
+     * context values take priority in case of a conflict)
+     * @return the created logger
      */
     Logger createChildLogger(String name, Map<String, String> context);
+    /**
+     * Create a 'child' logger which derives from this one.  The child logger
+     * will share the same log level setting as this one and it will inherit
+     * this logger's {@link LogContext}
+     * @return the created logger
+     */
     Logger createChildLogger(String name);
     /**
      * Check if a message with a TRACE level would actually be logged by this
