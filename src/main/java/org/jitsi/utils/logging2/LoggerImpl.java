@@ -30,7 +30,7 @@ public class LoggerImpl implements Logger
 
     /**
      * The 'minimum' level a log statement must be to be logged by this Logger. For example, if this
-     * is set to {@link Level.WARNING}, then only log statements at the warning level or above
+     * is set to {@link Level#WARNING}, then only log statements at the warning level or above
      * will actually be logged.
      */
     private final Level minLogLevel;
@@ -103,6 +103,16 @@ public class LoggerImpl implements Logger
             return;
         }
         LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
+        loggerDelegate.log(lr);
+    }
+
+    private void log(Level level, Supplier<String> msgSupplier)
+    {
+        if (!isLoggable(level))
+        {
+            return;
+        }
+        LogRecord lr = new ContextLogRecord(level, msgSupplier.get(), logContext.formattedContext);
         loggerDelegate.log(lr);
     }
 
@@ -181,6 +191,12 @@ public class LoggerImpl implements Logger
     }
 
     @Override
+    public void trace(Supplier<String> msgSupplier)
+    {
+        log(Level.FINER, msgSupplier);
+    }
+
+    @Override
     public boolean isDebugEnabled() {
         return isLoggable(Level.FINE);
     }
@@ -189,6 +205,12 @@ public class LoggerImpl implements Logger
     public void debug(Object msg)
     {
         log(Level.FINE, msg);
+    }
+
+    @Override
+    public void debug(Supplier<String> msgSupplier)
+    {
+        log(Level.FINE, msgSupplier);
     }
 
     @Override
@@ -204,6 +226,12 @@ public class LoggerImpl implements Logger
     }
 
     @Override
+    public void info(Supplier<String> msgSupplier)
+    {
+       log(Level.INFO, msgSupplier);
+    }
+
+    @Override
     public boolean isWarnEnabled()
     {
         return isLoggable(Level.WARNING);
@@ -216,6 +244,12 @@ public class LoggerImpl implements Logger
     }
 
     @Override
+    public void warn(Supplier<String> msgSupplier)
+    {
+        log(Level.WARNING, msgSupplier);
+    }
+
+    @Override
     public void warn(Object msg, Throwable t)
     {
         log(Level.WARNING, msg, t);
@@ -225,6 +259,12 @@ public class LoggerImpl implements Logger
     public void error(Object msg)
     {
         log(Level.SEVERE, msg);
+    }
+
+    @Override
+    public void error(Supplier<String> msgSupplier)
+    {
+        log(Level.SEVERE, msgSupplier);
     }
 
     @Override

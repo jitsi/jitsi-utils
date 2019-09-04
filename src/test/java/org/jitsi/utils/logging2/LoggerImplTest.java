@@ -172,6 +172,17 @@ public class LoggerImplTest
         assertEquals(1, childLoggerDelegate.logLines.size());
     }
 
+    @Test
+    public void testMsgSupplier()
+    {
+        LoggerImpl logger = new LoggerImpl("test");
+        logger.setLevel(Level.INFO);
+
+        logger.debug(() -> { throw new RuntimeException("This shouldn't run"); });
+
+        logger.info(() -> "hello, world!");
+        assertEquals(1, fakeLogger.logLines.size());
+    }
 }
 
 class FakeLogger extends java.util.logging.Logger

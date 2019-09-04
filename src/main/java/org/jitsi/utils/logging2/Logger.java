@@ -17,6 +17,7 @@
 package org.jitsi.utils.logging2;
 
 import java.util.*;
+import java.util.function.*;
 import java.util.logging.*;
 
 public interface Logger
@@ -57,6 +58,15 @@ public interface Logger
     void trace(Object msg);
 
     /**
+     * Log a TRACE message.  Only invokes the given supplier
+     * if the TRACE level is currently loggable.
+     *
+     * @param msgSupplier a {@link Supplier} which will return the
+     *                    log mesage when invoked
+     */
+    void trace(Supplier<String> msgSupplier);
+
+    /**
      * Check if a message with a DEBUG level would actually be logged by this
      * logger.
      * <p>
@@ -76,6 +86,15 @@ public interface Logger
     void debug(Object msg);
 
     /**
+     * Log a DEBUG message.  Only invokes the given supplier
+     * if the DEBUG level is currently loggable.
+     *
+     * @param msgSupplier a {@link Supplier} which will return the
+     *                    log mesage when invoked
+     */
+    void debug(Supplier<String> msgSupplier);
+
+    /**
      * Check if a message with an INFO level would actually be logged by this
      * logger.
      *
@@ -84,7 +103,7 @@ public interface Logger
     boolean isInfoEnabled();
 
     /**
-     * Log a INFO message.
+     * Log an INFO message.
      * <p>
      * If the logger is currently enabled for the INFO message
      * level then the given message is forwarded to all the
@@ -93,6 +112,15 @@ public interface Logger
      * @param msg The message to log
      */
     void info(Object msg);
+
+    /**
+     * Log an INFO message.  Only invokes the given supplier
+     * if the INFO level is currently loggable.
+     *
+     * @param msgSupplier a {@link Supplier} which will return the
+     *                    log mesage when invoked
+     */
+    void info(Supplier<String> msgSupplier);
 
     /**
      * Check if a message with a WARN level would actually be logged by this
@@ -114,6 +142,15 @@ public interface Logger
     void warn(Object msg);
 
     /**
+     * Log a WARN message.  Only invokes the given supplier
+     * if the WARN level is currently loggable.
+     *
+     * @param msgSupplier a {@link Supplier} which will return the
+     *                    log mesage when invoked
+     */
+    void warn(Supplier<String> msgSupplier);
+
+    /**
      * Log a message, with associated Throwable information.
      * <p>
      * @param msg   The message to log
@@ -131,6 +168,15 @@ public interface Logger
      * @param msg The message to log
      */
     void error(Object msg);
+
+    /**
+     * Log an ERROR message.  Only invokes the given supplier
+     * if the ERROR level is currently loggable.
+     *
+     * @param msgSupplier a {@link Supplier} which will return the
+     *                    log mesage when invoked
+     */
+    void error(Supplier<String> msgSupplier);
 
     /**
      * Log a message, with associated Throwable information.
