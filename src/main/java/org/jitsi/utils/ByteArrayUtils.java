@@ -75,4 +75,76 @@ public class ByteArrayUtils
                         | ((buf[off++] & 0xFF) << 8)
                         | (buf[off] & 0xFF);
     }
+
+    /**
+     * Writes an {@code int} into a byte array buffer at a specified offset.
+     *
+     * @param bab the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeInt(ByteArrayBuffer bab, int off, int value)
+    {
+        writeInt(bab.getBuffer(), off + bab.getOffset(), value);
+    }
+
+    /**
+     * Writes an {@code int} into a byte array at a specified offset.
+     *
+     * @param buf the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeInt(byte[] buf, int off, int value)
+    {
+        buf[off++] = (byte) ((value >> 24) & 0xFF);
+        buf[off++] = (byte) ((value >> 16) & 0xFF);
+        buf[off++] = (byte) ((value >> 8) & 0xFF);
+        buf[off] = (byte) (value & 0xFF);
+    }
+
+    /**
+     * Read a 16-bit signed integer from a byte array buffer at a specified
+     * offset into a {@code short}.
+     *
+     * @param bab the byte array from which to read.
+     * @param off start offset in the buffer of the integer to be read.
+     */
+    public static short readShort(ByteArrayBuffer bab, int off)
+    {
+        return readShort(bab.getBuffer(), off + bab.getOffset());
+    }
+
+    /**
+     * Read a 16-bit signed integer from a byte array at a specified offset
+     * into a {@code short}.
+     *
+     * @param buf the byte array from which to read.
+     * @param off start offset in the buffer of the integer to be read.
+     */
+    public static short readShort(byte[] buf, int off)
+    {
+        return (short) (((buf[off++] & 0xFF) << 8) | (buf[off] & 0xFF));
+    }
+
+    /**
+     * Writes a {@code short} into a byte array buffer at a specified offset.
+     *
+     * @param bab the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeShort(ByteArrayBuffer bab, int off, short value)
+    {
+        writeShort(bab.getBuffer(), off + bab.getOffset(), value);
+    }
+
+    /**
+     * Writes a {@code short} into a byte array at a specified offset.
+     *
+     * @param buf the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeShort(byte[] buf, int off, short value)
+    {
+        buf[off++] = (byte) ((value >> 8) & 0xFF);
+        buf[off] = (byte) (value & 0xFF);
+    }
 }
