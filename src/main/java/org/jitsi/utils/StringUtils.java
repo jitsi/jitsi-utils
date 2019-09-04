@@ -23,7 +23,10 @@ import java.nio.charset.*;
  *
  * @author Grigorii Balutsel
  * @author Emil Ivov
+ *
+ * @deprecated Use StringUtils from apache commons.
  */
+@Deprecated
 public final class StringUtils
 {
     /**
