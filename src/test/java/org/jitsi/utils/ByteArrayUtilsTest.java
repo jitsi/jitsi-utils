@@ -47,4 +47,26 @@ public class ByteArrayUtilsTest
         writeInt(bab, offset, -1234);
         assertEquals("Write/read a negative int", -1234, readInt(bab, offset));
     }
+
+    @Test
+    public void testReadWriteUint16()
+    {
+        ByteArrayBuffer bab = new BasicByteArrayBuffer(10);
+        int offset = 3;
+
+        writeUint16(bab, offset, 1234);
+        assertEquals(
+                "Write/read a 16-bit int", 1234, readUint16(bab, offset));
+    }
+
+    @Test
+    public void testReadWriteUint24()
+    {
+        ByteArrayBuffer bab = new BasicByteArrayBuffer(10);
+        int offset = 3;
+
+        writeUint24(bab, offset, 1234);
+        assertEquals(
+                "Write/read a 24-bit int", 1234, readUint24(bab, offset));
+    }
 }

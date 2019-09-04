@@ -29,9 +29,9 @@ public class ByteArrayUtils
      * @param off start offset of the unsigned short
      * @return the int value of the unsigned short at offset
      */
-    public static int readUint16AsInt(ByteArrayBuffer bab, int off)
+    public static int readUint16(ByteArrayBuffer bab, int off)
     {
-        return readUint16AsInt(bab.getBuffer(), off + bab.getOffset());
+        return readUint16(bab.getBuffer(), off + bab.getOffset());
     }
 
     /**
@@ -42,12 +42,89 @@ public class ByteArrayUtils
      * @param off start offset of the unsigned short
      * @return the int value of the unsigned short at offset
      */
-    public static int readUint16AsInt(byte[] buf, int off)
+    public static int readUint16(byte[] buf, int off)
     {
-        int b1 = (0xFF & (buf[off + 0]));
-        int b2 = (0xFF & (buf[off + 1]));
-        int val = b1 << 8 | b2;
-        return val;
+        int b1 = (0xFF & (buf[off++]));
+        int b2 = (0xFF & (buf[off]));
+        return b1 << 8 | b2;
+    }
+
+    /**
+     * Writes a 16-bit unsigned integer into a byte array buffer at a specified
+     * offset.
+     *
+     * @param bab the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeUint16(ByteArrayBuffer bab, int off, int value)
+    {
+        writeUint16(bab.getBuffer(), off + bab.getOffset(), value);
+    }
+
+    /**
+     * Writes a 16-bit unsigned integer into a byte array at a specified offset.
+     *
+     * @param buf the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeUint16(byte[] buf, int off, int value)
+    {
+        buf[off++] = (byte) ((value >> 8) & 0xFF);
+        buf[off] = (byte) (value & 0xFF);
+    }
+
+    /**
+     * Read a unsigned 24-bit value from a byte array buffer at a specified
+     * offset as an int.
+     *
+     * @param bab the buffer from which to read.
+     * @param off start offset of the unsigned short
+     * @return the int value of the unsigned short at offset
+     */
+    public static int readUint24(ByteArrayBuffer bab, int off)
+    {
+        return readUint24(bab.getBuffer(), off + bab.getOffset());
+    }
+
+    /**
+     * Read a unsigned 24-bit value from a byte array at a specified offset as
+     * an int.
+     *
+     * @param buf the buffer from which to read.
+     * @param off start offset of the unsigned short
+     * @return the int value of the unsigned short at offset
+     */
+    public static int readUint24(byte[] buf, int off)
+    {
+        int b1 = (0xFF & (buf[off++]));
+        int b2 = (0xFF & (buf[off++]));
+        int b3 = (0xFF & (buf[off]));
+        return b1 << 16 | b2 << 8 | b3;
+    }
+
+    /**
+     * Writes a 24-bit unsigned integer into a byte array buffer at a specified
+     * offset.
+     *
+     * @param bab the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeUint24(ByteArrayBuffer bab, int off, int value)
+    {
+        writeUint24(bab.getBuffer(), off + bab.getOffset(), value);
+    }
+
+    /**
+     * Writes a 24-bit unsigned integer into a byte array at a specified offset.
+     *
+     * @param buf the byte array to write to.
+     * @param value the value to write.
+     */
+    public static void writeUint24(byte[] buf, int off, int value)
+    {
+        buf[off++] = (byte) ((value >> 16) & 0xFF);
+        buf[off++] = (byte) ((value >> 8) & 0xFF);
+        buf[off] = (byte) (value & 0xFF);
     }
 
     /**
