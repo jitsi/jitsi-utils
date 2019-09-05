@@ -128,6 +128,32 @@ public class ByteArrayUtils
     }
 
     /**
+     * Read a unsigned 32-bit value from a byte array buffer at a specified
+     * offset as a {@code long}.
+     *
+     * @param bab the buffer from which to read.
+     * @param off start offset of the unsigned short
+     * @return the int value of the unsigned short at offset
+     */
+    public static long readUint32(ByteArrayBuffer bab, int off)
+    {
+        return readUint32(bab.getBuffer(), off + bab.getOffset());
+    }
+
+    /**
+     * Read a unsigned 32-bit value from a byte array at a specified offset as
+     * a {@code long}.
+     *
+     * @param buf the buffer from which to read.
+     * @param off start offset of the unsigned short
+     * @return the int value of the unsigned short at offset
+     */
+    public static long readUint32(byte[] buf, int off)
+    {
+        return readInt(buf, off) & 0xFFFF_FFFFL;
+    }
+
+    /**
      * Read a 32-bit integer from a byte array buffer at a specified offset.
      *
      * @param bab the byte array from which to read.

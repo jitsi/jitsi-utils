@@ -69,4 +69,21 @@ public class ByteArrayUtilsTest
         assertEquals(
                 "Write/read a 24-bit int", 1234, readUint24(bab, offset));
     }
+
+    @Test
+    public void testReadUint32()
+    {
+        ByteArrayBuffer bab = new BasicByteArrayBuffer(10);
+        int offset = 3;
+
+        long l = 0xff11_1111L;
+        writeInt(bab, offset, (int) l);
+        assertEquals(
+            "Read a 32-bit unsigned int (msb=1)", l, readUint32(bab, offset));
+
+        l = 0x0f11_1111L;
+        writeInt(bab, offset, (int) l);
+        assertEquals(
+            "Read a 32-bit unsigned int (msb=0)", l, readUint32(bab, offset));
+    }
 }
