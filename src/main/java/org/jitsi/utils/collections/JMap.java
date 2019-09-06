@@ -52,11 +52,12 @@ public class JMap
     }
 
     /**
-     * @param k1
-     * @param v1
-     * @param <K>
-     * @param <V>
-     * @return
+     * Create a map with the given key and value
+     * @param k1 the key
+     * @param v1 the value
+     * @param <K> the key type
+     * @param <V> the value type
+     * @return a map with the given keys and values
      */
     public static <K, V> Map<K, V> of(K k1, V v1)
     {
@@ -65,6 +66,16 @@ public class JMap
         return map;
     }
 
+    /**
+     * Create a map with the given keys and values
+     * @param k1 the first key
+     * @param v1 the value for the first key
+     * @param k2 the second  key
+     * @param v2 the value for the second key
+     * @param <K> the key type
+     * @param <V> the value type
+     * @return a map containing the given keys and values
+     */
     public static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2)
     {
         Map<K, V> map = of(k1, v1);
@@ -72,6 +83,18 @@ public class JMap
         return map;
     }
 
+    /**
+     * Create a map with the given keys and values
+     * @param k1 the first key
+     * @param v1 the value for the first key
+     * @param k2 the second  key
+     * @param v2 the value for the second key
+     * @param k3 the third key
+     * @param v3  the value for the third  key
+     * @param <K> the key type
+     * @param <V> the value type
+     * @return a map containing the given keys and values
+     */
     public static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3)
     {
         Map<K, V> map = of(k1, v1, k2, v2);

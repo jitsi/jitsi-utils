@@ -27,7 +27,7 @@ public class JMapTest
     @Test
     public void testMapOf()
     {
-        java.util.Map data = JMap.ofEntries(
+        java.util.Map<String, String> data = JMap.ofEntries(
             entry("one", "1"),
             entry("two", "2"),
             entry("three", "3")
@@ -40,7 +40,23 @@ public class JMapTest
     }
 
     @Test
-    public void testArgsMapOf()
+    public void test1ArgMapOf()
+    {
+        java.util.Map data = JMap.of("one", "1");
+        assertEquals(1, data.size());
+        assertEquals("1", data.get("one"));
+    }
+    @Test
+    public void test2ArgsMapOf()
+    {
+        java.util.Map data = JMap.of("one", "1", "two", "2");
+        assertEquals(2, data.size());
+        assertEquals("1", data.get("one"));
+        assertEquals("2", data.get("two"));
+    }
+
+    @Test
+    public void test3ArgsMapOf()
     {
         java.util.Map data = JMap.of("one", "1", "two", "2", "three", "3");
         assertEquals(3, data.size());

@@ -35,18 +35,27 @@ public class MapEntry<K, V> implements Map.Entry<K, V>
         this.value = value;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public K getKey()
     {
         return key;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public V getValue()
     {
         return value;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public V setValue(V value)
     {
