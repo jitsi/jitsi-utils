@@ -93,6 +93,7 @@ public class LoggerImpl implements Logger
         }
         LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
         lr.setThrown(thrown);
+        lr.setLoggerName(this.loggerDelegate.getName());
         loggerDelegate.log(lr);
     }
 
@@ -103,6 +104,7 @@ public class LoggerImpl implements Logger
             return;
         }
         LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
+        lr.setLoggerName(this.loggerDelegate.getName());
         loggerDelegate.log(lr);
     }
 
@@ -113,6 +115,7 @@ public class LoggerImpl implements Logger
             return;
         }
         LogRecord lr = new ContextLogRecord(level, msgSupplier.get(), logContext.formattedContext);
+        lr.setLoggerName(this.loggerDelegate.getName());
         loggerDelegate.log(lr);
     }
 
