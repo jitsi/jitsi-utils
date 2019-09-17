@@ -15,6 +15,7 @@
  */
 package org.jitsi.utils.logging;
 
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -28,6 +29,28 @@ public class DiagnosticContext
     extends ConcurrentHashMap<String, Object>
 {
     /**
+     * {@inheritDoc}
+     */
+    public DiagnosticContext()
+    {
+        super();
+        this.clock = Clock.systemUTC();
+    }
+
+
+    /**
+     * Creates a diagnostic context using the specified clock for timestamp values.
+     * @param clock
+     */
+    public DiagnosticContext(Clock clock)
+    {
+        super();
+        this.clock = clock;
+    }
+
+    Clock clock;
+
+    /**
      * Makes a new time series point without a timestamp. This is recommended
      * for time series where the exact timestamp value isn't important and can
      * be deduced via other means (i.e. Java logging timestamps).
@@ -36,7 +59,7 @@ public class DiagnosticContext
      */
     public TimeSeriesPoint makeTimeSeriesPoint(String timeSeriesName)
     {
-        return makeTimeSeriesPoint(timeSeriesName, System.currentTimeMillis());
+        return makeTimeSeriesPoint(timeSeriesName, clock.instant());
     }
 
     /**
@@ -48,6 +71,23 @@ public class DiagnosticContext
      */
     public TimeSeriesPoint makeTimeSeriesPoint(String timeSeriesName, long tsMs)
     {
+        return new TimeSeriesPoint(this)
+            .addField("series", timeSeriesName)
+            .addField("time", tsMs);
+    }
+
+    /**
+     * Makes a new time series point with an Instant. This is recommended for
+     * time series where it's important to have the exact timestamp value,
+     * when the process is working in Instant values.
+     *
+     * @param timeSeriesName the name of the time series
+     * @param ts the timestamp of the time series point
+     */
+    public TimeSeriesPoint makeTimeSeriesPoint(String timeSeriesName, Instant ts)
+    {
+        Double tsMs = ts.getEpochSecond() * 1e3 + ts.getNano() * 1e-6;
+
         return new TimeSeriesPoint(this)
             .addField("series", timeSeriesName)
             .addField("time", tsMs);
