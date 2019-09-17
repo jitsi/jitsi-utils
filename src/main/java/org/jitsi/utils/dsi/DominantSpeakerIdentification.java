@@ -399,8 +399,7 @@ public class DominantSpeakerIdentification
 
                 // speakers
                 Collection<Speaker> speakersCollection = this.speakers.values();
-                JSONObject[] speakersArray = new JSONObject[speakers.size()];
-                int i = 0;
+                JSONArray speakersArray = new JSONArray();
 
                 for (Speaker speaker : speakersCollection)
                 {
@@ -410,7 +409,7 @@ public class DominantSpeakerIdentification
                     speakerJSONObject.put("ssrc", Long.valueOf(speaker.ssrc));
                     // levels
                     speakerJSONObject.put("levels", speaker.getLevels());
-                    speakersArray[i++] = speakerJSONObject;
+                    speakersArray.add(speakerJSONObject);
                 }
                 jsonObject.put("speakers", speakersArray);
             }
