@@ -16,6 +16,7 @@
 
 package org.jitsi.utils.logging2;
 
+import com.google.common.collect.*;
 import org.jetbrains.annotations.*;
 import org.jitsi.utils.collections.*;
 
@@ -38,21 +39,21 @@ public class LogContext
     public static String CONTEXT_START_TOKEN = "[";
     public static String CONTEXT_END_TOKEN = "]";
 
-    protected Map<String, String> parentContext;
-    protected Map<String, String> context;
+    protected ImmutableMap<String, String> parentContext;
+    protected ImmutableMap<String, String> context;
 
     protected String formattedContext;
     private final List<LogContext> childContexts = new CopyOnWriteArrayList<>();
 
     public LogContext(Map<String, String> context)
     {
-        this(context, new HashMap<>());
+        this(context, ImmutableMap.of());
     }
 
-    protected LogContext(Map<String, String> context, Map<String, String> parentContext)
+    protected LogContext(Map<String, String> context, ImmutableMap<String, String> parentContext)
     {
-        this.context = Collections.unmodifiableMap(context);
-        this.parentContext = Collections.unmodifiableMap(parentContext);
+        this.context = ImmutableMap.copyOf(context);
+        this.parentContext = parentContext;
         updateFormattedContext();
     }
 
@@ -90,7 +91,7 @@ public class LogContext
     {
         // The parent context to this child is the combination of this LogContext's context
         // and its parent's context
-        Map<String, String> combinedParentContext = combineMaps(parentContext, context);
+        ImmutableMap<String, String> combinedParentContext = combineMaps(parentContext, context);
         LogContext child = new LogContext(childContextData, combinedParentContext);
         childContexts.add(child);
         return child;
@@ -109,13 +110,13 @@ public class LogContext
 
     protected void updateChildren()
     {
-        Map<String, String> combined = combineMaps(parentContext, context);
-       childContexts.forEach((child) -> child.parentContextUpdated(combined));
+        ImmutableMap<String, String> combined = combineMaps(parentContext, context);
+        childContexts.forEach((child) -> child.parentContextUpdated(combined));
     }
 
-    protected void parentContextUpdated(Map<String, String> parentContext)
+    protected void parentContextUpdated(ImmutableMap<String, String> parentContext)
     {
-        this.parentContext = Collections.unmodifiableMap(parentContext);
+        this.parentContext = parentContext;
         updateFormattedContext();
     }
 
@@ -127,14 +128,14 @@ public class LogContext
      */
     @SafeVarargs
     @NotNull
-    protected static Map<String, String> combineMaps(@NotNull Map<String, String>... maps)
+    protected static ImmutableMap<String, String> combineMaps(@NotNull Map<String, String>... maps)
     {
         Map<String, String> combinedMap = new HashMap<>();
         for (Map<String, String> map : maps)
         {
             combinedMap.putAll(map);
         }
-        return Collections.unmodifiableMap(combinedMap);
+        return ImmutableMap.copyOf(combinedMap);
     }
 
     @Override
