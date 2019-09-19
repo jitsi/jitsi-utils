@@ -88,4 +88,43 @@ public class LogContextTest
         assertTrue(containsData(data, "epId=456"));
         assertTrue(containsData(data, "confId=111"));
     }
+
+    @Test
+    public void addingContextAfterCreation()
+    {
+        LogContext ctx = new LogContext(
+                JMap.ofEntries(
+                        entry("confId", "111"),
+                        entry("epId", "123")
+                )
+        );
+
+        ctx.addContext("newKey", "newValue");
+        String[] data = getTokens(ctx.toString());
+        assertTrue(containsData(data, "confId=111"));
+        assertTrue(containsData(data, "epId=123"));
+        assertTrue(containsData(data, "newKey=newValue"));
+    }
+
+    @Test
+    public void addContextAfterCreationReflectedInChildren()
+    {
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx = ctx.createSubContext(JMap.of("epId", "123"));
+        LogContext subSubCtx = subCtx.createSubContext(JMap.of("ssrc", "98765"));
+
+        ctx.addContext("newKey", "newValue");
+
+        String[] subCtxData = getTokens(subCtx.toString());
+        assertTrue(containsData(subCtxData, "confId=111"));
+        assertTrue(containsData(subCtxData, "newKey=newValue"));
+        assertTrue(containsData(subCtxData, "epId=123"));
+
+        String[] subSubCtxData = getTokens(subSubCtx.toString());
+        assertTrue(containsData(subSubCtxData, "confId=111"));
+        assertTrue(containsData(subSubCtxData, "newKey=newValue"));
+        assertTrue(containsData(subSubCtxData, "epId=123"));
+        assertTrue(containsData(subSubCtxData, "ssrc=98765"));
+    }
+
 }

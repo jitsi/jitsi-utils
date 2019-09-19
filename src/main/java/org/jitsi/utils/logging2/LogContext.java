@@ -16,47 +16,125 @@
 
 package org.jitsi.utils.logging2;
 
+import org.jetbrains.annotations.*;
+import org.jitsi.utils.collections.*;
+
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.*;
 
+/**
+ * Maintains a map of key-value pairs (both Strings) which holds
+ * arbitrary context to use as a prefix for log messages.  Sub-contexts
+ * can be created and will inherit any context values from their parent
+ * context.
+ */
+// Supress warnings about access since this is an library and usages will
+// occur outside this repo
+@SuppressWarnings("WeakerAccess")
 public class LogContext
 {
     public static LogContext EMPTY = new LogContext(Collections.emptyMap());
     public static String CONTEXT_START_TOKEN = "[";
     public static String CONTEXT_END_TOKEN = "]";
 
-    protected final Map<String, String> context;
-    protected final String formattedContext;
+    protected Map<String, String> parentContext;
+    protected Map<String, String> context;
+
+    protected String formattedContext;
+    private final List<LogContext> childContexts = new CopyOnWriteArrayList<>();
 
     public LogContext(Map<String, String> context)
     {
-        this.context = context;
-        this.formattedContext = formatContext(context);
+        this(context, new HashMap<>());
     }
 
-    protected String formatContext(Map<String, String> context)
+    protected LogContext(Map<String, String> context, Map<String, String> parentContext)
     {
-        if (context.isEmpty()) {
+        this.context = Collections.unmodifiableMap(context);
+        this.parentContext = Collections.unmodifiableMap(parentContext);
+        updateFormattedContext();
+    }
+
+    protected void updateFormattedContext()
+    {
+        this.formattedContext = formatContext(combineMaps(parentContext, context));
+        updateChildren();
+    }
+
+    @SafeVarargs
+    protected static String formatContext(Map<String, String>... contexts)
+    {
+        StringBuilder contextString = new StringBuilder();
+        for (Map<String, String> context : contexts)
+        {
+            String data = context.entrySet()
+                    .stream()
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(Collectors.joining(" "));
+            contextString.append(data);
+        }
+        if (contextString.length() > 0)
+        {
+            return CONTEXT_START_TOKEN +
+                    contextString +
+                    CONTEXT_END_TOKEN;
+        }
+        else
+        {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append(CONTEXT_START_TOKEN);
-        String data = context.entrySet()
-                .stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining(" "));
-        sb.append(data);
-        sb.append(CONTEXT_END_TOKEN);
-        return sb.toString();
     }
 
     public LogContext createSubContext(Map<String, String> childContextData)
     {
-        // We don't merge directly into the given map, as it may have come
-        // from Kotlin and be a read-only map
-        Map<String, String> resultingContext = new HashMap<>(this.context);
-        resultingContext.putAll(childContextData);
-        return new LogContext(resultingContext);
+        // The parent context to this child is the combination of this LogContext's context
+        // and its parent's context
+        Map<String, String> combinedParentContext = combineMaps(parentContext, context);
+        LogContext child = new LogContext(childContextData, combinedParentContext);
+        childContexts.add(child);
+        return child;
+    }
+
+    public void addContext(String key, String value)
+    {
+        addContext(JMap.of(key, value));
+    }
+
+    public void addContext(Map<String, String> addedContext)
+    {
+        this.context = combineMaps(context, addedContext);
+        updateFormattedContext();
+    }
+
+    protected void updateChildren()
+    {
+        Map<String, String> combined = combineMaps(parentContext, context);
+       childContexts.forEach((child) -> child.parentContextUpdated(combined));
+    }
+
+    protected void parentContextUpdated(Map<String, String> parentContext)
+    {
+        this.parentContext = Collections.unmodifiableMap(parentContext);
+        updateFormattedContext();
+    }
+
+    /**
+     * Combine all the given maps into a new map.  Note that the order in which the maps
+     * are passed matters: keys in later maps will override duplicates in earlier maps.
+     * @param maps the maps to combine, in order of lowest to highest priority for keys
+     * @return an *unmodifiable* combined map containing all the data of the given maps
+     */
+    @SafeVarargs
+    @NotNull
+    protected static Map<String, String> combineMaps(@NotNull Map<String, String>... maps)
+    {
+        Map<String, String> combinedMap = new HashMap<>();
+        for (Map<String, String> map : maps)
+        {
+            combinedMap.putAll(map);
+        }
+        return Collections.unmodifiableMap(combinedMap);
     }
 
     @Override
@@ -64,5 +142,4 @@ public class LogContext
     {
         return formattedContext;
     }
-
 }
