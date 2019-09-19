@@ -16,15 +16,15 @@
 
 package org.jitsi.utils.logging2;
 
+import org.jitsi.utils.collections.*;
 import org.junit.*;
 
-import java.util.*;
-
+import static org.jitsi.utils.collections.JMap.*;
 import static org.junit.Assert.*;
 
 public class LogContextTest
 {
-    public static boolean containsData(String[] dataTokens, String expected)
+    static boolean containsData(String[] dataTokens, String expected)
     {
         for (String dataToken : dataTokens)
         {
@@ -36,19 +36,22 @@ public class LogContextTest
         return false;
     }
 
-    public static String[] getTokens(String formattedCtxString)
+    static String[] getTokens(String formattedCtxString)
     {
         int contextBlockStartIndex = formattedCtxString.indexOf(LogContext.CONTEXT_START_TOKEN);
         int contextBlockStopIndex = formattedCtxString.indexOf(LogContext.CONTEXT_END_TOKEN, contextBlockStartIndex);
         return formattedCtxString.substring(contextBlockStartIndex + 1, contextBlockStopIndex).split(" ");
     }
+
     @Test
-    public void logContextFormatIsCorrect()
+    public void logContextFormat()
     {
-        Map<String, String> ctxData = new HashMap();
-        ctxData.put("confId", "111");
-        ctxData.put("epId", "123");
-        LogContext ctx = new LogContext(ctxData);
+        LogContext ctx = new LogContext(
+                JMap.ofEntries(
+                    entry("confId", "111"),
+                    entry("epId", "123")
+                )
+        );
 
         String formatted = ctx.toString();
 
@@ -60,36 +63,29 @@ public class LogContextTest
     }
 
     @Test
-    public void creatingSubContextWorksCorrectly()
+    public void creatingSubContext()
     {
-        Map<String, String> ctxData = new HashMap();
-        ctxData.put("confId", "111");
-        LogContext ctx = new LogContext(ctxData);
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx = ctx.createSubContext(JMap.of("epId", "123"));
 
-        Map<String, String> subCtxData = new HashMap();
-        subCtxData.put("epId", "123");
-
-        LogContext subCtx = ctx.createSubContext(subCtxData);
         String[] data = getTokens(subCtx.toString());
         assertTrue(containsData(data, "epId=123"));
         assertTrue(containsData(data, "confId=111"));
     }
 
     @Test
-    public void creatingSubContextWithConflictsWorksCorrectly()
+    public void creatingSubContextWithConflicts()
     {
-        Map<String, String> ctxData = new HashMap();
-        ctxData.put("confId", "111");
-        ctxData.put("epId", "456");
-        LogContext ctx = new LogContext(ctxData);
+        LogContext ctx = new LogContext(
+                JMap.ofEntries(
+                        entry("confId", "111"),
+                        entry("epId", "123")
+                )
+        );
 
-        Map<String, String> subCtxData = new HashMap();
-        // This should override the 'epId' value in the parent context
-        subCtxData.put("epId", "123");
-
-        LogContext subCtx = ctx.createSubContext(subCtxData);
+        LogContext subCtx = ctx.createSubContext(JMap.of("epId", "456"));
         String[] data = getTokens(subCtx.toString());
-        assertTrue(containsData(data, "epId=123"));
+        assertTrue(containsData(data, "epId=456"));
         assertTrue(containsData(data, "confId=111"));
     }
 }
