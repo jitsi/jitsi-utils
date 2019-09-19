@@ -10,3 +10,4 @@ to depend on ice4j.
 
 This project's external dependencies should be kept to a minimum, and 
 it should NOT depend on any other Jitsi project.
+
