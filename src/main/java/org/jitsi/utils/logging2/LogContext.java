@@ -39,10 +39,27 @@ public class LogContext
     public static String CONTEXT_START_TOKEN = "[";
     public static String CONTEXT_END_TOKEN = "]";
 
+    /**
+     * All context belonging to 'ancestors' of  this
+     * LogContext
+     */
     protected ImmutableMap<String, String> parentContext;
+    /**
+     * The context held by this specific LogContext.
+     */
     protected ImmutableMap<String, String> context;
 
+    /**
+     * The formatted String representing the total context
+     * (the combination of the parent context and this
+     * context)
+     */
     protected String formattedContext;
+
+    /**
+     * Child LogContext's of this LogContext (which will be notified
+     * anytime this context changes)
+     */
     private final List<LogContext> childContexts = new CopyOnWriteArrayList<>();
 
     public LogContext(Map<String, String> context)
@@ -108,12 +125,19 @@ public class LogContext
         updateFormattedContext();
     }
 
+    /**
+     * Notify children of changes in this context
+     */
     protected void updateChildren()
     {
         ImmutableMap<String, String> combined = combineMaps(parentContext, context);
         childContexts.forEach((child) -> child.parentContextUpdated(combined));
     }
 
+    /**
+     * Handle a change in the parent's context
+     * @param parentContext the parent's new  context
+     */
     protected void parentContextUpdated(ImmutableMap<String, String> parentContext)
     {
         this.parentContext = parentContext;
