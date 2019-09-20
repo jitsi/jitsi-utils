@@ -30,7 +30,7 @@ import java.util.stream.*;
  * can be created and will inherit any context values from their parent
  * context.
  */
-// Supress warnings about access since this is an library and usages will
+// Supress warnings about access since this is a library and usages will
 // occur outside this repo
 @SuppressWarnings("WeakerAccess")
 public class LogContext
