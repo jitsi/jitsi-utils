@@ -127,4 +127,55 @@ public class LogContextTest
         assertTrue(containsData(subSubCtxData, "ssrc=98765"));
     }
 
+    @Test
+    public void testMultipleChildContexts()
+    {
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx1 = ctx.createSubContext(JMap.of("epId", "123"));
+        LogContext subCtx2 = ctx.createSubContext(JMap.of("epId", "456"));
+
+        ctx.addContext("newKey", "newValue");
+
+        String[] subCtx1Data = getTokens(subCtx1.toString());
+        assertTrue(containsData(subCtx1Data, "confId=111"));
+        assertTrue(containsData(subCtx1Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx1Data, "epId=123"));
+
+        String[] subCtx2Data = getTokens(subCtx2.toString());
+        assertTrue(containsData(subCtx2Data, "confId=111"));
+        assertTrue(containsData(subCtx2Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx2Data, "epId=456"));
+    }
+
+    @Test
+    public void testChildContextDisappearing()
+    {
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx1 = ctx.createSubContext(JMap.of("epId", "123"));
+        LogContext subCtx2 = ctx.createSubContext(JMap.of("epId", "456"));
+        LogContext subCtx3 = ctx.createSubContext(JMap.of("epId", "789"));
+
+        ctx.addContext("newKey", "newValue");
+
+        // We set subCtx to null here and attempt to invoke GC in order for it to be null
+        // for when we add more context to the parent logger.  Although we don't have a
+        // guarantee that GC will always run, it did so reliably when I wrote these tests
+        // to at least validate that LogContext behaves as expected.
+        subCtx2 = null;
+        System.gc();
+
+        ctx.addContext("anotherNewKey", "anotherNewValue");
+
+        String[] subCtx1Data = getTokens(subCtx1.toString());
+        assertTrue(containsData(subCtx1Data, "confId=111"));
+        assertTrue(containsData(subCtx1Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx1Data, "epId=123"));
+        assertTrue(containsData(subCtx1Data, "anotherNewKey=anotherNewValue"));
+
+        String[] subCtx3Data = getTokens(subCtx3.toString());
+        assertTrue(containsData(subCtx3Data, "confId=111"));
+        assertTrue(containsData(subCtx3Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx3Data, "epId=789"));
+        assertTrue(containsData(subCtx1Data, "anotherNewKey=anotherNewValue"));
+    }
 }

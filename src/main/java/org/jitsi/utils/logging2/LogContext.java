@@ -20,6 +20,7 @@ import com.google.common.collect.*;
 import org.jetbrains.annotations.*;
 import org.jitsi.utils.collections.*;
 
+import java.lang.ref.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -60,7 +61,7 @@ public class LogContext
      * Child LogContext's of this LogContext (which will be notified
      * anytime this context changes)
      */
-    private final List<LogContext> childContexts = new ArrayList<>();
+    private final List<WeakReference<LogContext>> childContexts = new ArrayList<>();
 
     public LogContext(Map<String, String> context)
     {
@@ -86,7 +87,7 @@ public class LogContext
         // this context (its parent) and all of this context's parent context
         ImmutableMap<String, String> combinedParentContext = combineMaps(ancestorsContext, context);
         LogContext child = new LogContext(childContextData, combinedParentContext);
-        childContexts.add(child);
+        childContexts.add(new WeakReference<>(child));
         return child;
     }
 
@@ -107,7 +108,18 @@ public class LogContext
     protected synchronized void updateChildren()
     {
         ImmutableMap<String, String> combined = combineMaps(ancestorsContext, context);
-        childContexts.forEach((child) -> child.parentContextUpdated(combined));
+        Iterator<WeakReference<LogContext>> iter = childContexts.iterator();
+        while (iter.hasNext()) {
+            LogContext c = iter.next().get();
+            if (c != null)
+            {
+                c.parentContextUpdated(combined);
+            }
+            else
+            {
+                iter.remove();
+            }
+        }
     }
 
     /**
