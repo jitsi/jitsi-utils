@@ -21,7 +21,6 @@ import org.jetbrains.annotations.*;
 import org.jitsi.utils.collections.*;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.*;
 
 /**
@@ -40,10 +39,11 @@ public class LogContext
     public static String CONTEXT_END_TOKEN = "]";
 
     /**
-     * All context belonging to 'ancestors' of  this
+     * All context inherited from the 'ancestors' of this
      * LogContext
      */
-    protected ImmutableMap<String, String> parentContext;
+    protected ImmutableMap<String, String> ancestorsContext;
+
     /**
      * The context held by this specific LogContext.
      */
@@ -67,24 +67,24 @@ public class LogContext
         this(context, ImmutableMap.of());
     }
 
-    protected LogContext(Map<String, String> context, ImmutableMap<String, String> parentContext)
+    protected LogContext(Map<String, String> context, ImmutableMap<String, String> ancestorsContext)
     {
         this.context = ImmutableMap.copyOf(context);
-        this.parentContext = parentContext;
+        this.ancestorsContext = ancestorsContext;
         updateFormattedContext();
     }
 
     protected synchronized void updateFormattedContext()
     {
-        this.formattedContext = formatContext(combineMaps(parentContext, context));
+        this.formattedContext = formatContext(combineMaps(ancestorsContext, context));
         updateChildren();
     }
 
     public synchronized LogContext createSubContext(Map<String, String> childContextData)
     {
-        // The parent context to this child is the combination of this LogContext's context
-        // and its parent's context
-        ImmutableMap<String, String> combinedParentContext = combineMaps(parentContext, context);
+        // The parent context to the child being created is the context of all of its ancestors: which includes
+        // this context (its parent) and all of this context's parent context
+        ImmutableMap<String, String> combinedParentContext = combineMaps(ancestorsContext, context);
         LogContext child = new LogContext(childContextData, combinedParentContext);
         childContexts.add(child);
         return child;
@@ -106,7 +106,7 @@ public class LogContext
      */
     protected synchronized void updateChildren()
     {
-        ImmutableMap<String, String> combined = combineMaps(parentContext, context);
+        ImmutableMap<String, String> combined = combineMaps(ancestorsContext, context);
         childContexts.forEach((child) -> child.parentContextUpdated(combined));
     }
 
@@ -116,7 +116,7 @@ public class LogContext
      */
     protected synchronized void parentContextUpdated(ImmutableMap<String, String> parentContext)
     {
-        this.parentContext = parentContext;
+        this.ancestorsContext = parentContext;
         updateFormattedContext();
     }
 
