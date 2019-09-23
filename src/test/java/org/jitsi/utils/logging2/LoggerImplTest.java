@@ -189,7 +189,7 @@ class FakeLogger extends java.util.logging.Logger
 {
     final List<LogRecord> logLines = new ArrayList<>();
 
-    public FakeLogger(String name)
+    FakeLogger(String name)
     {
         super(name, null);
     }
@@ -215,25 +215,13 @@ class FakeLogger extends java.util.logging.Logger
         return last().getMessage();
     }
 
-    String lastContext()
+    private String lastContext()
     {
         return ((ContextLogRecord)last()).getContext();
     }
 
-    public void reset()
+    void reset()
     {
         logLines.clear();
-    }
-
-    class LogLine
-    {
-        final Level level;
-        final String msg;
-
-        LogLine(Level level, String msg)
-        {
-            this.level = level;
-            this.msg = msg;
-        }
     }
 }

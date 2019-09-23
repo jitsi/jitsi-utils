@@ -16,47 +16,118 @@
 
 package org.jitsi.utils.logging2;
 
+import com.google.common.collect.*;
+import org.jetbrains.annotations.*;
+import org.jitsi.utils.collections.*;
+
+import java.lang.ref.*;
 import java.util.*;
 import java.util.stream.*;
 
+/**
+ * Maintains a map of key-value pairs (both Strings) which holds
+ * arbitrary context to use as a prefix for log messages.  Sub-contexts
+ * can be created and will inherit any context values from their ancestors'
+ * context.
+ */
+// Supress warnings about access since this is a library and usages will
+// occur outside this repo
+@SuppressWarnings("WeakerAccess")
 public class LogContext
 {
     public static LogContext EMPTY = new LogContext(Collections.emptyMap());
     public static String CONTEXT_START_TOKEN = "[";
     public static String CONTEXT_END_TOKEN = "]";
 
-    protected final Map<String, String> context;
-    protected final String formattedContext;
+    /**
+     * All context inherited from the 'ancestors' of this
+     * LogContext
+     */
+    protected ImmutableMap<String, String> ancestorsContext;
+
+    /**
+     * The context held by this specific LogContext.
+     */
+    protected ImmutableMap<String, String> context;
+
+    /**
+     * The formatted String representing the total context
+     * (the combination of the ancestors' context and this
+     * context)
+     */
+    protected String formattedContext;
+
+    /**
+     * Child LogContext's of this LogContext (which will be notified
+     * anytime this context changes)
+     */
+    private final List<WeakReference<LogContext>> childContexts = new ArrayList<>();
 
     public LogContext(Map<String, String> context)
     {
-        this.context = context;
-        this.formattedContext = formatContext(context);
+        this(context, ImmutableMap.of());
     }
 
-    protected String formatContext(Map<String, String> context)
+    protected LogContext(Map<String, String> context, ImmutableMap<String, String> ancestorsContext)
     {
-        if (context.isEmpty()) {
-            return "";
+        this.context = ImmutableMap.copyOf(context);
+        this.ancestorsContext = ancestorsContext;
+        updateFormattedContext();
+    }
+
+    protected synchronized void updateFormattedContext()
+    {
+        ImmutableMap<String, String> combined = combineMaps(ancestorsContext, context);
+        this.formattedContext = formatContext(combined);
+        updateChildren(combined);
+    }
+
+    public synchronized LogContext createSubContext(Map<String, String> childContextData)
+    {
+        ImmutableMap<String, String> childAncestorContext = combineMaps(ancestorsContext, context);
+        LogContext child = new LogContext(childContextData, childAncestorContext);
+        childContexts.add(new WeakReference<>(child));
+        return child;
+    }
+
+    public void addContext(String key, String value)
+    {
+        addContext(JMap.of(key, value));
+    }
+
+    public synchronized void addContext(Map<String, String> addedContext)
+    {
+        this.context = combineMaps(context, addedContext);
+        updateFormattedContext();
+    }
+
+    /**
+     * Notify children of changes in this context
+     */
+    protected synchronized void updateChildren(ImmutableMap<String, String> newAncestorContext)
+    {
+        Iterator<WeakReference<LogContext>> iter = childContexts.iterator();
+        while (iter.hasNext()) {
+            LogContext c = iter.next().get();
+            if (c != null)
+            {
+                c.ancestorContextUpdated(newAncestorContext);
+            }
+            else
+            {
+                iter.remove();
+            }
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append(CONTEXT_START_TOKEN);
-        String data = context.entrySet()
-                .stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining(" "));
-        sb.append(data);
-        sb.append(CONTEXT_END_TOKEN);
-        return sb.toString();
     }
 
-    public LogContext createSubContext(Map<String, String> childContextData)
+    /**
+     * Handle a change in the ancestors' context
+     * @param newAncestorContext the ancestors' new context
+     */
+    protected synchronized void ancestorContextUpdated(ImmutableMap<String, String> newAncestorContext)
     {
-        // We don't merge directly into the given map, as it may have come
-        // from Kotlin and be a read-only map
-        Map<String, String> resultingContext = new HashMap<>(this.context);
-        resultingContext.putAll(childContextData);
-        return new LogContext(resultingContext);
+        this.ancestorsContext = newAncestorContext;
+        updateFormattedContext();
     }
 
     @Override
@@ -65,4 +136,41 @@ public class LogContext
         return formattedContext;
     }
 
+    /**
+     * Combine all the given maps into a new map.  Note that the order in which the maps
+     * are passed matters: keys in later maps will override duplicates in earlier maps.
+     * @param maps the maps to combine, in order of lowest to highest priority for keys
+     * @return an *unmodifiable* combined map containing all the data of the given maps
+     */
+    @SafeVarargs
+    @NotNull
+    protected static ImmutableMap<String, String> combineMaps(@NotNull Map<String, String>... maps)
+    {
+        Map<String, String> combinedMap = new HashMap<>();
+        for (Map<String, String> map : maps)
+        {
+            combinedMap.putAll(map);
+        }
+        return ImmutableMap.copyOf(combinedMap);
+    }
+
+    protected static String formatContext(Map<String, String> context)
+    {
+        StringBuilder contextString = new StringBuilder();
+        String data = context.entrySet()
+                .stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(" "));
+        contextString.append(data);
+        if (contextString.length() > 0)
+        {
+            return CONTEXT_START_TOKEN +
+                    contextString +
+                    CONTEXT_END_TOKEN;
+        }
+        else
+        {
+            return "";
+        }
+    }
 }

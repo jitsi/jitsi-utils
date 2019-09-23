@@ -16,15 +16,15 @@
 
 package org.jitsi.utils.logging2;
 
+import org.jitsi.utils.collections.*;
 import org.junit.*;
 
-import java.util.*;
-
+import static org.jitsi.utils.collections.JMap.*;
 import static org.junit.Assert.*;
 
 public class LogContextTest
 {
-    public static boolean containsData(String[] dataTokens, String expected)
+    static boolean containsData(String[] dataTokens, String expected)
     {
         for (String dataToken : dataTokens)
         {
@@ -36,19 +36,22 @@ public class LogContextTest
         return false;
     }
 
-    public static String[] getTokens(String formattedCtxString)
+    static String[] getTokens(String formattedCtxString)
     {
         int contextBlockStartIndex = formattedCtxString.indexOf(LogContext.CONTEXT_START_TOKEN);
         int contextBlockStopIndex = formattedCtxString.indexOf(LogContext.CONTEXT_END_TOKEN, contextBlockStartIndex);
         return formattedCtxString.substring(contextBlockStartIndex + 1, contextBlockStopIndex).split(" ");
     }
+
     @Test
-    public void logContextFormatIsCorrect()
+    public void logContextFormat()
     {
-        Map<String, String> ctxData = new HashMap();
-        ctxData.put("confId", "111");
-        ctxData.put("epId", "123");
-        LogContext ctx = new LogContext(ctxData);
+        LogContext ctx = new LogContext(
+                JMap.ofEntries(
+                    entry("confId", "111"),
+                    entry("epId", "123")
+                )
+        );
 
         String formatted = ctx.toString();
 
@@ -60,36 +63,119 @@ public class LogContextTest
     }
 
     @Test
-    public void creatingSubContextWorksCorrectly()
+    public void creatingSubContext()
     {
-        Map<String, String> ctxData = new HashMap();
-        ctxData.put("confId", "111");
-        LogContext ctx = new LogContext(ctxData);
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx = ctx.createSubContext(JMap.of("epId", "123"));
 
-        Map<String, String> subCtxData = new HashMap();
-        subCtxData.put("epId", "123");
-
-        LogContext subCtx = ctx.createSubContext(subCtxData);
         String[] data = getTokens(subCtx.toString());
         assertTrue(containsData(data, "epId=123"));
         assertTrue(containsData(data, "confId=111"));
     }
 
     @Test
-    public void creatingSubContextWithConflictsWorksCorrectly()
+    public void creatingSubContextWithConflicts()
     {
-        Map<String, String> ctxData = new HashMap();
-        ctxData.put("confId", "111");
-        ctxData.put("epId", "456");
-        LogContext ctx = new LogContext(ctxData);
+        LogContext ctx = new LogContext(
+                JMap.ofEntries(
+                        entry("confId", "111"),
+                        entry("epId", "123")
+                )
+        );
 
-        Map<String, String> subCtxData = new HashMap();
-        // This should override the 'epId' value in the parent context
-        subCtxData.put("epId", "123");
-
-        LogContext subCtx = ctx.createSubContext(subCtxData);
+        LogContext subCtx = ctx.createSubContext(JMap.of("epId", "456"));
         String[] data = getTokens(subCtx.toString());
-        assertTrue(containsData(data, "epId=123"));
+        assertTrue(containsData(data, "epId=456"));
         assertTrue(containsData(data, "confId=111"));
+    }
+
+    @Test
+    public void addingContextAfterCreation()
+    {
+        LogContext ctx = new LogContext(
+                JMap.ofEntries(
+                        entry("confId", "111"),
+                        entry("epId", "123")
+                )
+        );
+
+        ctx.addContext("newKey", "newValue");
+        String[] data = getTokens(ctx.toString());
+        assertTrue(containsData(data, "confId=111"));
+        assertTrue(containsData(data, "epId=123"));
+        assertTrue(containsData(data, "newKey=newValue"));
+    }
+
+    @Test
+    public void addContextAfterCreationReflectedInChildren()
+    {
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx = ctx.createSubContext(JMap.of("epId", "123"));
+        LogContext subSubCtx = subCtx.createSubContext(JMap.of("ssrc", "98765"));
+
+        ctx.addContext("newKey", "newValue");
+
+        String[] subCtxData = getTokens(subCtx.toString());
+        assertTrue(containsData(subCtxData, "confId=111"));
+        assertTrue(containsData(subCtxData, "newKey=newValue"));
+        assertTrue(containsData(subCtxData, "epId=123"));
+
+        String[] subSubCtxData = getTokens(subSubCtx.toString());
+        assertTrue(containsData(subSubCtxData, "confId=111"));
+        assertTrue(containsData(subSubCtxData, "newKey=newValue"));
+        assertTrue(containsData(subSubCtxData, "epId=123"));
+        assertTrue(containsData(subSubCtxData, "ssrc=98765"));
+    }
+
+    @Test
+    public void testMultipleChildContexts()
+    {
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx1 = ctx.createSubContext(JMap.of("epId", "123"));
+        LogContext subCtx2 = ctx.createSubContext(JMap.of("epId", "456"));
+
+        ctx.addContext("newKey", "newValue");
+
+        String[] subCtx1Data = getTokens(subCtx1.toString());
+        assertTrue(containsData(subCtx1Data, "confId=111"));
+        assertTrue(containsData(subCtx1Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx1Data, "epId=123"));
+
+        String[] subCtx2Data = getTokens(subCtx2.toString());
+        assertTrue(containsData(subCtx2Data, "confId=111"));
+        assertTrue(containsData(subCtx2Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx2Data, "epId=456"));
+    }
+
+    @Test
+    public void testChildContextDisappearing()
+    {
+        LogContext ctx = new LogContext(JMap.of("confId", "111"));
+        LogContext subCtx1 = ctx.createSubContext(JMap.of("epId", "123"));
+        LogContext subCtx2 = ctx.createSubContext(JMap.of("epId", "456"));
+        LogContext subCtx3 = ctx.createSubContext(JMap.of("epId", "789"));
+
+        ctx.addContext("newKey", "newValue");
+
+        // We set subCtx to null here and attempt to invoke GC in order for it to be null
+        // for when we add more context to the parent logger.  Although we don't have a
+        // guarantee that GC will always run, it did so reliably when I wrote these tests
+        // to at least validate that LogContext behaves as expected.
+        subCtx2 = null;
+        System.gc();
+
+        ctx.addContext("anotherNewKey", "anotherNewValue");
+
+        String[] subCtx1Data = getTokens(subCtx1.toString());
+        assertTrue(containsData(subCtx1Data, "confId=111"));
+        assertTrue(containsData(subCtx1Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx1Data, "epId=123"));
+        assertTrue(containsData(subCtx1Data, "anotherNewKey=anotherNewValue"));
+
+        String[] subCtx3Data = getTokens(subCtx3.toString());
+        assertTrue(containsData(subCtx3Data, "confId=111"));
+        assertTrue(containsData(subCtx3Data, "newKey=newValue"));
+        assertTrue(containsData(subCtx3Data, "epId=789"));
+        assertTrue(containsData(subCtx1Data, "anotherNewKey=anotherNewValue"));
     }
 }
