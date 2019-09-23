@@ -154,18 +154,14 @@ public class LogContext
         return ImmutableMap.copyOf(combinedMap);
     }
 
-    @SafeVarargs
-    protected static String formatContext(Map<String, String>... contexts)
+    protected static String formatContext(Map<String, String> context)
     {
         StringBuilder contextString = new StringBuilder();
-        for (Map<String, String> context : contexts)
-        {
-            String data = context.entrySet()
-                    .stream()
-                    .map(e -> e.getKey() + "=" + e.getValue())
-                    .collect(Collectors.joining(" "));
-            contextString.append(data);
-        }
+        String data = context.entrySet()
+                .stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(" "));
+        contextString.append(data);
         if (contextString.length() > 0)
         {
             return CONTEXT_START_TOKEN +
