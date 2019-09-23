@@ -77,8 +77,9 @@ public class LogContext
 
     protected synchronized void updateFormattedContext()
     {
-        this.formattedContext = formatContext(combineMaps(ancestorsContext, context));
-        updateChildren();
+        ImmutableMap<String, String> combined = combineMaps(ancestorsContext, context);
+        this.formattedContext = formatContext(combined);
+        updateChildren(combined);
     }
 
     public synchronized LogContext createSubContext(Map<String, String> childContextData)
@@ -103,15 +104,14 @@ public class LogContext
     /**
      * Notify children of changes in this context
      */
-    protected synchronized void updateChildren()
+    protected synchronized void updateChildren(ImmutableMap<String, String> newAncestorContext)
     {
-        ImmutableMap<String, String> combined = combineMaps(ancestorsContext, context);
         Iterator<WeakReference<LogContext>> iter = childContexts.iterator();
         while (iter.hasNext()) {
             LogContext c = iter.next().get();
             if (c != null)
             {
-                c.ancestorContextUpdated(combined);
+                c.ancestorContextUpdated(newAncestorContext);
             }
             else
             {
