@@ -60,7 +60,7 @@ public class LogContext
      * Child LogContext's of this LogContext (which will be notified
      * anytime this context changes)
      */
-    private final List<LogContext> childContexts = new CopyOnWriteArrayList<>();
+    private final List<LogContext> childContexts = new ArrayList<>();
 
     public LogContext(Map<String, String> context)
     {
@@ -74,13 +74,13 @@ public class LogContext
         updateFormattedContext();
     }
 
-    protected void updateFormattedContext()
+    protected synchronized void updateFormattedContext()
     {
         this.formattedContext = formatContext(combineMaps(parentContext, context));
         updateChildren();
     }
 
-    public LogContext createSubContext(Map<String, String> childContextData)
+    public synchronized LogContext createSubContext(Map<String, String> childContextData)
     {
         // The parent context to this child is the combination of this LogContext's context
         // and its parent's context
@@ -95,7 +95,7 @@ public class LogContext
         addContext(JMap.of(key, value));
     }
 
-    public void addContext(Map<String, String> addedContext)
+    public synchronized void addContext(Map<String, String> addedContext)
     {
         this.context = combineMaps(context, addedContext);
         updateFormattedContext();
@@ -104,7 +104,7 @@ public class LogContext
     /**
      * Notify children of changes in this context
      */
-    protected void updateChildren()
+    protected synchronized void updateChildren()
     {
         ImmutableMap<String, String> combined = combineMaps(parentContext, context);
         childContexts.forEach((child) -> child.parentContextUpdated(combined));
@@ -114,7 +114,7 @@ public class LogContext
      * Handle a change in the parent's context
      * @param parentContext the parent's new  context
      */
-    protected void parentContextUpdated(ImmutableMap<String, String> parentContext)
+    protected synchronized void parentContextUpdated(ImmutableMap<String, String> parentContext)
     {
         this.parentContext = parentContext;
         updateFormattedContext();
