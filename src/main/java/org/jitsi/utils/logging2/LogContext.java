@@ -27,7 +27,7 @@ import java.util.stream.*;
 /**
  * Maintains a map of key-value pairs (both Strings) which holds
  * arbitrary context to use as a prefix for log messages.  Sub-contexts
- * can be created and will inherit any context values from their parent
+ * can be created and will inherit any context values from their ancestors'
  * context.
  */
 // Supress warnings about access since this is a library and usages will
@@ -52,7 +52,7 @@ public class LogContext
 
     /**
      * The formatted String representing the total context
-     * (the combination of the parent context and this
+     * (the combination of the ancestors' context and this
      * context)
      */
     protected String formattedContext;
@@ -83,10 +83,8 @@ public class LogContext
 
     public synchronized LogContext createSubContext(Map<String, String> childContextData)
     {
-        // The parent context to the child being created is the context of all of its ancestors: which includes
-        // this context (its parent) and all of this context's parent context
-        ImmutableMap<String, String> combinedParentContext = combineMaps(ancestorsContext, context);
-        LogContext child = new LogContext(childContextData, combinedParentContext);
+        ImmutableMap<String, String> childAncestorContext = combineMaps(ancestorsContext, context);
+        LogContext child = new LogContext(childContextData, childAncestorContext);
         childContexts.add(new WeakReference<>(child));
         return child;
     }
@@ -113,7 +111,7 @@ public class LogContext
             LogContext c = iter.next().get();
             if (c != null)
             {
-                c.parentContextUpdated(combined);
+                c.ancestorContextUpdated(combined);
             }
             else
             {
@@ -123,12 +121,12 @@ public class LogContext
     }
 
     /**
-     * Handle a change in the parent's context
-     * @param parentContext the parent's new  context
+     * Handle a change in the ancestors' context
+     * @param newAncestorContext the ancestors' new  context
      */
-    protected synchronized void parentContextUpdated(ImmutableMap<String, String> parentContext)
+    protected synchronized void ancestorContextUpdated(ImmutableMap<String, String> newAncestorContext)
     {
-        this.ancestorsContext = parentContext;
+        this.ancestorsContext = newAncestorContext;
         updateFormattedContext();
     }
 
