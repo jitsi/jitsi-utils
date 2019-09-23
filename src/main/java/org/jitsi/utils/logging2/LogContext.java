@@ -122,7 +122,7 @@ public class LogContext
 
     /**
      * Handle a change in the ancestors' context
-     * @param newAncestorContext the ancestors' new  context
+     * @param newAncestorContext the ancestors' new context
      */
     protected synchronized void ancestorContextUpdated(ImmutableMap<String, String> newAncestorContext)
     {
