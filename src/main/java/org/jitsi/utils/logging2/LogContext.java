@@ -80,30 +80,6 @@ public class LogContext
         updateChildren();
     }
 
-    @SafeVarargs
-    protected static String formatContext(Map<String, String>... contexts)
-    {
-        StringBuilder contextString = new StringBuilder();
-        for (Map<String, String> context : contexts)
-        {
-            String data = context.entrySet()
-                    .stream()
-                    .map(e -> e.getKey() + "=" + e.getValue())
-                    .collect(Collectors.joining(" "));
-            contextString.append(data);
-        }
-        if (contextString.length() > 0)
-        {
-            return CONTEXT_START_TOKEN +
-                    contextString +
-                    CONTEXT_END_TOKEN;
-        }
-        else
-        {
-            return "";
-        }
-    }
-
     public LogContext createSubContext(Map<String, String> childContextData)
     {
         // The parent context to this child is the combination of this LogContext's context
@@ -144,6 +120,12 @@ public class LogContext
         updateFormattedContext();
     }
 
+    @Override
+    public String toString()
+    {
+        return formattedContext;
+    }
+
     /**
      * Combine all the given maps into a new map.  Note that the order in which the maps
      * are passed matters: keys in later maps will override duplicates in earlier maps.
@@ -162,9 +144,27 @@ public class LogContext
         return ImmutableMap.copyOf(combinedMap);
     }
 
-    @Override
-    public String toString()
+    @SafeVarargs
+    protected static String formatContext(Map<String, String>... contexts)
     {
-        return formattedContext;
+        StringBuilder contextString = new StringBuilder();
+        for (Map<String, String> context : contexts)
+        {
+            String data = context.entrySet()
+                    .stream()
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(Collectors.joining(" "));
+            contextString.append(data);
+        }
+        if (contextString.length() > 0)
+        {
+            return CONTEXT_START_TOKEN +
+                    contextString +
+                    CONTEXT_END_TOKEN;
+        }
+        else
+        {
+            return "";
+        }
     }
 }
