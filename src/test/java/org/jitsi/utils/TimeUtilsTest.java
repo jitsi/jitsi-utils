@@ -7,7 +7,8 @@ import static org.junit.Assert.*;
 public class TimeUtilsTest
 {
     @Test
-    public void testTimestampFormats() {
+    public void testTimestampFormats()
+    {
         assertEquals(TimeUtils.formatTimeAsFullMillis(0, 0), "0");
 
         assertEquals(TimeUtils.formatTimeAsFullMillis(0, 1), "0.000001");

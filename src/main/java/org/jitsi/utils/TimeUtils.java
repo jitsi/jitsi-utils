@@ -208,14 +208,17 @@ public class TimeUtils
         int millis = nanos / 1_000_000;
         int nanosPerMilli = nanos % 1_000_000;
 
-        if (secs != 0) {
+        if (secs != 0)
+        {
             builder.append(secs);
             builder.append(trailingMilliFormat.format(millis));
         }
-        else {
+        else
+        {
             builder.append(millis);
         }
-        if (nanosPerMilli != 0) {
+        if (nanosPerMilli != 0)
+        {
             builder.append(nanosPerMilliFormat.format(nanosPerMilli / 1e6));
         }
 
