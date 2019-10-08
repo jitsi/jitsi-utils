@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.logging;
 
+import org.jitsi.utils.*;
+
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -86,11 +88,9 @@ public class DiagnosticContext
      */
     public TimeSeriesPoint makeTimeSeriesPoint(String timeSeriesName, Instant ts)
     {
-        Double tsMs = ts.getEpochSecond() * 1e3 + ts.getNano() * 1e-6;
-
         return new TimeSeriesPoint(this)
             .addField("series", timeSeriesName)
-            .addField("time", tsMs);
+            .addField("time", TimeUtils.formatTimeAsFullMillis(ts.getEpochSecond(), ts.getNano()));
     }
 
     public static class TimeSeriesPoint

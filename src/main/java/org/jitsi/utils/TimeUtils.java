@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils;
 
+import java.text.*;
+
 /**
  * Provides utility methods for converting between different time formats.
  *
@@ -175,4 +177,51 @@ public class TimeUtils
     {
         return ntpTime & 0xFFFFFFFFL;
     }
+
+    /** Format string for formatTimeAsFullMillis to print milliseconds-per-second */
+    private static DecimalFormat trailingMilliFormat = new DecimalFormat("000");
+    /** Format string for formatTimeAsFullMillis to print nanoseconds-per-millisecond */
+    private static DecimalFormat nanosPerMilliFormat = new DecimalFormat(".######");
+
+    /**
+     * Formats a time -- represented by (long seconds, int nanos) -- as
+     * a String of floating-point milliseconds, in full precision.
+     *
+     * This is designed to format the java.time.Duration and java.time.Interval
+     * classes, without being dependent on them.
+     *
+     * This should return a correct result for every valid (secs, nanos) pair.
+     */
+    public static String formatTimeAsFullMillis(long secs, int nanos)
+    {
+        assert(nanos >= 0 && nanos < 1_000_000_000);
+
+        StringBuilder builder = new StringBuilder();
+
+        if (secs < 0 && nanos != 0)
+        {
+            secs = -secs - 1;
+            nanos = 1_000_000_000 - nanos;
+            builder.append('-');
+        }
+
+        int millis = nanos / 1_000_000;
+        int nanosPerMilli = nanos % 1_000_000;
+
+        if (secs != 0)
+        {
+            builder.append(secs);
+            builder.append(trailingMilliFormat.format(millis));
+        }
+        else
+        {
+            builder.append(millis);
+        }
+        if (nanosPerMilli != 0)
+        {
+            builder.append(nanosPerMilliFormat.format(nanosPerMilli / 1e6));
+        }
+
+        return builder.toString();
+     }
 }
