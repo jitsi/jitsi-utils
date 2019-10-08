@@ -16,7 +16,6 @@
 
 package org.jitsi.utils.config;
 
-import org.jitsi.utils.collections.*;
 import org.junit.*;
 
 import java.util.concurrent.atomic.*;
@@ -43,11 +42,15 @@ public class ReadOncePropertyTest
         assertEquals(1, numTimesGetterCalled.get());
     }
 
-    protected static class AnswerProp extends ReadOnceProperty<Integer>
+    protected static class AnswerProp extends AbstractConfigProperty<Integer>
     {
         AnswerProp(Supplier<Integer> getter)
         {
-            super(JList.of(getter));
+            super(new PropertyConfig<Integer>()
+                .suppliedBy(getter)
+                .readOnce()
+                .throwIfNotFound()
+            );
         }
     }
 }

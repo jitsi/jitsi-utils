@@ -16,8 +16,6 @@
 
 package org.jitsi.utils.config;
 
-import org.jitsi.utils.collections.*;
-import org.jitsi.utils.config.*;
 import org.junit.*;
 
 import java.util.concurrent.atomic.*;
@@ -44,11 +42,15 @@ public class ReadEveryTimePropertyTest
         assertEquals(4, numTimesGetterCalled.get());
     }
 
-    protected static class AnswerProp extends ReadEveryTimeProperty<Integer>
+    protected static class AnswerProp extends AbstractConfigProperty<Integer>
     {
         AnswerProp(Supplier<Integer> getter)
         {
-            super(JList.of(getter));
+            super(new PropertyConfig<Integer>()
+                .suppliedBy(getter)
+                .readEveryTime()
+                .throwIfNotFound()
+            );
         }
     }
 }

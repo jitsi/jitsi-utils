@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.config;
+package org.jitsi.utils.config.strategy.read_frequency;
 
-import java.util.*;
 import java.util.function.*;
 
 /**
- * A property whose value is read once from the underlying config
- * (on creation).  That value is returned every time {@link ConfigProperty#get()}
- * is called.
+ * Re-queries the given supplier for the configuration
+ * property's value every time {@link ReadEveryTimeStrategy#getValue()}
+ * is called
  *
- * @param <T> the value type of the config property
+ * @param <T> the type of the configuration property's value
  */
-public class ReadOnceProperty<T> extends ConfigPropertyImpl<T>
+public class ReadEveryTimeStrategy<T> implements ReadFrequencyStrategy<T>
 {
-    protected T value;
+    protected final Supplier<T> supplier;
 
-    public ReadOnceProperty(List<Supplier<T>> configValueSuppliers)
+    public ReadEveryTimeStrategy(Supplier<T> supplier)
     {
-        super(configValueSuppliers);
-        value = doGet();
+        this.supplier = supplier;
     }
 
     @Override
-    public T get()
+    public T getValue()
     {
-        return value;
+        return supplier.get();
     }
 }

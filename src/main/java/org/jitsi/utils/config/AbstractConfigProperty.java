@@ -16,6 +16,9 @@
 
 package org.jitsi.utils.config;
 
+import org.jitsi.utils.config.strategy.prop_not_found.*;
+import org.jitsi.utils.config.strategy.read_frequency.*;
+
 import java.util.*;
 import java.util.function.*;
 
@@ -23,17 +26,24 @@ import java.util.function.*;
  * A base helper class for modeling a configuration property.  Contains the
  * code for iterating over multiple {@link Supplier}s for the first
  * one which successfully returns a result; if none contain the property,
- * it returns the default value.
+ * it defers to the given {@link PropNotFoundStrategy}
  *
- * @param <T> the type of the property value
+ * @param <T> the type of the configuration property's value
  */
-public abstract class ConfigPropertyImpl<T> implements ConfigProperty<T>
+public abstract class AbstractConfigProperty<T> implements ConfigProperty<T>
 {
     protected final List<Supplier<T>> configValueSuppliers;
+    protected final ReadFrequencyStrategy<T> readFrequencyStrategy;
+    protected final PropNotFoundStrategy<T> propNotFoundStrategy;
 
-    public ConfigPropertyImpl(List<Supplier<T>> configValueSuppliers)
+    public AbstractConfigProperty(PropertyConfig<T> builder)
     {
-        this.configValueSuppliers = configValueSuppliers;
+        builder.validate();
+        this.configValueSuppliers = builder.propValueSuppliers;
+        // Note: it's important we set the not-found strategy first, as some
+        // read strategies may read the value upon creation
+        this.propNotFoundStrategy = builder.propNotFoundStrategy;
+        this.readFrequencyStrategy = builder.readFrequencyStrategyCreator.apply(this::doGet);
     }
 
     /**
@@ -41,7 +51,7 @@ public abstract class ConfigPropertyImpl<T> implements ConfigProperty<T>
      * one is successfully retrieved.  If none are found, return the default value.
      * @return the retrieved value for this configuration property
      */
-    protected T doGet()
+    private T doGet()
     {
         for (Supplier<T> configValueSupplier : configValueSuppliers)
         {
@@ -51,7 +61,12 @@ public abstract class ConfigPropertyImpl<T> implements ConfigProperty<T>
             }
             catch (ConfigPropertyNotFoundException ignored) { }
         }
-        throw new ConfigPropertyNotFoundException(this.getClass().toString());
+        return propNotFoundStrategy.handleNotFound(this.getClass().getName());
     }
 
+    @Override
+    public T get()
+    {
+        return readFrequencyStrategy.getValue();
+    }
 }
