@@ -1,11 +1,11 @@
 # Config
 
-The `org.jitsi.utils.config` package contains classes for defining configuration properties in way that abstracts the property itself away from a particular 'key' and 'source' of the property.
+The `org.jitsi.utils.config` package contains classes for defining configuration properties in a way that abstracts the property itself away from a particular 'key' and 'source' of the property.
 
 Each configuration property definition (created by subclassing `ConfigProperty`) has 3 properties:
 1. A list of suppliers
-2. A 'read frequency' strategy
-3. A 'not found' strategy
+1. A 'read frequency' strategy
+1. A 'not found' strategy
 
 #### Suppliers
 A supplier for a configuration property queries some source and returns a value, if found, for that property.  Multiple suppliers can be provided to perform 'fallback' mechanics for a property.
@@ -23,7 +23,7 @@ Example command line argument:
 When we define this property, we'll want to add 2 suppliers: one which will check the command-line argument for the `--port` command-line flag, and another which will check the file for the `myapp.webserver.port` property.  Our definition of the property might look like:
 
 ```
-class WebserverPortProperty implements AbstractConfigProperty<Integer>
+class WebserverPortProperty extends AbstractConfigProperty<Integer>
 {
     protected static final configFilePropName = "myapp.webserver.port";
     protected static final commandLineArgName = "--port";
@@ -59,7 +59,7 @@ public class Main
 Some configuration values we want to be able to update if we re-load the config in order to see new values.  To get this behavior, we apply a read frequency strategy to our property definition.  So, if we want the value return from `.get()` to update if the config is reloaded and the value has changed, our property definition would become:
 
 ```
-class WebserverPortProperty implements AbstractConfigProperty<Integer>
+class WebserverPortProperty extends AbstractConfigProperty<Integer>
 {
     protected static final configFilePropName = "myapp.webserver.port";
     protected static final commandLineArgName = "--port";
@@ -84,7 +84,7 @@ And now, the next time we call `.get()` we'll get a new value if the suppliers r
 Generally, configuration properties must be defined (this wrapper defines no method to supply a default value) so if the code looks for a property and it isn't found, a `ConfigPropertyNotFound` exception is thrown.  Sometimes, though, an optional property is desired.  The 'not found' strategy defines what happens when none of the suppliers find a value for this property.  If we want to require a property, we'd use: `.throwIfNotFound()`:
 
 ```
-class WebserverPortProperty implements AbstractConfigProperty<Integer>
+class WebserverPortProperty extends AbstractConfigProperty<Integer>
 {
     protected static final configFilePropName = "myapp.webserver.port";
     protected static final commandLineArgName = "--port";
@@ -107,3 +107,15 @@ If we're ok with a property not being present, we can use `.returnNullIfNotFound
 
 #### Marking a property as obsolete
 The `ObsoleteConfig` annotation is provided to mark a property as obsolete.  Code can be written to find property classes with this annotation to see if any value is provided and warn appropriately.
+
+```
+@ObsoleteConfig("This property is deprecated, its replacement is SomeNewProperty")
+class SomeOldProperty extends AbstractConfigProperty<String>
+{
+    public SomeOldProperty()
+    {
+        ...
+    }
+}
+```
+
