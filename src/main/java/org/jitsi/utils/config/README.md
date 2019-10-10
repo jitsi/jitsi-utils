@@ -119,3 +119,15 @@ class SomeOldProperty extends AbstractConfigProperty<String>
 }
 ```
 
+#### Validation
+This code also provides some tools to help validate configuration.  The `ConfigValidator` can check for a couple common scenarios:
+
+##### Property marked as obsolete is still being defined
+The validator will print a warning if it finds a value for a property which has been annotated with `ObsoleteConfig`
+
+##### Property is defined which has no property class which reads it
+The validator will search through the list of defined configuration keys (this must be passed in, as this code doesn't have access to all of the config sources) and, for each one, try to find a `ConfigProperty` which reads that key.  NOTE: This currently uses the somewhat hacky method of searching for all `String` members in a `ConfigProperty` to look for which configuration keys it will read, so for this to work you'll need to have defined the property names in `String` members, like in the example above.
+
+#### Usage notes
+* Since a configuration property only has a single value, it's likely the case that the property class instance which models it should be defined and accessed as a singleton; that way you know that all uses of that property will be accessing the same value.
+
