@@ -1,6 +1,7 @@
 /classes/
 /classes-test/
-/target/
+*/target/*
 .classpath
 .project
 .settings/
+*.iml
