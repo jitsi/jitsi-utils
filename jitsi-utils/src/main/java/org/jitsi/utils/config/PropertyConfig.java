@@ -35,7 +35,7 @@ public class PropertyConfig<PropValueType>
     /**
      * The ReadFrequencyStrategy constructor requires a supplier which will give the property's
      * value, but we don't have that here (it comes from {@link AbstractConfigProperty}.
-     * We'll pass this method to the {@link AbstractConfigProperty}
+     * We'll pass this method to the {@link org.jitsi.utils.config.AbstractConfigProperty}
      * constructor so that it can pass the provider and instantiate the ReadFrequencyStrategy
      */
     protected Function<Supplier<PropValueType>, ReadFrequencyStrategy<PropValueType>> readFrequencyStrategyCreator = null;
@@ -89,8 +89,15 @@ public class PropertyConfig<PropValueType>
             {
                 message = "'prop not found' strategy not set";
             }
-            //TODO: custom exception
-            throw new RuntimeException("Invalid property config: " + message);
+            throw new InvalidPropertyConfigurationException("Invalid property config: " + message);
+        }
+    }
+
+    public static class InvalidPropertyConfigurationException extends RuntimeException
+    {
+        public InvalidPropertyConfigurationException(String msg)
+        {
+            super(msg);
         }
     }
 }
