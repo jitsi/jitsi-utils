@@ -26,6 +26,10 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.*;
 
+/**
+ * Runs various configuration validations based on all found
+ * instances of {@link ConfigProperty} in the given package name.
+ */
 public class ConfigValidator
 {
     protected Logger logger = new LoggerImpl(getClass().getName());
@@ -43,6 +47,7 @@ public class ConfigValidator
     }
 
     /**
+     * Perform all config validations
      *
      * @param propNamesFromConfiguration a set of Strings representing
      *                                   all of the property names that were parsed
@@ -63,8 +68,8 @@ public class ConfigValidator
     }
 
     /**
-     * Warns about configuration properties which have been defined but are
-     * marked as obsolete.
+     * Warns about configuration properties which have been defined in a configuration source
+     * but are marked as obsolete in their corresponding {@link ConfigProperty} class.
      */
     protected void checkForDefinedObsoleteProperties()
     {
@@ -90,7 +95,8 @@ public class ConfigValidator
             }
             catch (NoSuchMethodException e)
             {
-                logger.error("Configuration property " + obsoleteConfigProperty + " must have a no-arg constructor!");
+                logger.error("Configuration property " + obsoleteConfigProperty +
+                    " must have a no-arg constructor!");
             }
             catch (InvocationTargetException e)
             {
@@ -130,6 +136,15 @@ public class ConfigValidator
         }
     }
 
+    /**
+     * Returns true if any {@link ConfigProperty} instance found in the package
+     * reads the given property name.  NOTE: the way we determine whether or
+     * not a {@link ConfigProperty} reads a property name is to search the
+     * {@code String} members contained by that {@link ConfigProperty}.
+     *
+     * @param propName
+     * @return
+     */
     protected boolean doesAnyPropReadPropName(String propName)
     {
         // Try and find any config property which reads this key

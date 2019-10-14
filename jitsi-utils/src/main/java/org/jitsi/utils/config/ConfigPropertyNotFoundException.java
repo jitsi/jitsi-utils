@@ -16,6 +16,9 @@
 
 package org.jitsi.utils.config;
 
+/**
+ * Thrown when a value for a configuration property wasn't found
+ */
 public class ConfigPropertyNotFoundException extends RuntimeException
 {
     public ConfigPropertyNotFoundException(String propName)

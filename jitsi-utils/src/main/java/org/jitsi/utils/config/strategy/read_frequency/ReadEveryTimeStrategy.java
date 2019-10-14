@@ -23,19 +23,19 @@ import java.util.function.*;
  * property's value every time {@link ReadEveryTimeStrategy#getValue()}
  * is called
  *
- * @param <T> the type of the configuration property's value
+ * @param <PropValueType> the type of the configuration property's value
  */
-public class ReadEveryTimeStrategy<T> implements ReadFrequencyStrategy<T>
+public class ReadEveryTimeStrategy<PropValueType> implements ReadFrequencyStrategy<PropValueType>
 {
-    protected final Supplier<T> supplier;
+    protected final Supplier<PropValueType> supplier;
 
-    public ReadEveryTimeStrategy(Supplier<T> supplier)
+    public ReadEveryTimeStrategy(Supplier<PropValueType> supplier)
     {
         this.supplier = supplier;
     }
 
     @Override
-    public T getValue()
+    public PropValueType getValue()
     {
         return supplier.get();
     }

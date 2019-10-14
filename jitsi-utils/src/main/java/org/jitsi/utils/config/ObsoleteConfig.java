@@ -16,14 +16,22 @@
 
 package org.jitsi.utils.config;
 
+import org.jitsi.utils.config.validation.*;
+
 import java.lang.annotation.*;
 
 /**
  * Denote that a configuration property is obsolete and no longer used
+ *
+ * See {@link ConfigValidator#checkForDefinedObsoleteProperties()}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ObsoleteConfig
 {
+    /**
+     * A deprecation message which can be provided when using the annotation
+     * @return the deprecation message
+     */
     String value();
 }

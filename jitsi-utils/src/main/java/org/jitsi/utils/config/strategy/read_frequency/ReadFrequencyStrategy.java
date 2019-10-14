@@ -20,9 +20,9 @@ package org.jitsi.utils.config.strategy.read_frequency;
  * A strategy which defines how often we'll read a
  * property's value from the config library.
  *
- * @param <T> the type of the property's value
+ * @param <PropValueType> the type of the property's value
  */
-public interface ReadFrequencyStrategy<T>
+public interface ReadFrequencyStrategy<PropValueType>
 {
-    T getValue();
+    PropValueType getValue();
 }

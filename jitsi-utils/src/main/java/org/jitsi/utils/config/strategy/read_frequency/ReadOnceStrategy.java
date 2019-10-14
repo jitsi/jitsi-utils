@@ -24,19 +24,19 @@ import java.util.function.*;
  * cached value each time {@link ReadEveryTimeStrategy#getValue()}
  * is called
  *
- * @param <T> the type of the configuration property's value
+ * @param <PropValueType> the type of the configuration property's value
  */
-public class ReadOnceStrategy<T> implements ReadFrequencyStrategy<T>
+public class ReadOnceStrategy<PropValueType> implements ReadFrequencyStrategy<PropValueType>
 {
-    protected final T value;
+    protected final PropValueType value;
 
-    public ReadOnceStrategy(Supplier<T> supplier)
+    public ReadOnceStrategy(Supplier<PropValueType> supplier)
     {
         value = supplier.get();
     }
 
     @Override
-    public T getValue()
+    public PropValueType getValue()
     {
         return value;
     }
