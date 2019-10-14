@@ -81,7 +81,7 @@ class WebserverPortProperty extends AbstractConfigProperty<Integer>
 And now, the next time we call `.get()` we'll get a new value if the suppliers return a different result than they did before.  To read a property only once (when the property instance is created), use `.readOnce()` instead.
 
 #### Not found strategy
-Generally, configuration properties must be defined (this wrapper defines no method to supply a default value) so if the code looks for a property and it isn't found, a `ConfigPropertyNotFound` exception is thrown.  Sometimes, though, an optional property is desired.  The 'not found' strategy defines what happens when none of the suppliers find a value for this property.  If we want to require a property, we'd use: `.throwIfNotFound()`:
+Generally, configuration properties must be defined (this wrapper defines no method to supply a default value), meaning at least one supplier must provide a value for a given property. If no suppliers produce a value, a `ConfigPropertyNotFound` exception is thrown. Sometimes, though, an optional property is desired. The 'not found' strategy defines what happens when none of the suppliers find a value for this property. If we want to require a property, we'd use `.throwIfNotFound()`
 
 ```
 class WebserverPortProperty extends AbstractConfigProperty<Integer>
