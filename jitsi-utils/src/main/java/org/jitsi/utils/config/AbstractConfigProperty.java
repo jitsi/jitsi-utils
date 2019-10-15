@@ -32,14 +32,18 @@ import java.util.function.*;
  */
 public abstract class AbstractConfigProperty<T> implements ConfigProperty<T>
 {
-    protected final List<Supplier<T>> configValueSuppliers;
+    /**
+     * The list of suppliers, in priority order, this {@link ConfigProperty}
+     * will check for a value for the property
+     */
+    protected final List<Supplier<T>> propValueSuppliers;
     protected final ReadFrequencyStrategy<T> readFrequencyStrategy;
     protected final PropNotFoundStrategy<T> propNotFoundStrategy;
 
     public AbstractConfigProperty(PropertyConfig<T> builder)
     {
         builder.validate();
-        this.configValueSuppliers = builder.propValueSuppliers;
+        this.propValueSuppliers = builder.propValueSuppliers;
         // Note: it's important we set the not-found strategy first, as some
         // read strategies may read the value upon creation
         this.propNotFoundStrategy = builder.propNotFoundStrategy;
@@ -53,7 +57,7 @@ public abstract class AbstractConfigProperty<T> implements ConfigProperty<T>
      */
     private T doGet()
     {
-        for (Supplier<T> configValueSupplier : configValueSuppliers)
+        for (Supplier<T> configValueSupplier : propValueSuppliers)
         {
             try
             {
