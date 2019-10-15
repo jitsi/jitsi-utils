@@ -78,18 +78,14 @@ public class PropertyConfig<PropValueType>
 
     public void validate()
     {
-        if (readFrequencyStrategyCreator == null || propNotFoundStrategy == null)
+        if (readFrequencyStrategyCreator == null)
         {
-            String message;
-            if (readFrequencyStrategyCreator == null)
-            {
-                message = "'read' strategy not set";
-            }
-            else
-            {
-                message = "'prop not found' strategy not set";
-            }
-            throw new InvalidPropertyConfigurationException("Invalid property config: " + message);
+            throw new InvalidPropertyConfigurationException("Invalid property config: 'read' strategy not set");
+        }
+        if (propNotFoundStrategy == null)
+        {
+            throw new InvalidPropertyConfigurationException("Invalid property config: 'prop not found' " +
+                "strategy not set");
         }
     }
 
