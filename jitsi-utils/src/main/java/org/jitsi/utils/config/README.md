@@ -56,7 +56,7 @@ public class Main
 ```
 
 #### Read frequency strategy
-Some configuration values we want to be able to update if we re-load the config in order to see new values.  To get this behavior, we apply a read frequency strategy to our property definition.  So, if we want the value return from `.get()` to update if the config is reloaded and the value has changed, our property definition would become:
+Some configuration values we want to be able to update if we re-load the config in order to see new values.  To get this behavior, we apply a read frequency strategy to our property definition.  So, if we want the value returned from `.get()` to update if the config is reloaded and the value has changed, our property definition would become:
 
 ```
 class WebserverPortProperty extends AbstractConfigProperty<Integer>
