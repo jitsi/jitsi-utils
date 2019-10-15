@@ -16,7 +16,7 @@
 
 package org.jitsi.utils.config.strategy.prop_not_found;
 
-public interface PropNotFoundStrategy<PropValueType>
+public interface PropNotFoundStrategy<T>
 {
-    PropValueType handleNotFound(String propName);
+    T handleNotFound(String propName);
 }

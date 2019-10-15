@@ -28,9 +28,9 @@ import java.util.function.*;
  * (e.g. how often it is read, what should be done when it isn't found); basically:
  * a configuration property's properties...
  *
- * @param <PropValueType> the type of the configuration property's value
+ * @param <T> the type of the configuration property's value
  */
-public class PropertyConfig<PropValueType>
+public class PropertyConfig<T>
 {
     /**
      * The ReadFrequencyStrategy constructor requires a supplier which will give the property's
@@ -38,38 +38,38 @@ public class PropertyConfig<PropValueType>
      * We'll pass this method to the {@link org.jitsi.utils.config.AbstractConfigProperty}
      * constructor so that it can pass the provider and instantiate the ReadFrequencyStrategy
      */
-    protected Function<Supplier<PropValueType>, ReadFrequencyStrategy<PropValueType>> readFrequencyStrategyCreator = null;
-    protected PropNotFoundStrategy<PropValueType> propNotFoundStrategy;
-    protected List<Supplier<PropValueType>> propValueSuppliers = new ArrayList<>();
+    protected Function<Supplier<T>, ReadFrequencyStrategy<T>> readFrequencyStrategyCreator = null;
+    protected PropNotFoundStrategy<T> propNotFoundStrategy;
+    protected List<Supplier<T>> propValueSuppliers = new ArrayList<>();
 
-    public PropertyConfig<PropValueType> suppliedBy(Supplier<PropValueType> supplier)
+    public PropertyConfig<T> suppliedBy(Supplier<T> supplier)
     {
         propValueSuppliers.add(supplier);
         return this;
     }
 
-    public PropertyConfig<PropValueType> readOnce()
+    public PropertyConfig<T> readOnce()
     {
         readFrequencyStrategyCreator = ReadOnceStrategy::new;
 
         return this;
     }
 
-    public PropertyConfig<PropValueType> readEveryTime()
+    public PropertyConfig<T> readEveryTime()
     {
         readFrequencyStrategyCreator = ReadEveryTimeStrategy::new;
 
         return this;
     }
 
-    public PropertyConfig<PropValueType> throwIfNotFound()
+    public PropertyConfig<T> throwIfNotFound()
     {
         propNotFoundStrategy = new ThrowIfNotFoundStrategy<>();
 
         return this;
     }
 
-    public PropertyConfig<PropValueType> returnNullIfNotFound()
+    public PropertyConfig<T> returnNullIfNotFound()
     {
         propNotFoundStrategy = new ReturnNullIfNotFoundStrategy<>();
 

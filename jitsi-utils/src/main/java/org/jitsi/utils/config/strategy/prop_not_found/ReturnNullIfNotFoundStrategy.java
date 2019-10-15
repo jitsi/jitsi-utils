@@ -16,10 +16,10 @@
 
 package org.jitsi.utils.config.strategy.prop_not_found;
 
-public class ReturnNullIfNotFoundStrategy<PropValueType> implements PropNotFoundStrategy<PropValueType>
+public class ReturnNullIfNotFoundStrategy<T> implements PropNotFoundStrategy<T>
 {
     @Override
-    public PropValueType handleNotFound(String propName)
+    public T handleNotFound(String propName)
     {
         return null;
     }

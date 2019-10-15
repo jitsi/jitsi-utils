@@ -18,10 +18,10 @@ package org.jitsi.utils.config.strategy.prop_not_found;
 
 import org.jitsi.utils.config.*;
 
-public class ThrowIfNotFoundStrategy<PropValueType> implements PropNotFoundStrategy<PropValueType>
+public class ThrowIfNotFoundStrategy<T> implements PropNotFoundStrategy<T>
 {
     @Override
-    public PropValueType handleNotFound(String propName)
+    public T handleNotFound(String propName)
     {
         throw new ConfigPropertyNotFoundException(propName);
     }
