@@ -38,6 +38,7 @@ public class ConfigValidator
     public ConfigValidator(String packageName)
     {
         reflections = new Reflections(new ConfigurationBuilder()
+            .filterInputsBy(new FilterBuilder().includePackage(packageName))
             .setUrls(ClasspathHelper.forPackage(packageName))
             .setScanners(
                 new SubTypesScanner(),
