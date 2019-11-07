@@ -16,42 +16,45 @@
 
 package org.jitsi.utils.configk.strategy
 
+import org.jitsi.utils.configk.ConfigResult
+import org.jitsi.utils.configk.configRunCatching
+
 /**
  * A strategy which defines how a configuration property's value is read.
  */
-sealed class ReadStrategy<T>(
+sealed class ReadStrategy<T : Any>(
     protected val configurationValueSupplier: () -> T
 ) {
     /**
      * Get this configuration property's value in the form
-     * of a [Result<T>]: if the property was not found or
-     * reading encountered an error, a [Result.failure]
+     * of a [ConfigResult<T>]: if the property was not found or
+     * reading encountered an error, a [ConfigResult.NotFound]
      * will be returned
      */
-    abstract fun get(): Result<T>
+    abstract fun get(): ConfigResult<T>
 }
 
 /**
  * Read a configuration property's value only once
  */
-class ReadOnceStrategy<T>(configurationValueSupplier: () -> T) : ReadStrategy<T>(configurationValueSupplier) {
-    private val result: Result<T> = runCatching { configurationValueSupplier() }
+class ReadOnceStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadStrategy<T>(configurationValueSupplier) {
+    private val result: ConfigResult<T> = configRunCatching { configurationValueSupplier() }
 
-    override fun get(): Result<T> = result
+    override fun get(): ConfigResult<T> = result
 }
 
 /**
  * Re-read a configuration property's value every time it is accessed
  */
-class ReadEveryTimeStrategy<T>(configurationValueSupplier: () -> T) : ReadStrategy<T>(configurationValueSupplier) {
-    override fun get(): Result<T> = runCatching { configurationValueSupplier() }
+class ReadEveryTimeStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadStrategy<T>(configurationValueSupplier) {
+    override fun get(): ConfigResult<T> = configRunCatching { configurationValueSupplier() }
 }
 
 /**
  * Based on whether or not a configuration property's value should be read only
- * a single time, return the appropriate [ReadStrategy] which will return a [Result<T]]
+ * a single time, return the appropriate [ReadStrategy] which will return a [ConfigResult<T]]
  */
-fun <T> getReadStrategy(readOnce: Boolean, configurationValueSupplier: () -> T): ReadStrategy<T>  {
+fun <T : Any> getReadStrategy(readOnce: Boolean, configurationValueSupplier: () -> T): ReadStrategy<T>  {
     return if (readOnce) {
         ReadOnceStrategy(configurationValueSupplier)
     } else {

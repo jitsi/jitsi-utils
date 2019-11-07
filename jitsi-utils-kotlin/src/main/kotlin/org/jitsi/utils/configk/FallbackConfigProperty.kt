@@ -16,16 +16,17 @@
 
 package org.jitsi.utils.configk
 
+import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+
 /**
  * A property which checks multiple sources in priority order for its value
  */
-abstract class FallbackConfigProperty<T : Any> : ConfigProperty<T> {
-    protected abstract val propertyPriority: List<Result<T>>
+abstract class FallbackProperty<T : Any> : ConfigProperty<T> {
+    protected abstract val propertyPriority: List<ConfigResult<T>>
 
-    //TODO: verify the getter
     final override val value: T
         get() = propertyPriority.asSequence()
-                .map { it.getOrNull() }
-                .filterNotNull()
-                .first()
+                .filter { it is ConfigResult.PropertyFound }
+                .map { (it as ConfigResult.PropertyFound).value }
+                .firstOrNull() ?: throw ConfigPropertyNotFoundException("No configuration property found for ${javaClass}}")
 }

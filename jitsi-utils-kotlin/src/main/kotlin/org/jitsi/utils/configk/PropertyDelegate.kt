@@ -29,15 +29,15 @@ import kotlin.reflect.KProperty
  * A property delegate for retrieving a configuration value of type [T]
  * from a configuration source.
  */
-interface PropertyDelegate<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T>
+interface PropertyDelegate<T : Any> {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): ConfigResult<T>
 
     /**
      * Sometimes we want to be able to wrap this delegate with something else
      * (like to grab a value and then convert it), so expose a way to retrieve
      * the value from somewhere other than a delegate context.
      */
-    fun getValue(): Result<T>
+    fun getValue(): ConfigResult<T>
 
     /**
      * We provide the attributes here for similar reasons as [getValue]:
@@ -52,7 +52,7 @@ interface PropertyDelegate<T> {
  * A delegate which handles creating the appropriate [ReadStrategy] and
  * invoking it when accessed.
  */
-open class PropertyDelegateImpl<T>(
+open class PropertyDelegateImpl<T : Any>(
     final override val attributes: ConfigPropertyAttributes,
     configValueSupplier: () -> T
 ) : PropertyDelegate<T> {
@@ -60,12 +60,12 @@ open class PropertyDelegateImpl<T>(
     private val readStrategy: ReadStrategy<T> =
         getReadStrategy(attributes.readOnce, configValueSupplier)
 
-    private val result: Result<T>
+    private val result: ConfigResult<T>
         get() = readStrategy.get()
 
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T> = result
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): ConfigResult<T> = result
 
-    override fun getValue(): Result<T> = result
+    override fun getValue(): ConfigResult<T> = result
 }
 
 inline fun<reified T : Any> getPropertyDelegate(

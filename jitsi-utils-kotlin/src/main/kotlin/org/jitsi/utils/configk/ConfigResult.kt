@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.exception
+package org.jitsi.utils.configk
 
-class ConfigurationValueTypeUnsupportedException(
-    message: String
-) : Exception(message)
+sealed class ConfigResult<T : Any> {
+    class PropertyFound<T : Any>(val value: T) : ConfigResult<T>()
+    class PropertyNotFound<T : Any>() : ConfigResult<T>()
 
-class ConfigPropertyNotFoundException(
-    message: String
-) : Exception(message)
+    companion object {
+        fun<T : Any> found(value: T): ConfigResult<T> = PropertyFound(value)
+        fun<T : Any> notFound(): ConfigResult<T> = PropertyNotFound()
+    }
+}
+
+inline fun<T : Any> configRunCatching(block: () -> T): ConfigResult<T> {
+    return try {
+        ConfigResult.found(block())
+    } catch (t: Throwable) {
+        ConfigResult.notFound()
+    }
+}
