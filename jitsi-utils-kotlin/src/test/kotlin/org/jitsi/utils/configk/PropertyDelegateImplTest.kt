@@ -19,6 +19,10 @@ package org.jitsi.utils.configk
 import io.kotlintest.IsolationMode
 import io.kotlintest.specs.ShouldSpec
 import io.kotlintest.shouldBe
+import org.jitsi.utils.configk.ConfigResult
+import org.jitsi.utils.configk.PropertyDelegateImpl
+import org.jitsi.utils.configk.readEveryTime
+import org.jitsi.utils.configk.readOnce
 
 class PropertyDelegateImplTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
