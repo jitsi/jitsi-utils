@@ -22,6 +22,7 @@ import org.jitsi.utils.configk.configRunCatching
 /**
  * A strategy which defines how a configuration property's value is read.
  */
+//TODO: readfrequencystrategy
 sealed class ReadStrategy<T : Any>(
     protected val configurationValueSupplier: () -> T
 ) {

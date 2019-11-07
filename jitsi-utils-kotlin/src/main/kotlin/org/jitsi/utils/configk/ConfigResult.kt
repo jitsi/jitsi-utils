@@ -16,8 +16,13 @@
 
 package org.jitsi.utils.configk
 
-import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
-
+/**
+ * A [ConfigResult] represents the result of a 'search' for a configuration
+ * property's value.  If the property was found and the value parsed
+ * successfully as type [T], use [ConfigResult.found] to indicate a found
+ * result.  Otherwise [ConfigResult.notFound] can be used to hold the
+ * exception.
+ */
 sealed class ConfigResult<T : Any> {
     class PropertyFound<T : Any>(val value: T) : ConfigResult<T>()
     class PropertyNotFound<T : Any>(val exception: Throwable) : ConfigResult<T>()

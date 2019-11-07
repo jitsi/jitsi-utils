@@ -38,8 +38,8 @@ import kotlin.reflect.KClass
 interface TypedConfigValueGetter {
     /**
      * Given the type of the configuration value [T], return a
-     * function which will take in some config object and a path
-     * and return the value of the property at path as type [T]
+     * function which will take in some config instance and a path
+     * and return the value of the property at path as type [T].
      */
     fun<T : Any> getSupplier(clazz: KClass<T>): (Any, String) -> T
 }

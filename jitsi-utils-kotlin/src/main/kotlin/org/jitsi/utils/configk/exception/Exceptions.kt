@@ -16,6 +16,10 @@
 
 package org.jitsi.utils.configk.exception
 
+/**
+ * Used for when the configuration source doesn't support parsing the requested
+ * type
+ */
 class ConfigurationValueTypeUnsupportedException(
     message: String
 ) : Exception(message)

@@ -67,6 +67,9 @@ open class PropertyDelegateImpl<T : Any>(
     override fun getValue(): ConfigResult<T> = result
 }
 
+/**
+ * A helper to pass a KClass automatically to [getPropertyDelegate] below
+ */
 inline fun<reified T : Any> getPropertyDelegate(
     propAttributes: ConfigPropertyAttributes,
     config: Any,
