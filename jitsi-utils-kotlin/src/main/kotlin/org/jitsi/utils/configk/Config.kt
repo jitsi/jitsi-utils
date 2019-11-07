@@ -16,6 +16,8 @@
 
 package org.jitsi.utils.configk
 
+import java.time.Duration
+
 /**
  * An interface defining all possible operations on a configuration
  * 'source'.
@@ -24,6 +26,7 @@ interface Config {
     fun getBoolean(path: String): Boolean
     fun getInt(path: String): Int
     fun getString(path: String): String
+    fun getDuration(path: String): Duration
 
     fun getAny(path: String): Any?
 }

@@ -21,6 +21,7 @@ package org.jitsi.utils.configk
 import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk.strategy.ReadStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
+import java.time.Duration
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -65,6 +66,10 @@ class IntPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Conf
 class StringPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
         AbstractPropertyDelegate<String>(propAttributes, { config.getString(path)} )
 
+class DurationPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
+        AbstractPropertyDelegate<Duration>(propAttributes, { config.getDuration(path)} )
+
+
 class AnyPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
         AbstractPropertyDelegate<Any?>(propAttributes, { config.getAny(path)} )
 
@@ -78,6 +83,7 @@ fun<T : Any> getPropertyDelegate(clazz: KClass<T>, propAttributes: ConfigPropert
         Boolean::class -> BooleanPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
         Int::class -> IntPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
         String::class -> StringPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
+        Duration::class -> DurationPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
         else -> throw ConfigurationValueTypeUnsupportedException("No supported getter for configuration value type $clazz")
     }
 }
