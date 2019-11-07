@@ -19,7 +19,7 @@
 package org.jitsi.utils.configk
 
 import org.jitsi.utils.configk.spi.TypedConfigValueGetterService
-import org.jitsi.utils.configk.strategy.ReadStrategy
+import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -48,7 +48,7 @@ interface PropertyDelegate<T : Any> {
 }
 
 /**
- * A delegate which handles creating the appropriate [ReadStrategy] and
+ * A delegate which handles creating the appropriate [ReadFrequencyStrategy] and
  * invoking it when accessed.
  */
 open class PropertyDelegateImpl<T : Any>(
@@ -56,11 +56,11 @@ open class PropertyDelegateImpl<T : Any>(
     configValueSupplier: () -> T
 ) : PropertyDelegate<T> {
 
-    private val readStrategy: ReadStrategy<T> =
+    private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
         getReadStrategy(attributes.readOnce, configValueSupplier)
 
     private val result: ConfigResult<T>
-        get() = readStrategy.get()
+        get() = readFrequencyStrategy.get()
 
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): ConfigResult<T> = result
 

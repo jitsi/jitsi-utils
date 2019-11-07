@@ -20,10 +20,10 @@ import org.jitsi.utils.configk.ConfigResult
 import org.jitsi.utils.configk.configRunCatching
 
 /**
- * A strategy which defines how a configuration property's value is read.
+ * A strategy which defines how frequently a configuration
+ * property's value is read.
  */
-//TODO: readfrequencystrategy
-sealed class ReadStrategy<T : Any>(
+sealed class ReadFrequencyStrategy<T : Any>(
     protected val configurationValueSupplier: () -> T
 ) {
     /**
@@ -38,7 +38,7 @@ sealed class ReadStrategy<T : Any>(
 /**
  * Read a configuration property's value only once
  */
-class ReadOnceStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadStrategy<T>(configurationValueSupplier) {
+class ReadOnceStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadFrequencyStrategy<T>(configurationValueSupplier) {
     private val result: ConfigResult<T> = configRunCatching { configurationValueSupplier() }
 
     override fun get(): ConfigResult<T> = result
@@ -47,15 +47,15 @@ class ReadOnceStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadStrat
 /**
  * Re-read a configuration property's value every time it is accessed
  */
-class ReadEveryTimeStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadStrategy<T>(configurationValueSupplier) {
+class ReadEveryTimeStrategy<T : Any>(configurationValueSupplier: () -> T) : ReadFrequencyStrategy<T>(configurationValueSupplier) {
     override fun get(): ConfigResult<T> = configRunCatching { configurationValueSupplier() }
 }
 
 /**
  * Based on whether or not a configuration property's value should be read only
- * a single time, return the appropriate [ReadStrategy] which will return a [ConfigResult<T]]
+ * a single time, return the appropriate [ReadFrequencyStrategy] which will return a [ConfigResult<T]]
  */
-fun <T : Any> getReadStrategy(readOnce: Boolean, configurationValueSupplier: () -> T): ReadStrategy<T>  {
+fun <T : Any> getReadStrategy(readOnce: Boolean, configurationValueSupplier: () -> T): ReadFrequencyStrategy<T>  {
     return if (readOnce) {
         ReadOnceStrategy(configurationValueSupplier)
     } else {
