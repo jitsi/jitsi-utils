@@ -18,7 +18,6 @@
 
 package org.jitsi.utils.configk
 
-import org.jitsi.utils.config.AbstractConfigProperty
 import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk.strategy.ReadStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
@@ -32,32 +31,48 @@ import kotlin.reflect.KProperty
  */
 interface PropertyDelegate<T> {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T>
-}
 
-fun<T> getOrNull(block: () -> T): T? {
-    return try {
-        block()
-    } catch (t: Throwable) {
-        null
-    }
+    /**
+     * Sometimes we want to be able to wrap this delegate with something else
+     * (like to grab a value and then convert it), so expose a way to retrieve
+     * the value from somewhere other than a delegate context.
+     */
+    fun getValue(): Result<T>
+
+    /**
+     * We provide the attributes here for similar reasons as [getValue]:
+     * it can be useful to wrap or chain delegates together to perform
+     * transformations, and to do so the downstream code needs the
+     * properties.
+     */
+    val attributes: ConfigPropertyAttributes
 }
 
 /**
  * A delegate which handles creating the appropriate [ReadStrategy] and
  * invoking it when accessed.
  */
-open class PropertyDelegateImpl<T>(propAttributes: ConfigPropertyAttributes, configValueSupplier: () -> T) : PropertyDelegate<T> {
+open class PropertyDelegateImpl<T>(
+    final override val attributes: ConfigPropertyAttributes,
+    configValueSupplier: () -> T
+) : PropertyDelegate<T> {
+
     private val readStrategy: ReadStrategy<T> =
-        getReadStrategy(propAttributes.readOnce, configValueSupplier)
+        getReadStrategy(attributes.readOnce, configValueSupplier)
 
     private val result: Result<T>
         get() = readStrategy.get()
 
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T> = result
+
+    override fun getValue(): Result<T> = result
 }
 
-inline fun<reified T : Any> getPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> =
-    getPropertyDelegate(T::class, propAttributes, config, path)
+inline fun<reified T : Any> getPropertyDelegate(
+    propAttributes: ConfigPropertyAttributes,
+    config: Config,
+    path: String
+): PropertyDelegate<T> = getPropertyDelegate(T::class, propAttributes, config, path)
 
 /**
  * Return a supplier to retrieve a value of type [T] from an instance of
@@ -76,23 +91,13 @@ fun<T : Any> getSupplier(clazz: KClass<T>, config: Config, path: String): () -> 
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-fun<T : Any> getPropertyDelegate(clazz: KClass<T>, propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> {
-    return PropertyDelegateImpl(propAttributes, getSupplier(clazz, config, path))
-}
-
 /**
- * A wrapper around any existing type property delegate (below) which returns null
- * if the property wasn't found
+ * Return a [PropertyDelegateImpl] which will use the proper supplier for [T]
  */
-class OptionalPropertyDelegateWrapper<T>(private val innerDelegate: PropertyDelegate<T>) :
-        PropertyDelegate<T?> {
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T?> {
-        return kotlin.runCatching { innerDelegate.getValue(thisRef, property).getOrNull() }
-    }
-}
-
 @Suppress("UNCHECKED_CAST")
-fun<T : Any> getOptionalPropertyDelegate(clazz: KClass<T>, propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> {
-    return OptionalPropertyDelegateWrapper(getPropertyDelegate(clazz, propAttributes, config, path)) as PropertyDelegate<T>
-}
+fun<T : Any> getPropertyDelegate(
+    clazz: KClass<T>,
+    propAttributes: ConfigPropertyAttributes,
+    config: Config,
+    path: String
+): PropertyDelegate<T> = PropertyDelegateImpl(propAttributes, getSupplier(clazz, config, path))

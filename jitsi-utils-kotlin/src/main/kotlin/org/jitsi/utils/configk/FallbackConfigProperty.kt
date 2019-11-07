@@ -16,14 +16,16 @@
 
 package org.jitsi.utils.configk
 
-data class ConfigPropertyAttributes(
-    /**
-     * Whether or not the configuration property's value should be read
-     * only a single time and cached (i.e. runtime changes to this
-     * value will *not* be seen by the running code) or re-read from
-     * the configuration source every time its accessed.
-     */
-    val readOnce: Boolean
-)
+/**
+ * A property which checks multiple sources in priority order for its value
+ */
+abstract class FallbackConfigProperty<T : Any> : ConfigProperty<T> {
+    protected abstract val propertyPriority: List<Result<T>>
 
-fun readOnce(): ConfigPropertyAttributes = ConfigPropertyAttributes(readOnce = true)
+    //TODO: verify the getter
+    final override val value: T
+        get() = propertyPriority.asSequence()
+                .map { it.getOrNull() }
+                .filterNotNull()
+                .first()
+}

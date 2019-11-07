@@ -16,19 +16,10 @@
 
 package org.jitsi.utils.configk
 
+/**
+ * A configuration property with a value of type [T]
+ */
 interface ConfigProperty<T : Any> {
     val value: T
 }
 
-//abstract class AbstractConfigProperty<T : Any> : ConfigProperty<T> {
-//    /**
-//     * Get the calculated value of this configuration property
-//     * (this should be the final result after checking appropriate
-//     * configuration sources).  Implementors should throw
-//     * [TODO()] exception if no value for the property was found
-//     */
-//    protected abstract fun getPropertyValue(): T
-//
-//    override val value: T
-//        get() = getPropertyValue()
-//}
