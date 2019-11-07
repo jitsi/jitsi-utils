@@ -20,6 +20,7 @@ import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.ShouldSpec
 import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
 import kotlin.reflect.KProperty
 
 internal class FallbackPropertyTest : ShouldSpec() {
@@ -41,7 +42,7 @@ internal class FallbackPropertyTest : ShouldSpec() {
             "where none contain a result" {
                 val testProp = NotFoundProp()
                 should("throw an exception") {
-                    shouldThrow<ConfigPropertyNotFoundException> {
+                    shouldThrow<NoAcceptablePropertyInstanceFoundException> {
                         testProp.value
                     }
                 }
@@ -49,7 +50,7 @@ internal class FallbackPropertyTest : ShouldSpec() {
         }
     }
 
-    class FoundPropWithMultipleSources : FallbackProperty<Int>() {
+    class FoundPropWithMultipleSources : FallbackConfigProperty<Int>() {
         val propOne: ConfigResult<Int> by NotFoundDelegate()
         val propTwo: ConfigResult<Int> by FoundDelegate(42)
 
@@ -59,7 +60,7 @@ internal class FallbackPropertyTest : ShouldSpec() {
         )
     }
 
-    class MultipleFoundProps : FallbackProperty<Int>() {
+    class MultipleFoundProps : FallbackConfigProperty<Int>() {
         val propOne: ConfigResult<Int> by FoundDelegate(42)
         val propTwo: ConfigResult<Int> by FoundDelegate(43)
         val propThree: ConfigResult<Int> by FoundDelegate(44)
@@ -71,7 +72,7 @@ internal class FallbackPropertyTest : ShouldSpec() {
         )
     }
 
-    class NotFoundProp : FallbackProperty<Int>() {
+    class NotFoundProp : FallbackConfigProperty<Int>() {
         val propOne: ConfigResult<Int> by NotFoundDelegate()
         val propTwo: ConfigResult<Int> by NotFoundDelegate()
 

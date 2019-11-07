@@ -16,13 +16,22 @@
 
 package org.jitsi.utils.configk
 
+import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+
 sealed class ConfigResult<T : Any> {
     class PropertyFound<T : Any>(val value: T) : ConfigResult<T>()
-    class PropertyNotFound<T : Any>() : ConfigResult<T>()
+    class PropertyNotFound<T : Any>(val exception: Throwable) : ConfigResult<T>()
 
     companion object {
         fun<T : Any> found(value: T): ConfigResult<T> = PropertyFound(value)
-        fun<T : Any> notFound(): ConfigResult<T> = PropertyNotFound()
+        fun<T : Any> notFound(exception: Throwable): ConfigResult<T> = PropertyNotFound(exception)
+    }
+}
+
+fun<T : Any> ConfigResult<T>.getOrThrow(): T {
+    return when (this) {
+        is ConfigResult.PropertyNotFound -> throw this.exception
+        is ConfigResult.PropertyFound -> this.value
     }
 }
 
@@ -30,6 +39,6 @@ inline fun<T : Any> configRunCatching(block: () -> T): ConfigResult<T> {
     return try {
         ConfigResult.found(block())
     } catch (t: Throwable) {
-        ConfigResult.notFound()
+        ConfigResult.notFound(t)
     }
 }

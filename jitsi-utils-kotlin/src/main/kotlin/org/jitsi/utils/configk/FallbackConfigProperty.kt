@@ -17,16 +17,26 @@
 package org.jitsi.utils.configk
 
 import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
 
 /**
  * A property which checks multiple sources in priority order for its value
  */
-abstract class FallbackProperty<T : Any> : ConfigProperty<T> {
+abstract class FallbackConfigProperty<T : Any> : ConfigProperty<T> {
     protected abstract val propertyPriority: List<ConfigResult<T>>
 
     final override val value: T
-        get() = propertyPriority.asSequence()
-                .filter { it is ConfigResult.PropertyFound }
-                .map { (it as ConfigResult.PropertyFound).value }
-                .firstOrNull() ?: throw ConfigPropertyNotFoundException("No configuration property found for ${javaClass}}")
+        get() {
+            return propertyPriority.asSequence()
+                    .filterIsInstance<ConfigResult.PropertyFound<T>>()
+                    .map { it.value }
+                    .firstOrNull() ?: run {
+
+                val exceptions = propertyPriority.asSequence()
+                        .filterIsInstance<ConfigResult.PropertyNotFound<*>>()
+                        .map { it.exception }
+                        .toList()
+                throw NoAcceptablePropertyInstanceFoundException(exceptions)
+            }
+        }
 }

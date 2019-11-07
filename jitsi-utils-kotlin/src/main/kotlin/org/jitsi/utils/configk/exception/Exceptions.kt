@@ -20,6 +20,18 @@ class ConfigurationValueTypeUnsupportedException(
     message: String
 ) : Exception(message)
 
+/**
+ * Used for when a single config source can't find an instance
+ * of a property
+ */
 class ConfigPropertyNotFoundException(
     message: String
 ) : Exception(message)
+
+/**
+ * Used when no instance of a property can be found across multiple
+ * config sources
+ */
+class NoAcceptablePropertyInstanceFoundException(
+    val exceptions: List<Throwable>
+) : Exception("Unable to find or parse configuration property due to: ${exceptions}")
