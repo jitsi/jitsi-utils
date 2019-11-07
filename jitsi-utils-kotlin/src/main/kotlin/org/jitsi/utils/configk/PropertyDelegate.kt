@@ -32,13 +32,21 @@ interface PropertyDelegate<T> {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T>
 }
 
+fun<T> getOrNull(block: () -> T): T? {
+    return try {
+        block()
+    } catch (t: Throwable) {
+        null
+    }
+}
+
 /**
  * A delegate which handles creating the appropriate [ReadStrategy] and
  * invoking it when accessed.
  */
-sealed class AbstractPropertyDelegate<T>(prop: ConfigProperty, configValueSupplier: () -> T) : PropertyDelegate<T> {
+sealed class AbstractPropertyDelegate<T>(propAttributes: ConfigPropertyAttributes, configValueSupplier: () -> T) : PropertyDelegate<T> {
     private val readStrategy: ReadStrategy<T> =
-        getReadStrategy(prop.readOnce, configValueSupplier)
+        getReadStrategy(propAttributes.readOnce, configValueSupplier)
 
     private val result: Result<T>
         get() = readStrategy.get()
@@ -48,32 +56,44 @@ sealed class AbstractPropertyDelegate<T>(prop: ConfigProperty, configValueSuppli
 
 // Delegate classes for each supported configuration value type
 
-class BooleanPropertyDelegate(prop: ConfigProperty, config: Config, path: String) :
-        AbstractPropertyDelegate<Boolean>(prop, { config.getBoolean(path)} ) {
+class BooleanPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
+        AbstractPropertyDelegate<Boolean>(propAttributes, { config.getBoolean(path)} )
+
+class IntPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
+        AbstractPropertyDelegate<Int>(propAttributes, { config.getInt(path)} )
+
+class StringPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
+        AbstractPropertyDelegate<String>(propAttributes, { config.getString(path)} )
+
+class AnyPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
+        AbstractPropertyDelegate<Any?>(propAttributes, { config.getAny(path)} )
+
+inline fun<reified T : Any> getPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> =
+    getPropertyDelegate(T::class, propAttributes, config, path)
+
+
+@Suppress("UNCHECKED_CAST")
+fun<T : Any> getPropertyDelegate(clazz: KClass<T>, propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> {
+    return when (clazz) {
+        Boolean::class -> BooleanPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
+        Int::class -> IntPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
+        String::class -> StringPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
+        else -> throw ConfigurationValueTypeUnsupportedException("No supported getter for configuration value type $clazz")
+    }
 }
 
-class IntPropertyDelegate(prop: ConfigProperty, config: Config, path: String) :
-        AbstractPropertyDelegate<Int>(prop, { config.getInt(path)} ) {
-}
-
-class StringPropertyDelegate(prop: ConfigProperty, config: Config, path: String) :
-        AbstractPropertyDelegate<String>(prop, { config.getString(path)} ) {
-}
-
-class AnyPropertyDelegate(prop: ConfigProperty, config: Config, path: String) :
-        AbstractPropertyDelegate<Any?>(prop, { config.getAny(path)} ) {
-}
-
-inline fun<reified T : Any> getPropertyDelegate(prop: ConfigProperty, config: Config, path: String): PropertyDelegate<T> {
-    return getPropertyDelegate(T::class, prop, config, path)
+/**
+ * A wrapper around any existing type property delegate (below) which returns null
+ * if the property wasn't found
+ */
+class OptionalPropertyDelegateWrapper<T>(private val innerDelegate: PropertyDelegate<T>) :
+        PropertyDelegate<T?> {
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T?> {
+        return kotlin.runCatching { innerDelegate.getValue(thisRef, property).getOrNull() }
+    }
 }
 
 @Suppress("UNCHECKED_CAST")
-fun<T : Any> getPropertyDelegate(clazz: KClass<T>, prop: ConfigProperty, config: Config, path: String): PropertyDelegate<T> {
-    return when (clazz) {
-        Boolean::class -> BooleanPropertyDelegate(prop, config, path) as PropertyDelegate<T>
-        Int::class -> IntPropertyDelegate(prop, config, path) as PropertyDelegate<T>
-        String::class -> StringPropertyDelegate(prop, config, path) as PropertyDelegate<T>
-        else -> throw ConfigurationValueTypeUnsupportedException("No supported getter for configuration value type $clazz")
-    }
+fun<T : Any> getOptionalPropertyDelegate(clazz: KClass<T>, propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> {
+    return OptionalPropertyDelegateWrapper(getPropertyDelegate(clazz, propAttributes, config, path)) as PropertyDelegate<T>
 }

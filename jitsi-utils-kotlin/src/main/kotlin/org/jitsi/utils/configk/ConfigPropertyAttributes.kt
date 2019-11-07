@@ -16,14 +16,18 @@
 
 package org.jitsi.utils.configk
 
-interface ConfigProperty<T : Any>
-
-// We need 2 distinct types here so that we can model 'value' as
-// either T or T?
-interface RequiredConfigProperty<T : Any> : ConfigProperty<T> {
-    val value: T
-}
-
-interface OptionalConfigProperty<T : Any> : ConfigProperty<T> {
-    val value: T?
-}
+open class ConfigPropertyAttributes(
+    /**
+     * Whether or not the configuration property's value should be read
+     * only a single time and cached (i.e. runtime changes to this
+     * value will *not* be seen by the running code) or re-read from
+     * the configuration source every time its accessed.
+     */
+    val readOnce: Boolean,
+    /**
+     * If a configuration property is required and no value for it
+     * is found, a [TODO] exception is thrown.  Otherwise, null
+     * is returned.
+     */
+    val required: Boolean
+)
