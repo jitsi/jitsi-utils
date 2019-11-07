@@ -18,12 +18,24 @@ package org.jitsi.utils.configk
 
 interface ConfigProperty<T : Any>
 
-// We need 2 distinct types here so that we can model 'value' as
-// either T or T?
-interface RequiredConfigProperty<T : Any> : ConfigProperty<T> {
-    val value: T
+abstract class AbstractConfigProperty<T : Any> : ConfigProperty<T> {
+    /**
+     * Get the calculated value of this configuration property
+     * (this should be the final result after checking appropriate
+     * configuration sources).  Implementors should throw
+     * [TODO()] exception if no value for the property was found
+     */
+    protected abstract fun getPropertyValue(): T
 }
 
-interface OptionalConfigProperty<T : Any> : ConfigProperty<T> {
+// We need 2 distinct types here so that we can model 'value' as
+// either T or T?
+abstract class RequiredConfigProperty<T : Any> : AbstractConfigProperty<T>() {
+    val value: T
+        get() = getPropertyValue()
+}
+
+abstract class OptionalConfigProperty<T : Any> : AbstractConfigProperty<T>() {
     val value: T?
+        get() = getOrNull { getPropertyValue() }
 }
