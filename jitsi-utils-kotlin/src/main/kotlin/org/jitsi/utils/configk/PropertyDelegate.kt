@@ -18,10 +18,9 @@
 
 package org.jitsi.utils.configk
 
-import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
+import org.jitsi.utils.configk.spi.TypedConfigValueGetterService
 import org.jitsi.utils.configk.strategy.ReadStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
-import java.time.Duration
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -70,26 +69,9 @@ open class PropertyDelegateImpl<T : Any>(
 
 inline fun<reified T : Any> getPropertyDelegate(
     propAttributes: ConfigPropertyAttributes,
-    config: Config,
+    config: Any,
     path: String
 ): PropertyDelegate<T> = getPropertyDelegate(T::class, propAttributes, config, path)
-
-/**
- * Return a supplier to retrieve a value of type [T] from an instance of
- * [Config] for a property at [path]
- */
-@Suppress("UNCHECKED_CAST")
-fun<T : Any> getSupplier(clazz: KClass<T>, config: Config, path: String): () -> T {
-    return when (clazz) {
-        // We need the parenthesis here to denote that the braces denote a lambda, and not
-        // the when condition block
-        Boolean::class -> ({ config.getBoolean(path) as T })
-        Int::class -> ({ config.getInt(path) as T })
-        String::class -> ({ config.getString(path) as T })
-        Duration::class -> ({ config.getDuration(path) as T })
-        else -> throw ConfigurationValueTypeUnsupportedException("No supported getter for configuration value type $clazz")
-    }
-}
 
 /**
  * Return a [PropertyDelegateImpl] which will use the proper supplier for [T]
@@ -98,6 +80,10 @@ fun<T : Any> getSupplier(clazz: KClass<T>, config: Config, path: String): () -> 
 fun<T : Any> getPropertyDelegate(
     clazz: KClass<T>,
     propAttributes: ConfigPropertyAttributes,
-    config: Config,
+    config: Any,
     path: String
-): PropertyDelegate<T> = PropertyDelegateImpl(propAttributes, getSupplier(clazz, config, path))
+): PropertyDelegate<T> {
+    val typedGetter = TypedConfigValueGetterService.getterFor(clazz)
+    val supplier = { typedGetter(config, path) }
+    return PropertyDelegateImpl(propAttributes, supplier)
+}
