@@ -18,6 +18,7 @@
 
 package org.jitsi.utils.configk
 
+import org.jitsi.utils.config.AbstractConfigProperty
 import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk.strategy.ReadStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
@@ -45,7 +46,7 @@ fun<T> getOrNull(block: () -> T): T? {
  * A delegate which handles creating the appropriate [ReadStrategy] and
  * invoking it when accessed.
  */
-sealed class AbstractPropertyDelegate<T>(propAttributes: ConfigPropertyAttributes, configValueSupplier: () -> T) : PropertyDelegate<T> {
+open class PropertyDelegateImpl<T>(propAttributes: ConfigPropertyAttributes, configValueSupplier: () -> T) : PropertyDelegate<T> {
     private val readStrategy: ReadStrategy<T> =
         getReadStrategy(propAttributes.readOnce, configValueSupplier)
 
@@ -55,37 +56,29 @@ sealed class AbstractPropertyDelegate<T>(propAttributes: ConfigPropertyAttribute
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): Result<T> = result
 }
 
-// Delegate classes for each supported configuration value type
-
-class BooleanPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
-        AbstractPropertyDelegate<Boolean>(propAttributes, { config.getBoolean(path)} )
-
-class IntPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
-        AbstractPropertyDelegate<Int>(propAttributes, { config.getInt(path)} )
-
-class StringPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
-        AbstractPropertyDelegate<String>(propAttributes, { config.getString(path)} )
-
-class DurationPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
-        AbstractPropertyDelegate<Duration>(propAttributes, { config.getDuration(path)} )
-
-
-class AnyPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String) :
-        AbstractPropertyDelegate<Any?>(propAttributes, { config.getAny(path)} )
-
 inline fun<reified T : Any> getPropertyDelegate(propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> =
     getPropertyDelegate(T::class, propAttributes, config, path)
 
+/**
+ * Return a supplier to retrieve a value of type [T] from an instance of
+ * [Config] for a property at [path]
+ */
+@Suppress("UNCHECKED_CAST")
+fun<T : Any> getSupplier(clazz: KClass<T>, config: Config, path: String): () -> T {
+    return when (clazz) {
+        // We need the parenthesis here to denote that the braces denote a lambda, and not
+        // the when condition block
+        Boolean::class -> ({ config.getBoolean(path) as T })
+        Int::class -> ({ config.getInt(path) as T })
+        String::class -> ({ config.getString(path) as T })
+        Duration::class -> ({ config.getDuration(path) as T })
+        else -> throw ConfigurationValueTypeUnsupportedException("No supported getter for configuration value type $clazz")
+    }
+}
 
 @Suppress("UNCHECKED_CAST")
 fun<T : Any> getPropertyDelegate(clazz: KClass<T>, propAttributes: ConfigPropertyAttributes, config: Config, path: String): PropertyDelegate<T> {
-    return when (clazz) {
-        Boolean::class -> BooleanPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
-        Int::class -> IntPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
-        String::class -> StringPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
-        Duration::class -> DurationPropertyDelegate(propAttributes, config, path) as PropertyDelegate<T>
-        else -> throw ConfigurationValueTypeUnsupportedException("No supported getter for configuration value type $clazz")
-    }
+    return PropertyDelegateImpl(propAttributes, getSupplier(clazz, config, path))
 }
 
 /**
