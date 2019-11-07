@@ -27,3 +27,4 @@ data class ConfigPropertyAttributes(
 )
 
 fun readOnce(): ConfigPropertyAttributes = ConfigPropertyAttributes(readOnce = true)
+fun readEveryTime(): ConfigPropertyAttributes = ConfigPropertyAttributes(readOnce = false)
