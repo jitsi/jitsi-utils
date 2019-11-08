@@ -44,22 +44,22 @@ class XXX : ConfigProperty<Long> by property({
 })
 
 abstract class DefaultConfig<T : Any>(
-    clazz: KClass<T>,
+    propValueType: KClass<T>,
     attributes: ConfigPropertyAttributes,
     legacyPropName: String,
     newPropName: String
 ) : FallbackConfigProperty<T>() {
 
-    private val legacyProp = PropSource(
-        clazz,
+    private val legacyProp = PropValueRetriever.fromConfig(
+        propValueType,
         attributes = attributes,
-        path = legacyPropName,
+        configKey = legacyPropName,
         configSource = legacyConfig()
     )
-    private val newProp = PropSource(
-        clazz,
+    private val newProp = PropValueRetriever.fromConfig(
+        propValueType,
         attributes = attributes,
-        path = newPropName,
+        configKey = newPropName,
         configSource = newConfig()
     )
 
@@ -74,47 +74,41 @@ class Simple : DefaultConfig<Int>(Int::class, readOnce(), legacyPropName, newPro
     }
 }
 
-class YYY : ConfigProperty<Long> {
-    private val attributes = ConfigPropertyAttributes(readOnce = true)
-    val legacyProp = createProp<Long>(
+class TransformingType : FallbackConfigProperty<Long>() {
+    private val attributes = readOnce()
+    val legacyProp = PropValueRetriever.fromConfig(
+        Long::class,
         attributes = attributes,
-        propName = "legacyName",
+        configKey = "legacyName",
         configSource = legacyConfig()
     )
-    val newProp = createProp<Long>(
+    val newProp = PropValueRetriever.fromConfig(
+        Duration::class,
         attributes = attributes,
-        propName = "newName",
+        configKey = "newName",
         configSource = newConfig()
-    )
+    ).convertedBy { it.toMillis() }
 
-    override val value: Long
-        get() = TODO() //legacyProp.result.getOrElse { newProp.result.getOrThrow() }
+    override val propertyPriority: List<ConfigResult<Long>>
+        get() = listOf(legacyProp.result, newProp.result)
 }
 
-inline fun <reified T : Any> createProp(
-    attributes: ConfigPropertyAttributes,
-    propName: String,
-    configSource: Any
-) : PropSource<T> = PropSource(T::class, attributes, propName, configSource)
+class Foo(val str: String)
 
-inline fun <reified T : Any> ConfigPropertyAttributes.propSource(name: String, configSource: Any) =
-    PropSource(T::class, this, name, configSource)
+class ConfigObject
 
-class PropSource<T : Any>(
-    clazz: KClass<T>,
-    val attributes: ConfigPropertyAttributes,
-    val path: String,
-    val configSource: Any
-) {
-    private val propValueRetriever: PropValueRetriever<T>
-    init {
-        val typedGetter = TypedConfigValueGetterService.getterFor(clazz)
-        val supplier = { typedGetter(configSource, path) }
-        propValueRetriever = PropValueRetriever(attributes, supplier)
-    }
+class Complex : FallbackConfigProperty<List<Foo>>() {
+    private val attributes = readOnce()
+    val prop = PropValueRetriever.fromConfig(
+        ConfigObject::class,
+        attributes = attributes,
+        configKey = "key",
+        configSource = newConfig()
+    ).convertedBy { listOf(Foo("1"), Foo("2")) }
 
-    val result: ConfigResult<T>
-        get() = propValueRetriever.result
+    override val propertyPriority: List<ConfigResult<List<Foo>>>
+        get() = listOf(prop.result)
+
 }
 
 data class PropBuilder(

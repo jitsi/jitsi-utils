@@ -19,8 +19,12 @@ package org.jitsi.utils.configk
 import io.kotlintest.IsolationMode
 import io.kotlintest.specs.ShouldSpec
 import io.kotlintest.shouldBe
+import org.jitsi.utils.configk.PropValueRetriever
+import org.jitsi.utils.configk.getOrThrow
+import org.jitsi.utils.configk.readEveryTime
+import org.jitsi.utils.configk.readOnce
 
-class PropertyDelegateTest : ShouldSpec() {
+class PropValueRetrieverTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
     var numTimesCalled = 0
@@ -28,27 +32,24 @@ class PropertyDelegateTest : ShouldSpec() {
 
     init {
         "A read-once property" {
-            val testClass = object {
-                val number: ConfigResult<Int> by PropertyDelegate(readOnce(), intSupplier)
-            }
+            val prop = PropValueRetriever(readOnce(), intSupplier)
 
             "when accessed multiple times" {
-                repeat(5) { testClass.number }
+                repeat(5) { prop.result.getOrThrow() }
                 should("only have called the supplier once") {
                     numTimesCalled shouldBe 1
                 }
             }
         }
         "A read-every-time property" {
-            val testClass = object {
-                val number: ConfigResult<Int> by PropertyDelegate(readEveryTime(), intSupplier)
-            }
+            val prop = PropValueRetriever(readEveryTime(), intSupplier)
             "when accessed multiple times" {
-                repeat(5) { testClass.number }
+                repeat(5) { prop.result.getOrThrow() }
                 should("have called the supplier each time") {
                     numTimesCalled shouldBe 5
                 }
             }
         }
     }
+
 }
