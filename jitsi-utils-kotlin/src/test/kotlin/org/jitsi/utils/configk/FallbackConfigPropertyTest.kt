@@ -23,8 +23,7 @@ import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
 import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
 import kotlin.reflect.KProperty
 
-internal class FallbackPropertyTest : ShouldSpec() {
-
+internal class FallbackConfigPropertyTest : ShouldSpec() {
     init {
         "A fallback property with multiple sources" {
             "where one contains a result" {

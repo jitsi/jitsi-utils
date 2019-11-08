@@ -19,52 +19,24 @@
 package org.jitsi.utils.configk
 
 import org.jitsi.utils.configk.spi.TypedConfigValueGetterService
-import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
-import org.jitsi.utils.configk.strategy.getReadStrategy
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 /**
- * A property delegate for retrieving a configuration value of type [T]
- * from a configuration source.
+ * A property delegate wrapper around a [PropValueRetriever]
  */
-interface PropertyDelegate<T : Any> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): ConfigResult<T>
-
-    /**
-     * Sometimes we want to be able to wrap this delegate with something else
-     * (like to grab a value and then convert it), so expose a way to retrieve
-     * the value from somewhere other than a delegate context.
-     */
-    fun getValue(): ConfigResult<T>
-
-    /**
-     * We provide the attributes here for similar reasons as [getValue]:
-     * it can be useful to wrap or chain delegates together to perform
-     * transformations, and to do so the downstream code needs the
-     * properties.
-     */
-    val attributes: ConfigPropertyAttributes
-}
-
-/**
- * A delegate which handles creating the appropriate [ReadFrequencyStrategy] and
- * invoking it when accessed.
- */
-open class PropertyDelegateImpl<T : Any>(
-    final override val attributes: ConfigPropertyAttributes,
+class PropertyDelegate<T : Any>(
+    attributes: ConfigPropertyAttributes,
     configValueSupplier: () -> T
-) : PropertyDelegate<T> {
+) {
+    private val retriever = PropValueRetriever(attributes, configValueSupplier)
 
-    private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
-        getReadStrategy(attributes.readOnce, configValueSupplier)
+    val attributes: ConfigPropertyAttributes
+        get() = retriever.attributes
 
-    private val result: ConfigResult<T>
-        get() = readFrequencyStrategy.get()
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): ConfigResult<T> = retriever.result
 
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>): ConfigResult<T> = result
-
-    override fun getValue(): ConfigResult<T> = result
+    fun getValue(): ConfigResult<T> = retriever.result
 }
 
 /**
@@ -77,7 +49,7 @@ inline fun<reified T : Any> getPropertyDelegate(
 ): PropertyDelegate<T> = getPropertyDelegate(T::class, propAttributes, config, path)
 
 /**
- * Return a [PropertyDelegateImpl] which will use the proper supplier for [T]
+ * Return a [PropertyDelegate] which will use the proper supplier for [T]
  */
 @Suppress("UNCHECKED_CAST")
 fun<T : Any> getPropertyDelegate(
@@ -88,5 +60,5 @@ fun<T : Any> getPropertyDelegate(
 ): PropertyDelegate<T> {
     val typedGetter = TypedConfigValueGetterService.getterFor(clazz)
     val supplier = { typedGetter(config, path) }
-    return PropertyDelegateImpl(propAttributes, supplier)
+    return PropertyDelegate(propAttributes, supplier)
 }
