@@ -16,15 +16,51 @@
 
 package org.jitsi.utils.configk
 
-data class ConfigPropertyAttributes(
-    /**
-     * Whether or not the configuration property's value should be read
-     * only a single time and cached (i.e. runtime changes to this
-     * value will *not* be seen by the running code) or re-read from
-     * the configuration source every time its accessed.
-     */
-    val readOnce: Boolean
-)
+import org.jitsi.utils.configk.spi.TypedConfigValueGetterService
+import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
+import org.jitsi.utils.configk.strategy.getReadStrategy
+import java.util.function.Supplier
+import kotlin.reflect.KClass
+
+data class ConfigPropertyAttributes(val readOnce: Boolean)
+
+// TODO: previously, 'convertedBy' would chain onto a retriever and create a new retriever, but
+// we often don't need all the attrs, etc. for a convertedBy retriever.  instead, we should come
+// up with a simple, top-level 'retriever' interface (which probably just has a 'retrieve'
+// method) and then we can subclass it to differentiate a 'converting' retriever from
+// one that pulls from config
+// --> just tried out the implementation of this, need to do some test props to see how it is
+interface RetrieverInterface<T : Any> {
+    fun retrieve(): T
+}
+
+//class ConfigRetriever<T : Any>(
+//    val propertyAttributes: ConfigPropertyAttributes,
+//) : RetrieverInterface<T> {
+//    private val readFrequencyStrategy: ReadFrequencyStrategy<T>
+//
+//    init {
+//        val typedGetter
+//                = TypedConfigValueGetterService.getterFor(propertyAttributes.valueType)
+//        val supplier = { typedGetter(propertyAttributes.configSource, propertyAttributes.keyPath) }
+//        readFrequencyStrategy =
+//            getReadStrategy(propertyAttributes.readOnce, supplier)
+//
+//    }
+//
+//    override fun retrieve(): T = readFrequencyStrategy.get().getOrThrow()
+//}
+
+class ValueTypeConverter<T : Any, R : Any>(
+    private val supplier: Supplier<T>,
+    private val converter: (T) -> R
+) : RetrieverInterface<R> {
+
+    override fun retrieve(): R = converter(supplier.get())
+}
+
+fun <T : Any, U : Any> RetrieverInterface<T>.convertedBy(converter: (T) -> U): RetrieverInterface<U> =
+    ValueTypeConverter(Supplier { this@convertedBy.retrieve() }, converter)
 
 fun readOnce(): ConfigPropertyAttributes = ConfigPropertyAttributes(readOnce = true)
 fun readEveryTime(): ConfigPropertyAttributes = ConfigPropertyAttributes(readOnce = false)

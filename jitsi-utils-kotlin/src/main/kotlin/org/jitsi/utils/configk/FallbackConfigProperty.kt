@@ -21,6 +21,8 @@ import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundExcept
 /**
  * A property which checks multiple sources in priority order for its value
  */
+//TODO: we need to store the retrievers here instead of the results, as storing
+// the results won't work correctly with read-every-time properties.
 abstract class FallbackConfigProperty<T : Any> : ConfigProperty<T> {
     protected abstract val propertyPriority: List<ConfigResult<T>>
 
