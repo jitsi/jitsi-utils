@@ -16,19 +16,32 @@
 
 package org.jitsi.utils.configk.exception
 
+import kotlin.reflect.KClass
+
 /**
  * Used for when the configuration source doesn't support parsing the requested
  * type
  */
-class ConfigurationValueTypeUnsupportedException(
+class ConfigurationValueTypeUnsupportedException private constructor(
     message: String
-) : Exception(message)
+) : Exception(message) {
+    companion object {
+        // We can't have a generic type on the class constructor, so use a helper here
+        // to create the log message
+        fun <T : Any> new(valueType: KClass<T>): ConfigurationValueTypeUnsupportedException =
+            ConfigurationValueTypeUnsupportedException("No getter found for value of type $valueType")
+    }
+}
 
 /**
  * Used for when a single config source can't find an instance
  * of a property
  */
 class ConfigPropertyNotFoundException(
+    message: String
+) : Exception(message)
+
+class ConfigValueParsingException(
     message: String
 ) : Exception(message)
 

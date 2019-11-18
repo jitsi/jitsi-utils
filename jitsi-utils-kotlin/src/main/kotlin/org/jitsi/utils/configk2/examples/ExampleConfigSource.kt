@@ -17,6 +17,8 @@
 package org.jitsi.utils.configk2.examples
 
 import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.configk.exception.ConfigValueParsingException
+import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk2.ConfigSource
 import java.time.Duration
 import kotlin.reflect.KClass
@@ -25,18 +27,25 @@ class ExampleConfigSource(
     val props: Map<String, Any>
 ) : ConfigSource {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> getterFor(valueType: KClass<T>): (ConfigSource, String) -> T {
+    override fun <T : Any> getterFor(valueType: KClass<T>): (String) -> T {
         return when(valueType) {
-            Int::class -> ({ config, path -> (config as ExampleConfigSource).getInt(path) as T })
-            Long::class -> ({ config, path -> (config as ExampleConfigSource).getLong(path) as T })
-            Duration::class -> ({ config, path -> (config as ExampleConfigSource).getDuration(path) as T })
-            Double::class -> ({ _, _ -> throw ConfigPropertyNotFoundException("couldn't find it!")})
-            else -> TODO("no getter available for $valueType")
+            Int::class -> getterHelper(::getInt)
+            Long::class -> getterHelper(::getLong)
+            Duration::class -> getterHelper(::getDuration)
+            else -> throw ConfigurationValueTypeUnsupportedException.new(valueType)
         }
     }
 
-    fun getInt(path: String): Int = props[path] as Int
-    fun getLong(path: String): Long = props[path] as Long
-    fun getDuration(path: String): Duration = props[path] as Duration
+    private fun getInt(path: String): Int? = props[path] as? Int
+    private fun getLong(path: String): Long? = props[path] as? Long
+    private fun getDuration(path: String): Duration? = props[path] as? Duration
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <U, T : Any> getterHelper(getter: (String) -> U): (String) -> T {
+        return { path ->
+            getter(path) as? T ?:
+                throw ConfigPropertyNotFoundException("Could not find value for property at '$path'")
+        }
+    }
 }
 

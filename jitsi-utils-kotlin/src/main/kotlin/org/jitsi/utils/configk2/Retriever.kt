@@ -38,5 +38,5 @@ class Retriever<T : Any>(
 val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
     get() {
         val typedGetter = configSource.getterFor(valueType)
-        return { typedGetter(configSource, keyPath) }
+        return { typedGetter(keyPath) }
     }

@@ -20,9 +20,9 @@ import kotlin.reflect.KClass
 
 interface ConfigSource {
     /**
-     * Given a [valueType], return a function which takes in a [ConfigSource]
-     * and a configuration property key (aka a key 'name') and returns the value
+     * Given a [valueType], return a function which takes in a
+     * configuration property key (aka a key 'name') and returns the value
      * of the property at the given name as type [T]
      */
-    fun <T : Any>getterFor(valueType: KClass<T>): (ConfigSource, String) -> T
+    fun <T : Any>getterFor(valueType: KClass<T>): (String) -> T
 }

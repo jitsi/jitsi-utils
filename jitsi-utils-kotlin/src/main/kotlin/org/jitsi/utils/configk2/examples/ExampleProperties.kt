@@ -85,6 +85,8 @@ class ExampleProperties {
             }
         }
 
+        val neverFoundProperty =
+            simple<Int>(readOnce = true, legacyName = "notFound", newName = "notFound")
     }
 
     //TODO: validate read frequency stuff is working
@@ -118,4 +120,9 @@ fun main() {
     println("legacyProperty = ${ExampleProperties.legacyProperty.value}")
     println("legacyPropertyUsingHelper = ${ExampleProperties.legacyPropertyUsingHelper.value}")
     println("legacyFallthroughProperty = ${ExampleProperties.legacyFallthroughProperty.value}")
+    try {
+        println("neverFoundProperty = ${ExampleProperties.neverFoundProperty.value}")
+    } catch (t: Throwable) {
+        println(t)
+    }
 }
