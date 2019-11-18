@@ -17,12 +17,11 @@
 package org.jitsi.utils.configk2.dsl
 
 import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.spi.TypedConfigValueGetter
 import org.jitsi.utils.configk2.ConfigPropertyAttributes
 import org.jitsi.utils.configk2.ConfigRetriever
+import org.jitsi.utils.configk2.ConfigSource
 import org.jitsi.utils.configk2.TypedConfigPropertyAttributesBuilder
 import java.time.Duration
-import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
 class TypedFoo<T : Any>(
@@ -35,7 +34,7 @@ class TypedFoo<T : Any>(
         attributesBuilder.name(name)
     }
 
-    fun fromConfig(configSource: Any) {
+    fun fromConfig(configSource: ConfigSource) {
         attributesBuilder.fromConfig(configSource)
     }
 
@@ -88,21 +87,21 @@ inline fun <reified T : Any> property2(block: TypedFoo<T>.() -> Unit): ConfigPro
     return x.build()
 }
 
-class DummyConfig {
+class DummyConfig : ConfigSource {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> getterFor(valueType: KClass<T>): (ConfigSource, String) -> T {
+        return when(valueType) {
+            Int::class -> ({ config, path -> (config as DummyConfig).getInt(path) as T })
+            Duration::class -> ({ config, path -> (config as DummyConfig).getDuration(path) as T })
+            else -> TODO()
+        }
+    }
+
     fun getInt(path: String): Int = 42
     fun getDuration(path: String): Duration = Duration.ofSeconds(10)
 }
 
 fun main() {
-    val valueGetter = object : TypedConfigValueGetter {
-        override fun <T : Any> getSupplier(clazz: KClass<T>): (Any, String) -> T {
-            return when (clazz) {
-                Int::class -> ({ config, path -> (config as DummyConfig).getInt(path) as T })
-                Duration::class -> ({ config, path -> (config as DummyConfig).getDuration(path) as T })
-                else -> TODO()
-            }
-        }
-    }
     val x = property2<Long> {
         name("name")
         readOnce()

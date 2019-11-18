@@ -36,13 +36,13 @@ data class ConfigPropertyAttributes<T : Any>(
      */
     val readOnce: Boolean,
 
-    val configSource: Any
+    val configSource: ConfigSource
 )
 
 open class ConfigPropertyAttributesBuilder(
     protected var keyPath: String? = null,
     protected var readOnce: Boolean? = null,
-    protected var configSource: Any? = null
+    protected var configSource: ConfigSource? = null
 ) {
     open fun readOnce(): ConfigPropertyAttributesBuilder {
         readOnce = true
@@ -59,7 +59,7 @@ open class ConfigPropertyAttributesBuilder(
         return this
     }
 
-    open fun fromConfig(configSource: Any): ConfigPropertyAttributesBuilder {
+    open fun fromConfig(configSource: ConfigSource): ConfigPropertyAttributesBuilder {
         this.configSource = configSource
         return this
     }
@@ -93,7 +93,7 @@ class TypedConfigPropertyAttributesBuilder<T : Any>(
         return this
     }
 
-    override fun fromConfig(configSource: Any): TypedConfigPropertyAttributesBuilder<T> {
+    override fun fromConfig(configSource: ConfigSource): TypedConfigPropertyAttributesBuilder<T> {
         super.fromConfig(configSource)
         return this
     }

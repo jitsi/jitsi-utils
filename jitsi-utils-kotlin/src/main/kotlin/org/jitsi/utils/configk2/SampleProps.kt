@@ -46,59 +46,59 @@ abstract class SimpleBase<T : Any>(
 fun <T : Any>simpleProp(retriever: RetrieverInterface<T>): SimpleBase<T> =
     object : SimpleBase<T>(retriever) {}
 
-class SomeConfig {
-    val someProp = property<Int> {
-        name("name")
-        readOnce()
-        fromConfig(newConfig())
-    }
-
-    val convertingProp: ConfigProperty<Long> = property<Duration> {
-        name("name")
-        readOnce()
-        fromConfig(newConfig())
-    }.convertedBy { it.toMillis() }
-
-//    val convertingProp2 = propertyNew<Long> {
+//class SomeConfig {
+//    val someProp = property<Int> {
 //        name("name")
-//        withType(Duration::class)
-//        convertedBy { it }
-//    }
-
-//    val healthInterval = simpleProperty<Int> {
-//        name("name")
-//        type(Int::class)
 //        readOnce()
-//        fromNewConfig()
+//        fromConfig(newConfig())
 //    }
 //
-//    val otherInterval = simpleProperty<Int> {
+//    val convertingProp: ConfigProperty<Long> = property<Duration> {
 //        name("name")
-//        type(Duration::class)
 //        readOnce()
-//        fromNewConfig()
-//        transformedBy { it.toMillis() }
-//    }
+//        fromConfig(newConfig())
+//    }.convertedBy { it.toMillis() }
 //
-//    val legacyProp = multiPropety {
-//        simpleProperty {
-//            name("name")
-//            type(Int::class)
-//            readOnce()
-//            fromOldConfig()
-//        }
-//        simpleProperty {
-//            name("newName")
-//            type(Int::class)
-//            readOnce()
-//            fromNewConfig()
-//        }
-//    }
+////    val convertingProp2 = propertyNew<Long> {
+////        name("name")
+////        withType(Duration::class)
+////        convertedBy { it }
+////    }
 //
-//    val intervalProp = simpleProp(
-//        propName("name").withType(Int::class).readOnce().fromConfig(newConfig()).build()
-//    )
-}
+////    val healthInterval = simpleProperty<Int> {
+////        name("name")
+////        type(Int::class)
+////        readOnce()
+////        fromNewConfig()
+////    }
+////
+////    val otherInterval = simpleProperty<Int> {
+////        name("name")
+////        type(Duration::class)
+////        readOnce()
+////        fromNewConfig()
+////        transformedBy { it.toMillis() }
+////    }
+////
+////    val legacyProp = multiPropety {
+////        simpleProperty {
+////            name("name")
+////            type(Int::class)
+////            readOnce()
+////            fromOldConfig()
+////        }
+////        simpleProperty {
+////            name("newName")
+////            type(Int::class)
+////            readOnce()
+////            fromNewConfig()
+////        }
+////    }
+////
+////    val intervalProp = simpleProp(
+////        propName("name").withType(Int::class).readOnce().fromConfig(newConfig()).build()
+////    )
+//}
 
 fun main() {
     val reflections = Reflections(ConfigurationBuilder()

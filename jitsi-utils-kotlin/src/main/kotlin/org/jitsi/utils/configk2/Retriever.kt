@@ -17,11 +17,8 @@
 package org.jitsi.utils.configk2
 
 import org.jitsi.utils.configk.getOrThrow
-import org.jitsi.utils.configk.spi.TypedConfigValueGetterService
 import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
-import org.jitsi.utils.configk2.dsl.DummyConfig
-import java.time.Duration
 
 interface Retriever<T : Any> {
     fun retrieve(): T
@@ -30,23 +27,14 @@ interface Retriever<T : Any> {
 class ConfigRetriever<T : Any>(
     val propertyAttributes: ConfigPropertyAttributes<T>
 ) : Retriever<T> {
-    private val readFrequencyStrategy: ReadFrequencyStrategy<T>
-
-    init {
-        //TODO: change back to dynamic!!
-//        val typedGetter
-//                = TypedConfigValueGetterService.getterFor(propertyAttributes.valueType)
-        val typedGetter: (Any, String) -> T = when(propertyAttributes.valueType) {
-            Int::class -> ({ config, path -> (config as DummyConfig).getInt(path) as T })
-            Duration::class -> ({ config, path -> (config as DummyConfig).getDuration(path) as T })
-            else -> TODO()
-
-        }
-        val supplier = { typedGetter(propertyAttributes.configSource, propertyAttributes.keyPath) }
-        readFrequencyStrategy =
-            getReadStrategy(propertyAttributes.readOnce, supplier)
-
-    }
+    private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
+        getReadStrategy(propertyAttributes.readOnce, propertyAttributes.supplier)
 
     override fun retrieve(): T = readFrequencyStrategy.get().getOrThrow()
 }
+
+val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
+    get() {
+        val typedGetter = configSource.getterFor(valueType)
+        return { typedGetter(configSource, keyPath) }
+    }
