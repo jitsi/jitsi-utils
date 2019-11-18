@@ -24,8 +24,19 @@ package org.jitsi.utils.configk
  * exception.
  */
 sealed class ConfigResult<T : Any> {
-    class PropertyFound<T : Any>(val value: T) : ConfigResult<T>()
-    class PropertyNotFound<T : Any>(val exception: Throwable) : ConfigResult<T>()
+    class PropertyFound<T : Any>(val value: T) : ConfigResult<T>() {
+        override fun equals(other: Any?): Boolean =
+            other is PropertyFound<*> && value == other.value
+        override fun hashCode(): Int = value.hashCode()
+        override fun toString(): String = "Found($value)"
+    }
+
+    class PropertyNotFound<T : Any>(val exception: Throwable) : ConfigResult<T>() {
+        override fun equals(other: Any?): Boolean =
+            other is PropertyNotFound<*> && exception == other.exception
+        override fun hashCode(): Int = exception.hashCode()
+        override fun toString(): String = "NotFound($exception)"
+    }
 
     companion object {
         fun<T : Any> found(value: T): ConfigResult<T> = PropertyFound(value)
