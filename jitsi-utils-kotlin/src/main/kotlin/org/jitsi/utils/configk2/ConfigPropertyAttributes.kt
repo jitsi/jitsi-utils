@@ -39,66 +39,64 @@ data class ConfigPropertyAttributes<T : Any>(
     val configSource: ConfigSource
 )
 
-open class ConfigPropertyAttributesBuilder(
+class ConfigPropertyAttributesBuilder<T : Any>(
+    private val valueType: KClass<T>,
     protected var keyPath: String? = null,
     protected var readOnce: Boolean? = null,
     protected var configSource: ConfigSource? = null
 ) {
-    open fun readOnce(): ConfigPropertyAttributesBuilder {
+    fun readOnce(): ConfigPropertyAttributesBuilder<T> {
         readOnce = true
         return this
     }
 
-    open fun readEveryTime(): ConfigPropertyAttributesBuilder {
+    fun readEveryTime(): ConfigPropertyAttributesBuilder<T> {
         readOnce = false
         return this
     }
 
-    open fun name(propName: String): ConfigPropertyAttributesBuilder {
+    fun name(propName: String): ConfigPropertyAttributesBuilder<T> {
         keyPath = propName
         return this
     }
 
-    open fun fromConfig(configSource: ConfigSource): ConfigPropertyAttributesBuilder {
+    fun fromConfig(configSource: ConfigSource): ConfigPropertyAttributesBuilder<T> {
         this.configSource = configSource
         return this
     }
 
-    fun <T : Any> withType(valueType: KClass<T>): TypedConfigPropertyAttributesBuilder<T> {
-        return TypedConfigPropertyAttributesBuilder(valueType, keyPath, readOnce)
-    }
+    fun build(): ConfigPropertyAttributes<T> =
+        //TODO: validate params and give better exceptions
+        ConfigPropertyAttributes(keyPath!!, valueType, readOnce!!, configSource!!)
 
-    open fun build(): ConfigPropertyAttributes<*> {
-        throw Exception("No prop value type set!")
-    }
 }
 
-class TypedConfigPropertyAttributesBuilder<T : Any>(
-    private val valueType: KClass<T>,
-    keyPath: String? = null,
-    readOnce: Boolean? = null
-) : ConfigPropertyAttributesBuilder(keyPath, readOnce) {
-    override fun readOnce(): TypedConfigPropertyAttributesBuilder<T> {
-        super.readOnce()
-        return this
-    }
-
-    override fun readEveryTime(): ConfigPropertyAttributesBuilder {
-        super.readEveryTime()
-        return this
-    }
-
-    override fun name(propName: String): TypedConfigPropertyAttributesBuilder<T> {
-        super.name(propName)
-        return this
-    }
-
-    override fun fromConfig(configSource: ConfigSource): TypedConfigPropertyAttributesBuilder<T> {
-        super.fromConfig(configSource)
-        return this
-    }
-
-    override fun build(): ConfigPropertyAttributes<T> =
-        ConfigPropertyAttributes<T>(keyPath!!, valueType, readOnce!!, configSource!!)
-}
+//class TypedConfigPropertyAttributesBuilder<T : Any>(
+//    private val valueType: KClass<T>,
+//    keyPath: String? = null,
+//    readOnce: Boolean? = null
+//) : ConfigPropertyAttributesBuilder(keyPath, readOnce) {
+//    override fun readOnce(): TypedConfigPropertyAttributesBuilder<T> {
+//        super.readOnce()
+//        return this
+//    }
+//
+//    override fun readEveryTime(): ConfigPropertyAttributesBuilder {
+//        super.readEveryTime()
+//        return this
+//    }
+//
+//    override fun name(propName: String): TypedConfigPropertyAttributesBuilder<T> {
+//        super.name(propName)
+//        return this
+//    }
+//
+//    override fun fromConfig(configSource: ConfigSource): TypedConfigPropertyAttributesBuilder<T> {
+//        super.fromConfig(configSource)
+//        return this
+//    }
+//
+//    override fun build(): ConfigPropertyAttributes<T> =
+//        ConfigPropertyAttributes<T>(keyPath!!, valueType, readOnce!!, configSource!!)
+//}
 

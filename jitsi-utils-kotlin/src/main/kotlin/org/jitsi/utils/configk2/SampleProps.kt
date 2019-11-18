@@ -19,10 +19,6 @@ package org.jitsi.utils.configk2
 import org.jitsi.utils.configk.ConfigProperty
 import org.jitsi.utils.configk.RetrieverInterface
 import org.jitsi.utils.configk.readOnce
-import org.jitsi.utils.configk2.dsl.PropertyConfigBuilder
-import org.jitsi.utils.configk2.dsl.convertedBy
-import org.jitsi.utils.configk2.dsl.property
-import org.jitsi.utils.configk2.dsl.propertyNew
 import org.reflections.Reflections
 import org.reflections.scanners.FieldAnnotationsScanner
 import org.reflections.scanners.SubTypesScanner

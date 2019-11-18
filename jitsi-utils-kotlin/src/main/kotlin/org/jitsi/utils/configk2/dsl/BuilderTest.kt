@@ -18,16 +18,16 @@ package org.jitsi.utils.configk2.dsl
 
 import org.jitsi.utils.configk.ConfigProperty
 import org.jitsi.utils.configk2.ConfigPropertyAttributes
+import org.jitsi.utils.configk2.ConfigPropertyAttributesBuilder
 import org.jitsi.utils.configk2.ConfigRetriever
 import org.jitsi.utils.configk2.ConfigSource
-import org.jitsi.utils.configk2.TypedConfigPropertyAttributesBuilder
 import java.time.Duration
 import kotlin.reflect.KClass
 
 class TypedFoo<T : Any>(
     type: KClass<T>
 ) {
-    var attributesBuilder = TypedConfigPropertyAttributesBuilder<T>(type)
+    var attributesBuilder = ConfigPropertyAttributesBuilder<T>(type)
     var innerRetriever: RetrievedType<*, T>? = null
 
     fun name(name: String) {
