@@ -16,8 +16,11 @@
 
 package org.jitsi.utils.configk2.examples
 
+import org.jitsi.utils.configk.ConfigProperty
 import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.configk.readEveryTime
 import org.jitsi.utils.configk2.ConfigSource
+import org.jitsi.utils.configk2.dsl.MultiConfigPropertyBuilder
 import org.jitsi.utils.configk2.dsl.multiProperty
 import org.jitsi.utils.configk2.dsl.property
 import java.time.Duration
@@ -64,6 +67,9 @@ class ExampleProperties {
             }
         }
 
+        val legacyPropertyUsingHelper =
+            simple<Long>(readOnce = true, legacyName = "oldPropLong", newName = "newPropLong")
+
         // This prop won't be found in legacy config and will fall back to newConfig
         val legacyFallthroughProperty = multiProperty<Long> {
             property {
@@ -78,14 +84,30 @@ class ExampleProperties {
                 retrievedAs<Duration>() convertedBy { it.toMillis() }
             }
         }
+
     }
 
     //TODO: validate read frequency stuff is working
     //TODO: we should have an AbstractConfigProperty which would print a message if
     // a prop was marked as deprecated/etc and it was found
     //TODO: clean up and organize code
-    //TODO: helper class/method to get the simpler 'legacy config' syntax for the common case
-    // (or maybe this is in jvb?)
+}
+
+// An example helper to simplify a common case (a property that was in the old config and is now in
+// new config, doesn't do anything fancy with the type
+inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newName: String): ConfigProperty<T> {
+    return MultiConfigPropertyBuilder<T>(T::class).apply {
+        property {
+            name(legacyName)
+            if (readOnce) readOnce() else readEveryTime()
+            fromConfig(legacyConfig())
+        }
+        property {
+            name(newName)
+            if (readOnce) readOnce() else readEveryTime()
+            fromConfig(newConfig())
+        }
+    }.build()
 }
 
 
@@ -94,5 +116,6 @@ fun main() {
     println("simpleProperty = ${ExampleProperties.simpleProperty.value}")
     println("transformingProperty = ${ExampleProperties.transformingProperty.value}")
     println("legacyProperty = ${ExampleProperties.legacyProperty.value}")
+    println("legacyPropertyUsingHelper = ${ExampleProperties.legacyPropertyUsingHelper.value}")
     println("legacyFallthroughProperty = ${ExampleProperties.legacyFallthroughProperty.value}")
 }

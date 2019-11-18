@@ -68,5 +68,4 @@ class ConfigPropertyAttributesBuilder<T : Any>(
     fun build(): ConfigPropertyAttributes<T> =
         //TODO: validate params and give better exceptions
         ConfigPropertyAttributes(keyPath!!, valueType, readOnce!!, configSource!!)
-
 }

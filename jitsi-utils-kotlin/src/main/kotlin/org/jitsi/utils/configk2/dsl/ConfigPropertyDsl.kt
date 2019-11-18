@@ -21,6 +21,7 @@ import org.jitsi.utils.configk.ConfigResult
 import org.jitsi.utils.configk.configRunCatching
 import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
 import org.jitsi.utils.configk.getOrThrow
+import org.jitsi.utils.configk.readEveryTime
 import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
 import org.jitsi.utils.configk2.ConfigPropertyAttributes
