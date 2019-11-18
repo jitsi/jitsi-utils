@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk2.dsl
+package org.jitsi.utils.configk.dsl
 
-import org.jitsi.utils.configk2.ConfigProperty
-import org.jitsi.utils.configk2.exception.NoAcceptablePropertyInstanceFoundException
-import org.jitsi.utils.configk2.strategy.ReadFrequencyStrategy
-import org.jitsi.utils.configk2.strategy.getReadStrategy
-import org.jitsi.utils.configk2.ConfigPropertyAttributes
-import org.jitsi.utils.configk2.ConfigPropertyAttributesBuilder
-import org.jitsi.utils.configk2.ConfigResult
-import org.jitsi.utils.configk2.ConfigSource
-import org.jitsi.utils.configk2.configRunCatching
-import org.jitsi.utils.configk2.getOrThrow
-import org.jitsi.utils.configk2.supplier
+import org.jitsi.utils.configk.ConfigProperty
+import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
+import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
+import org.jitsi.utils.configk.strategy.getReadStrategy
+import org.jitsi.utils.configk.ConfigPropertyAttributes
+import org.jitsi.utils.configk.ConfigPropertyAttributesBuilder
+import org.jitsi.utils.configk.ConfigResult
+import org.jitsi.utils.configk.ConfigSource
+import org.jitsi.utils.configk.configRunCatching
+import org.jitsi.utils.configk.getOrThrow
+import org.jitsi.utils.configk.supplier
 import kotlin.reflect.KClass
 
 class ConfigPropertyBuilder<T : Any>(

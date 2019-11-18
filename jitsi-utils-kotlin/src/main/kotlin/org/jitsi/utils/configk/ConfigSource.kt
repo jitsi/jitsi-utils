@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk2
+package org.jitsi.utils.configk
 
-/**
- * A configuration property with a value of type [T]
- */
-interface ConfigProperty<T : Any> {
-    val value: T
+import kotlin.reflect.KClass
+
+interface ConfigSource {
+    /**
+     * Given a [valueType], return a function which takes in a
+     * configuration property key (aka a key 'name') and returns the value
+     * of the property at the given name as type [T]
+     */
+    fun <T : Any>getterFor(valueType: KClass<T>): (String) -> T
 }
-

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk2.exception
+package org.jitsi.utils.configk.exception
 
 import kotlin.reflect.KClass
 

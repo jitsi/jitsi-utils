@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk2.examples
+package org.jitsi.utils.configk.examples
 
-import org.jitsi.utils.configk2.ConfigProperty
-import org.jitsi.utils.configk2.ConfigSource
-import org.jitsi.utils.configk2.dsl.MultiConfigPropertyBuilder
-import org.jitsi.utils.configk2.dsl.multiProperty
-import org.jitsi.utils.configk2.dsl.property
+import org.jitsi.utils.configk.ConfigProperty
+import org.jitsi.utils.configk.ConfigSource
+import org.jitsi.utils.configk.dsl.MultiConfigPropertyBuilder
+import org.jitsi.utils.configk.dsl.multiProperty
+import org.jitsi.utils.configk.dsl.property
 import java.time.Duration
 
 private val newConfig = ExampleConfigSource(mapOf(

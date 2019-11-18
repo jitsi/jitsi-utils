@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk2
+package org.jitsi.utils.configk
 
 /**
  * A [ConfigResult] represents the result of a 'search' for a configuration
