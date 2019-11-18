@@ -21,9 +21,12 @@ import org.jitsi.utils.configk.ConfigResult
 import org.jitsi.utils.configk.configRunCatching
 import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
 import org.jitsi.utils.configk.getOrThrow
+import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
+import org.jitsi.utils.configk.strategy.getReadStrategy
 import org.jitsi.utils.configk2.ConfigPropertyAttributes
 import org.jitsi.utils.configk2.ConfigPropertyAttributesBuilder
 import org.jitsi.utils.configk2.ConfigSource
+import org.jitsi.utils.configk2.supplier
 import kotlin.reflect.KClass
 
 class ConfigPropertyBuilder<T : Any>(
@@ -49,11 +52,13 @@ class ConfigPropertyBuilder<T : Any>(
 
     fun build(): ConfigProperty<T> {
         val attrs = attributesBuilder.build()
-        return innerRetriever?.build(attributesBuilder.build()) ?: run {
+        return innerRetriever?.build(attrs) ?: run {
             object : ConfigProperty<T> {
-                val retriever = org.jitsi.utils.configk2.Retriever(attrs)
+                private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
+                    getReadStrategy(attrs.readOnce, attrs.supplier)
+//                val retriever = org.jitsi.utils.configk2.Retriever(attrs)
                 override val value: T
-                    get() = retriever.retrieve()
+                    get() = readFrequencyStrategy.get().getOrThrow()
             }
         }
     }
@@ -61,22 +66,28 @@ class ConfigPropertyBuilder<T : Any>(
     class RetrievedTypeHelper<RetrievedType : Any, ActualType : Any>(
         val retrieveType: KClass<RetrievedType>
     ) {
-        var converter: ((RetrievedType) -> ActualType)? = null
+        private lateinit var converter: ((RetrievedType) -> ActualType)
 
         infix fun convertedBy(converter: (RetrievedType) -> ActualType) {
             this.converter = converter
         }
 
         fun build(attrs: ConfigPropertyAttributes<ActualType>) : ConfigProperty<ActualType> {
-            // First make a retriever that retrieves it as RetrievedType
-            val innerAttrs = ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
-            val innerRetriever = org.jitsi.utils.configk2.Retriever(innerAttrs)
-
-            return object : ConfigProperty<ActualType> {
-                override val value: ActualType
-                    get() = converter!!(innerRetriever.retrieve())
+            if (!::converter.isInitialized) {
+                throw Exception("Property '${attrs.keyPath}' of type " +
+                        "${attrs.valueType.simpleName} was set to retrieve " +
+                        "as type ${retrieveType.simpleName}, but no " +
+                        "conversion function was " +
+                        "given via 'convertedBy'")
             }
 
+            return object : ConfigProperty<ActualType> {
+                val innerAttrs = ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
+                private val readFrequencyStrategy: ReadFrequencyStrategy<RetrievedType> =
+                    getReadStrategy(innerAttrs.readOnce, innerAttrs.supplier)
+                override val value: ActualType
+                    get() = converter(readFrequencyStrategy.get().getOrThrow())
+            }
         }
     }
 }
@@ -96,6 +107,8 @@ class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
                 is ConfigResult.PropertyFound -> return result
             }
         }
+        //TODO: better error message here (include prop name, at least)--or make the inner
+        // exceptions better
         return ConfigResult.notFound(NoAcceptablePropertyInstanceFoundException(exceptions))
     }
 
@@ -103,7 +116,6 @@ class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
         return object : ConfigProperty<T> {
             override val value: T
                 get() = findResultOrAggregateExceptions(innerProperties).getOrThrow()
-
         }
     }
 }

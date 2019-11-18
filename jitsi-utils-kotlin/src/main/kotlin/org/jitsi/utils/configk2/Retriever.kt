@@ -20,6 +20,9 @@ import org.jitsi.utils.configk.getOrThrow
 import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
 
+/**
+ *
+ */
 class Retriever<T : Any>(
     propertyAttributes: ConfigPropertyAttributes<T>
 ) {
@@ -29,6 +32,9 @@ class Retriever<T : Any>(
     fun retrieve(): T = readFrequencyStrategy.get().getOrThrow()
 }
 
+/**
+ * A helper method to define a supplier function for [ConfigPropertyAttributes]
+ */
 val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
     get() {
         val typedGetter = configSource.getterFor(valueType)

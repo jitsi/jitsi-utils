@@ -16,28 +16,27 @@
 
 package org.jitsi.utils.configk2.examples
 
+import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
 import org.jitsi.utils.configk2.ConfigSource
 import java.time.Duration
 import kotlin.reflect.KClass
 
-class ExampleConfigSource : ConfigSource {
+class ExampleConfigSource(
+    val props: Map<String, Any>
+) : ConfigSource {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> getterFor(valueType: KClass<T>): (ConfigSource, String) -> T {
         return when(valueType) {
             Int::class -> ({ config, path -> (config as ExampleConfigSource).getInt(path) as T })
             Long::class -> ({ config, path -> (config as ExampleConfigSource).getLong(path) as T })
             Duration::class -> ({ config, path -> (config as ExampleConfigSource).getDuration(path) as T })
+            Double::class -> ({ _, _ -> throw ConfigPropertyNotFoundException("couldn't find it!")})
             else -> TODO("no getter available for $valueType")
         }
     }
 
-    fun getInt(path: String): Int = 42
-    fun getLong(path: String): Long = 43
-    fun getDuration(path: String): Duration = Duration.ofSeconds(10)
+    fun getInt(path: String): Int = props[path] as Int
+    fun getLong(path: String): Long = props[path] as Long
+    fun getDuration(path: String): Duration = props[path] as Duration
 }
 
-private val newConfig = ExampleConfigSource()
-private val legacyConfig = ExampleConfigSource()
-
-fun newConfig(): ConfigSource = newConfig
-fun legacyConfig(): ConfigSource = legacyConfig
