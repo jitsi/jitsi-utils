@@ -17,39 +17,35 @@
 package org.jitsi.utils.configk
 
 import io.kotlintest.IsolationMode
-import io.kotlintest.specs.ShouldSpec
 import io.kotlintest.shouldBe
-import org.jitsi.utils.configk.PropValueRetriever
-import org.jitsi.utils.configk.getOrThrow
-import org.jitsi.utils.configk.readEveryTime
-import org.jitsi.utils.configk.readOnce
+import io.kotlintest.specs.ShouldSpec
 
-class PropValueRetrieverTest : ShouldSpec() {
-    override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
-
-    var numTimesCalled = 0
-    private val intSupplier = { numTimesCalled++ }
-
-    init {
-        "A read-once property" {
-            val prop = PropValueRetriever(readOnce(), intSupplier)
-
-            "when accessed multiple times" {
-                repeat(5) { prop.result.getOrThrow() }
-                should("only have called the supplier once") {
-                    numTimesCalled shouldBe 1
-                }
-            }
-        }
-        "A read-every-time property" {
-            val prop = PropValueRetriever(readEveryTime(), intSupplier)
-            "when accessed multiple times" {
-                repeat(5) { prop.result.getOrThrow() }
-                should("have called the supplier each time") {
-                    numTimesCalled shouldBe 5
-                }
-            }
-        }
-    }
-
-}
+//class PropValueRetrieverTest : ShouldSpec() {
+//    override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
+//
+//    var numTimesCalled = 0
+//    private val intSupplier = { numTimesCalled++ }
+//
+//    init {
+//        "A read-once property" {
+//            val prop = PropValueRetriever(readOnce(), intSupplier)
+//
+//            "when accessed multiple times" {
+//                repeat(5) { prop.result.getOrThrow() }
+//                should("only have called the supplier once") {
+//                    numTimesCalled shouldBe 1
+//                }
+//            }
+//        }
+//        "A read-every-time property" {
+//            val prop = PropValueRetriever(readEveryTime(), intSupplier)
+//            "when accessed multiple times" {
+//                repeat(5) { prop.result.getOrThrow() }
+//                should("have called the supplier each time") {
+//                    numTimesCalled shouldBe 5
+//                }
+//            }
+//        }
+//    }
+//
+//}

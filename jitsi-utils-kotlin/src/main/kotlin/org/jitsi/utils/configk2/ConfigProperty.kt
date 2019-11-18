@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk
+package org.jitsi.utils.configk2
 
 /**
  * A configuration property with a value of type [T]

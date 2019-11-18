@@ -16,9 +16,7 @@
 
 package org.jitsi.utils.configk2.examples
 
-import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
-import org.jitsi.utils.configk.readEveryTime
+import org.jitsi.utils.configk2.ConfigProperty
 import org.jitsi.utils.configk2.ConfigSource
 import org.jitsi.utils.configk2.dsl.MultiConfigPropertyBuilder
 import org.jitsi.utils.configk2.dsl.multiProperty

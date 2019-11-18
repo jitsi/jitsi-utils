@@ -39,6 +39,12 @@ data class ConfigPropertyAttributes<T : Any>(
     val configSource: ConfigSource
 )
 
+/**
+* A helper method to define a supplier function for [ConfigPropertyAttributes]
+*/
+val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
+    get() = { configSource.getterFor(valueType).invoke(keyPath) }
+
 class ConfigPropertyAttributesBuilder<T : Any>(
     private val valueType: KClass<T>,
     protected var keyPath: String? = null,

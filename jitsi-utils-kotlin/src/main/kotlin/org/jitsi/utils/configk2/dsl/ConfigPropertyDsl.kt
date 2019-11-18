@@ -16,17 +16,16 @@
 
 package org.jitsi.utils.configk2.dsl
 
-import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.ConfigResult
-import org.jitsi.utils.configk.configRunCatching
-import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
-import org.jitsi.utils.configk.getOrThrow
-import org.jitsi.utils.configk.readEveryTime
-import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
-import org.jitsi.utils.configk.strategy.getReadStrategy
+import org.jitsi.utils.configk2.ConfigProperty
+import org.jitsi.utils.configk2.exception.NoAcceptablePropertyInstanceFoundException
+import org.jitsi.utils.configk2.strategy.ReadFrequencyStrategy
+import org.jitsi.utils.configk2.strategy.getReadStrategy
 import org.jitsi.utils.configk2.ConfigPropertyAttributes
 import org.jitsi.utils.configk2.ConfigPropertyAttributesBuilder
+import org.jitsi.utils.configk2.ConfigResult
 import org.jitsi.utils.configk2.ConfigSource
+import org.jitsi.utils.configk2.configRunCatching
+import org.jitsi.utils.configk2.getOrThrow
 import org.jitsi.utils.configk2.supplier
 import kotlin.reflect.KClass
 
@@ -48,6 +47,10 @@ class ConfigPropertyBuilder<T : Any>(
         attributesBuilder.readOnce()
     }
 
+    fun readEveryTime() {
+        attributesBuilder.readEveryTime()
+    }
+
     inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> =
         RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
 
@@ -57,7 +60,6 @@ class ConfigPropertyBuilder<T : Any>(
             object : ConfigProperty<T> {
                 private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
                     getReadStrategy(attrs.readOnce, attrs.supplier)
-//                val retriever = org.jitsi.utils.configk2.Retriever(attrs)
                 override val value: T
                     get() = readFrequencyStrategy.get().getOrThrow()
             }

@@ -16,9 +16,8 @@
 
 package org.jitsi.utils.configk2.examples
 
-import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
-import org.jitsi.utils.configk.exception.ConfigValueParsingException
-import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
+import org.jitsi.utils.configk2.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.configk2.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk2.ConfigSource
 import java.time.Duration
 import kotlin.reflect.KClass
