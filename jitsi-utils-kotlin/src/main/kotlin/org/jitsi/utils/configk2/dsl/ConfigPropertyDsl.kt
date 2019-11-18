@@ -17,9 +17,12 @@
 package org.jitsi.utils.configk2.dsl
 
 import org.jitsi.utils.configk.ConfigProperty
+import org.jitsi.utils.configk.ConfigResult
+import org.jitsi.utils.configk.configRunCatching
+import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
+import org.jitsi.utils.configk.getOrThrow
 import org.jitsi.utils.configk2.ConfigPropertyAttributes
 import org.jitsi.utils.configk2.ConfigPropertyAttributesBuilder
-import org.jitsi.utils.configk2.ConfigRetriever
 import org.jitsi.utils.configk2.ConfigSource
 import kotlin.reflect.KClass
 
@@ -48,7 +51,7 @@ class ConfigPropertyBuilder<T : Any>(
         val attrs = attributesBuilder.build()
         return innerRetriever?.build(attributesBuilder.build()) ?: run {
             object : ConfigProperty<T> {
-                val retriever = ConfigRetriever(attrs)
+                val retriever = org.jitsi.utils.configk2.Retriever(attrs)
                 override val value: T
                     get() = retriever.retrieve()
             }
@@ -67,7 +70,7 @@ class ConfigPropertyBuilder<T : Any>(
         fun build(attrs: ConfigPropertyAttributes<ActualType>) : ConfigProperty<ActualType> {
             // First make a retriever that retrieves it as RetrievedType
             val innerAttrs = ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
-            val innerRetriever = ConfigRetriever(innerAttrs)
+            val innerRetriever = org.jitsi.utils.configk2.Retriever(innerAttrs)
 
             return object : ConfigProperty<ActualType> {
                 override val value: ActualType
@@ -78,7 +81,35 @@ class ConfigPropertyBuilder<T : Any>(
     }
 }
 
-inline fun <reified T : Any> property(block: ConfigPropertyBuilder<T>.() -> Unit): ConfigProperty<T> {
-    val x = ConfigPropertyBuilder(T::class).also(block)
-    return x.build()
+class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
+    val innerProperties = mutableListOf<ConfigProperty<T>>()
+
+    fun property(block: ConfigPropertyBuilder<T>.() -> Unit) {
+        innerProperties.add(ConfigPropertyBuilder<T>(type).apply(block).build())
+    }
+
+    private fun findResultOrAggregateExceptions(configProperties: Iterable<ConfigProperty<T>>): ConfigResult<T> {
+        val exceptions = mutableListOf<Throwable>()
+        for (prop in configProperties) {
+            when (val result = configRunCatching { prop.value }) {
+                is ConfigResult.PropertyNotFound -> exceptions.add(result.exception)
+                is ConfigResult.PropertyFound -> return result
+            }
+        }
+        return ConfigResult.notFound(NoAcceptablePropertyInstanceFoundException(exceptions))
+    }
+
+    fun build(): ConfigProperty<T> {
+        return object : ConfigProperty<T> {
+            override val value: T
+                get() = findResultOrAggregateExceptions(innerProperties).getOrThrow()
+
+        }
+    }
 }
+
+inline fun <reified T : Any> property(block: ConfigPropertyBuilder<T>.() -> Unit): ConfigProperty<T> =
+    ConfigPropertyBuilder(T::class).also(block).build()
+
+inline fun <reified T : Any> multiProperty(block: MultiConfigPropertyBuilder<T>.() -> Unit): ConfigProperty<T> =
+    MultiConfigPropertyBuilder(T::class).also(block).build()

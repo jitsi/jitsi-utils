@@ -25,6 +25,7 @@ class ExampleConfigSource : ConfigSource {
     override fun <T : Any> getterFor(valueType: KClass<T>): (ConfigSource, String) -> T {
         return when(valueType) {
             Int::class -> ({ config, path -> (config as ExampleConfigSource).getInt(path) as T })
+            Long::class -> ({ config, path -> (config as ExampleConfigSource).getLong(path) as T })
             Duration::class -> ({ config, path -> (config as ExampleConfigSource).getDuration(path) as T })
             else -> TODO("no getter available for $valueType")
         }

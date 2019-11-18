@@ -16,6 +16,7 @@
 
 package org.jitsi.utils.configk2.examples
 
+import org.jitsi.utils.configk2.dsl.multiProperty
 import org.jitsi.utils.configk2.dsl.property
 import java.time.Duration
 
@@ -33,10 +34,25 @@ class ExampleProperties {
             fromConfig(newConfig())
             retrievedAs<Duration>() convertedBy { it.toMillis() }
         }
+
+        val legacyProperty = multiProperty<Long> {
+            property {
+                name("legacyName")
+                readOnce()
+                fromConfig(legacyConfig())
+            }
+            property {
+                name("newName")
+                readOnce()
+                fromConfig(newConfig())
+                retrievedAs<Duration>() convertedBy { it.toMillis() }
+            }
+        }
     }
 }
 
 fun main() {
     println("simpleProperty = ${ExampleProperties.simpleProperty.value}")
     println("transformingProperty = ${ExampleProperties.transformingProperty.value}")
+    println("legacyProperty = ${ExampleProperties.legacyProperty.value}")
 }

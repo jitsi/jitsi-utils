@@ -34,7 +34,7 @@ interface RetrieverInterface<T : Any> {
     fun retrieve(): T
 }
 
-//class ConfigRetriever<T : Any>(
+//class Retriever<T : Any>(
 //    val propertyAttributes: ConfigPropertyAttributes,
 //) : RetrieverInterface<T> {
 //    private val readFrequencyStrategy: ReadFrequencyStrategy<T>

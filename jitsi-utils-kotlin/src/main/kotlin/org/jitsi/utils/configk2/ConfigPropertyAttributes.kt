@@ -70,33 +70,3 @@ class ConfigPropertyAttributesBuilder<T : Any>(
         ConfigPropertyAttributes(keyPath!!, valueType, readOnce!!, configSource!!)
 
 }
-
-//class TypedConfigPropertyAttributesBuilder<T : Any>(
-//    private val valueType: KClass<T>,
-//    keyPath: String? = null,
-//    readOnce: Boolean? = null
-//) : ConfigPropertyAttributesBuilder(keyPath, readOnce) {
-//    override fun readOnce(): TypedConfigPropertyAttributesBuilder<T> {
-//        super.readOnce()
-//        return this
-//    }
-//
-//    override fun readEveryTime(): ConfigPropertyAttributesBuilder {
-//        super.readEveryTime()
-//        return this
-//    }
-//
-//    override fun name(propName: String): TypedConfigPropertyAttributesBuilder<T> {
-//        super.name(propName)
-//        return this
-//    }
-//
-//    override fun fromConfig(configSource: ConfigSource): TypedConfigPropertyAttributesBuilder<T> {
-//        super.fromConfig(configSource)
-//        return this
-//    }
-//
-//    override fun build(): ConfigPropertyAttributes<T> =
-//        ConfigPropertyAttributes<T>(keyPath!!, valueType, readOnce!!, configSource!!)
-//}
-

@@ -20,17 +20,13 @@ import org.jitsi.utils.configk.getOrThrow
 import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
 import org.jitsi.utils.configk.strategy.getReadStrategy
 
-interface Retriever<T : Any> {
-    fun retrieve(): T
-}
-
-class ConfigRetriever<T : Any>(
-    val propertyAttributes: ConfigPropertyAttributes<T>
-) : Retriever<T> {
+class Retriever<T : Any>(
+    propertyAttributes: ConfigPropertyAttributes<T>
+) {
     private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
         getReadStrategy(propertyAttributes.readOnce, propertyAttributes.supplier)
 
-    override fun retrieve(): T = readFrequencyStrategy.get().getOrThrow()
+    fun retrieve(): T = readFrequencyStrategy.get().getOrThrow()
 }
 
 val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
