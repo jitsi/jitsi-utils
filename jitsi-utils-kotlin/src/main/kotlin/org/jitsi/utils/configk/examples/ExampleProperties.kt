@@ -87,10 +87,8 @@ class ExampleProperties {
             simple<Int>(readOnce = true, legacyName = "notFound", newName = "notFound")
     }
 
-    //TODO: validate read frequency stuff is working
     //TODO: we should have an AbstractConfigProperty which would print a message if
     // a prop was marked as deprecated/etc and it was found
-    //TODO: clean up and organize code
 }
 
 // An example helper to simplify a common case (a property that was in the old config and is now in

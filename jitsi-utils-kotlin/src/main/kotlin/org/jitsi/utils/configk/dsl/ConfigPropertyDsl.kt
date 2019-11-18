@@ -101,11 +101,18 @@ class ConfigPropertyBuilder<T : Any>(
             }
 
             return object : ConfigProperty<ActualType> {
-                val innerAttrs = ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
-                private val readFrequencyStrategy: ReadFrequencyStrategy<RetrievedType> =
-                    getReadStrategy(innerAttrs.readOnce, innerAttrs.supplier)
+                private val retrievedTypeAttrs =
+                    ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
+                // The supplier which retrieves the value as RetrievedType
+                private val retrievedTypeSupplier = retrievedTypeAttrs.supplier
+                // The supplier which invokes the retrievedTypeSupplier and converts the result to ActualType
+                private val actualTypeSupplier = { converter(retrievedTypeSupplier()) }
+
+                private val readFrequencyStrategy: ReadFrequencyStrategy<ActualType> =
+                    getReadStrategy(retrievedTypeAttrs.readOnce, actualTypeSupplier)
+                
                 override val value: ActualType
-                    get() = converter(readFrequencyStrategy.get().getOrThrow())
+                    get() = readFrequencyStrategy.get().getOrThrow()
             }
         }
     }
