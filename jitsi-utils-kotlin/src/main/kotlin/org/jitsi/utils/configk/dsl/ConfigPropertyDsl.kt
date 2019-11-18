@@ -29,10 +29,19 @@ import org.jitsi.utils.configk.getOrThrow
 import org.jitsi.utils.configk.supplier
 import kotlin.reflect.KClass
 
+/**
+ * A helper class used to build an instance of
+ * [ConfigProperty].
+ */
 class ConfigPropertyBuilder<T : Any>(
     type: KClass<T>
 ) {
-    var attributesBuilder = ConfigPropertyAttributesBuilder<T>(type)
+    private val attributesBuilder = ConfigPropertyAttributesBuilder(type)
+    /**
+     * If set, when building the [ConfigProperty] we'll use this
+     * helper to retrieve the value as a type other than [T]
+     * and then convert it to an instance of [T]
+     */
     var innerRetriever: RetrievedTypeHelper<*, T>? = null
 
     fun name(name: String) {
@@ -66,6 +75,13 @@ class ConfigPropertyBuilder<T : Any>(
         }
     }
 
+    /**
+     * A helper class used when a configuration value is retrieved as a
+     * different type than the eventual value type.  For example,
+     * this allows creating a [ConfigurationProperty] with a value
+     * type of [Int], but retrieving it from the [ConfigSource] as
+     * another type (say, [Duration]) and then converting it to [Int]
+     */
     class RetrievedTypeHelper<RetrievedType : Any, ActualType : Any>(
         val retrieveType: KClass<RetrievedType>
     ) {
@@ -95,6 +111,11 @@ class ConfigPropertyBuilder<T : Any>(
     }
 }
 
+/**
+ * A helper class used to build a [ConfigProperty] instance which is composed
+ * of multiple 'inner' properties.  Each of these properties is queried in
+ * order when looking for the value.
+ */
 class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
     val innerProperties = mutableListOf<ConfigProperty<T>>()
 

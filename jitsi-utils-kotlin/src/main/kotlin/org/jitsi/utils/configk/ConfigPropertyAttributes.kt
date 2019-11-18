@@ -35,7 +35,10 @@ data class ConfigPropertyAttributes<T : Any>(
      * the configuration source every time its accessed.
      */
     val readOnce: Boolean,
-
+    /**
+     * The [ConfigSource] instance from which this property will
+     * be read
+     */
     val configSource: ConfigSource
 )
 
@@ -47,9 +50,9 @@ val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
 
 class ConfigPropertyAttributesBuilder<T : Any>(
     private val valueType: KClass<T>,
-    protected var keyPath: String? = null,
-    protected var readOnce: Boolean? = null,
-    protected var configSource: ConfigSource? = null
+    private var keyPath: String? = null,
+    private var readOnce: Boolean? = null,
+    private var configSource: ConfigSource? = null
 ) {
     fun readOnce(): ConfigPropertyAttributesBuilder<T> {
         readOnce = true
@@ -71,7 +74,10 @@ class ConfigPropertyAttributesBuilder<T : Any>(
         return this
     }
 
-    fun build(): ConfigPropertyAttributes<T> =
-        //TODO: validate params and give better exceptions
-        ConfigPropertyAttributes(keyPath!!, valueType, readOnce!!, configSource!!)
+    fun build(): ConfigPropertyAttributes<T> {
+        val keyPath: String = keyPath ?: throw Exception("Property name not set")
+        val readOnce: Boolean = readOnce ?: throw Exception("Read frequency not set")
+        val configSource: ConfigSource = configSource ?: throw Exception("Config source not set")
+        return ConfigPropertyAttributes(keyPath, valueType, readOnce, configSource)
+    }
 }

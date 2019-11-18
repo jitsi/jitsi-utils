@@ -18,6 +18,10 @@ package org.jitsi.utils.configk
 
 import kotlin.reflect.KClass
 
+/**
+ * A [ConfigSource] is what is used to retrieve configuration values
+ * from some location.
+ */
 interface ConfigSource {
     /**
      * Given a [valueType], return a function which takes in a
