@@ -24,11 +24,11 @@ import org.jitsi.utils.configk2.ConfigSource
 import java.time.Duration
 import kotlin.reflect.KClass
 
-class TypedFoo<T : Any>(
+class ConfigPropertyBuilder<T : Any>(
     type: KClass<T>
 ) {
     var attributesBuilder = ConfigPropertyAttributesBuilder<T>(type)
-    var innerRetriever: RetrievedType<*, T>? = null
+    var innerRetriever: RetrievedTypeHelper<*, T>? = null
 
     fun name(name: String) {
         attributesBuilder.name(name)
@@ -42,10 +42,8 @@ class TypedFoo<T : Any>(
         attributesBuilder.readOnce()
     }
 
-    inline fun <reified U : Any> retrievedAs(block: RetrievedType<U, T>.() -> Unit) {
-        innerRetriever = RetrievedType<U, T>(U::class).apply(block)
-    }
-
+    inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> =
+        RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
 
     fun build(): ConfigProperty<T> {
         val attrs = attributesBuilder.build()
@@ -58,17 +56,17 @@ class TypedFoo<T : Any>(
         }
     }
 
-    class RetrievedType<RetrieveType : Any, ActualType : Any>(
-        val retrieveType: KClass<RetrieveType>
+    class RetrievedTypeHelper<RetrievedType : Any, ActualType : Any>(
+        val retrieveType: KClass<RetrievedType>
     ) {
-        var converter: ((RetrieveType) -> ActualType)? = null
+        var converter: ((RetrievedType) -> ActualType)? = null
 
-        fun convertedBy(converter: (RetrieveType) -> ActualType) {
+        infix fun convertedBy(converter: (RetrievedType) -> ActualType) {
             this.converter = converter
         }
 
         fun build(attrs: ConfigPropertyAttributes<ActualType>) : ConfigProperty<ActualType> {
-            // First make a retriever that retrieves it as RetrieveType
+            // First make a retriever that retrieves it as RetrievedType
             val innerAttrs = ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
             val innerRetriever = ConfigRetriever(innerAttrs)
 
@@ -81,9 +79,8 @@ class TypedFoo<T : Any>(
     }
 }
 
-inline fun <reified T : Any> property2(block: TypedFoo<T>.() -> Unit): ConfigProperty<T> {
-    val x = TypedFoo(T::class)
-    x.block()
+inline fun <reified T : Any> property(block: ConfigPropertyBuilder<T>.() -> Unit): ConfigProperty<T> {
+    val x = ConfigPropertyBuilder(T::class).also(block)
     return x.build()
 }
 
@@ -93,7 +90,7 @@ class DummyConfig : ConfigSource {
         return when(valueType) {
             Int::class -> ({ config, path -> (config as DummyConfig).getInt(path) as T })
             Duration::class -> ({ config, path -> (config as DummyConfig).getDuration(path) as T })
-            else -> TODO()
+            else -> TODO("no getter for $valueType")
         }
     }
 
@@ -102,16 +99,14 @@ class DummyConfig : ConfigSource {
 }
 
 fun main() {
-    val x = property2<Long> {
+    val x = property<Long> {
         name("name")
         readOnce()
         fromConfig(DummyConfig())
-        retrievedAs<Duration> {
-            convertedBy { it.toMillis() }
-        }
+        retrievedAs<Duration>() convertedBy { it.toMillis() }
     }
 
-    val y = property2<Int> {
+    val y = property<Int> {
         name("name")
         readOnce()
         fromConfig(DummyConfig())
@@ -120,12 +115,3 @@ fun main() {
     println("x = ${x.value}")
     println("y = ${y.value}")
 }
-
-// val x = property<Long> {
-//   name("name")
-//   readOnce()
-//   fromConfig(newConfig())
-//   retrievedAs<Duration> {
-//     convertedBy { it.toMillis }
-//   }
-//}
