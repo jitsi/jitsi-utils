@@ -22,6 +22,7 @@ import org.jitsi.utils.configk.dsl.MultiConfigPropertyBuilder
 import org.jitsi.utils.configk.dsl.multiProperty
 import org.jitsi.utils.configk.dsl.property
 import java.time.Duration
+import kotlin.reflect.KClass
 
 private val newConfig = ExampleConfigSource(mapOf(
     "newPropInt" to 42,
@@ -68,10 +69,18 @@ class ExampleProperties {
         val legacyPropertyUsingHelper =
             simple<Long>(readOnce = true, legacyName = "oldPropLong", newName = "newPropLong")
 
+        // Defining a class for a property instead of just a value
+        class LegacyPropertyUsingClass : SimpleConfig<Long>(
+            valueType = Long::class,
+            legacyName = "oldPropLong",
+            newName = "newPropLong",
+            readOnce = true
+        )
+
         // This prop won't be found in legacy config and will fall back to newConfig
         val legacyFallthroughProperty = multiProperty<Long> {
             property {
-                name("non-existant")
+                name("nonexistent")
                 readOnce()
                 fromConfig(legacyConfig())
             }
@@ -108,6 +117,29 @@ inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newNa
     }.build()
 }
 
+open class SimpleConfig<T : Any>(
+    valueType: KClass<T>,
+    legacyName: String,
+    newName: String,
+    readOnce: Boolean
+) : ConfigProperty<T> {
+    val multiProp = MultiConfigPropertyBuilder(valueType).apply {
+        property {
+            name(legacyName)
+            if (readOnce) readOnce() else readEveryTime()
+            fromConfig(legacyConfig())
+        }
+        property {
+            name(newName)
+            if (readOnce) readOnce() else readEveryTime()
+            fromConfig(newConfig())
+        }
+    }.build()
+
+    override val value: T
+        get() = multiProp.value
+}
+
 
 
 fun main() {
@@ -115,6 +147,7 @@ fun main() {
     println("transformingProperty = ${ExampleProperties.transformingProperty.value}")
     println("legacyProperty = ${ExampleProperties.legacyProperty.value}")
     println("legacyPropertyUsingHelper = ${ExampleProperties.legacyPropertyUsingHelper.value}")
+    println("legacyPropertyUsingClass = ${ExampleProperties.Companion.LegacyPropertyUsingClass().value}")
     println("legacyFallthroughProperty = ${ExampleProperties.legacyFallthroughProperty.value}")
     try {
         println("neverFoundProperty = ${ExampleProperties.neverFoundProperty.value}")

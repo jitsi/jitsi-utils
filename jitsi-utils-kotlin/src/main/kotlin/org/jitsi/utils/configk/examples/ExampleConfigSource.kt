@@ -35,6 +35,10 @@ class ExampleConfigSource(
         }
     }
 
+    //TODO: if the type is wrong, we end up getting 'config property not found exception'
+    // (because we return null here).  should maybe throw something from the getter
+    // methods which can give more info (i.e. it was found, but not as the expected
+    // type)
     private fun getInt(path: String): Int? = props[path] as? Int
     private fun getLong(path: String): Long? = props[path] as? Long
     private fun getDuration(path: String): Duration? = props[path] as? Duration

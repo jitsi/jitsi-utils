@@ -32,6 +32,7 @@ sealed class ReadFrequencyStrategy<T : Any>(
      * reading encountered an error, a [ConfigResult.NotFound]
      * will be returned
      */
+    //TODO: rename (read?)
     abstract fun get(): ConfigResult<T>
 }
 

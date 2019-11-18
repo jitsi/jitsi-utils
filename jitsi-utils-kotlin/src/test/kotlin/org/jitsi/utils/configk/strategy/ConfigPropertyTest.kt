@@ -20,6 +20,7 @@ import io.kotlintest.IsolationMode
 import io.kotlintest.TestCase
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
+import org.jitsi.utils.configk.dsl.multiProperty
 import org.jitsi.utils.configk.dsl.property
 import org.jitsi.utils.configk.testutils.TestConfigSource
 import java.time.Duration
@@ -85,6 +86,76 @@ class ConfigPropertyTest : ShouldSpec() {
                 repeat (5) { property.value }
                 newConfig.numGetsCalled shouldBe 1
                 numTimesConverterCalled shouldBe 1
+            }
+        }
+        "Converting, read-every-time property" {
+            var numTimesConverterCalled = 0
+            val property = property<Long> {
+                name("onlyNewProp")
+                readEveryTime()
+                fromConfig(newConfig)
+                retrievedAs<Duration>() convertedBy { numTimesConverterCalled++; it.toMillis() }
+            }
+            should("read the correct value") {
+                property.value shouldBe 10000
+            }
+            should("only query the value and converter once") {
+                repeat (5) { property.value }
+                newConfig.numGetsCalled shouldBe 5
+                numTimesConverterCalled shouldBe 5
+            }
+        }
+        "Multi, read-once property" {
+            val property = multiProperty<Long> {
+                property {
+                    name("oldPropLong")
+                    readOnce()
+                    fromConfig(legacyConfig)
+                }
+                property {
+                    name("newPropLong")
+                    readOnce()
+                    fromConfig(newConfig)
+                }
+            }
+            should("read the correct value") {
+                property.value shouldBe 44
+            }
+            should("only query the value once and stop") {
+                repeat (5) { property.value }
+                legacyConfig.numGetsCalled shouldBe 1
+                newConfig.numGetsCalled shouldBe 1
+            }
+        }
+        "Multi, read-every-time property" {
+            val property = multiProperty<Long> {
+                property {
+                    name("oldPropLong")
+                    readEveryTime()
+                    fromConfig(legacyConfig)
+                }
+                property {
+                    name("newPropLong")
+                    readEveryTime()
+                    fromConfig(newConfig)
+                }
+            }
+            should("read the correct value") {
+                property.value shouldBe 44
+            }
+            should("reflect changes") {
+                legacyConfig.props.remove("oldPropLong")
+                property.value shouldBe 43
+            }
+            should("query the value every time") {
+                repeat (5) { property.value }
+                legacyConfig.numGetsCalled shouldBe 5
+                // NOTE: A Multi property walks through each inner property
+                // and stops at the first one that gives a value.  Since
+                // read-every-time properties don't query the value on
+                // creation, that means we never end up checking newConfig
+                // for this value (since it exists in old config)
+                newConfig.numGetsCalled shouldBe 0
             }
         }
     }

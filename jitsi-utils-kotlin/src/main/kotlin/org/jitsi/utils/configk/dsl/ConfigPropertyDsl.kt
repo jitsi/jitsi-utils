@@ -110,7 +110,7 @@ class ConfigPropertyBuilder<T : Any>(
 
                 private val readFrequencyStrategy: ReadFrequencyStrategy<ActualType> =
                     getReadStrategy(retrievedTypeAttrs.readOnce, actualTypeSupplier)
-                
+
                 override val value: ActualType
                     get() = readFrequencyStrategy.get().getOrThrow()
             }
@@ -127,12 +127,20 @@ class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
     val innerProperties = mutableListOf<ConfigProperty<T>>()
 
     fun property(block: ConfigPropertyBuilder<T>.() -> Unit) {
-        innerProperties.add(ConfigPropertyBuilder<T>(type).apply(block).build())
+        innerProperties.add(ConfigPropertyBuilder(type).apply(block).build())
     }
 
     private fun findResultOrAggregateExceptions(configProperties: Iterable<ConfigProperty<T>>): ConfigResult<T> {
         val exceptions = mutableListOf<Throwable>()
         for (prop in configProperties) {
+            //TODO: configRunCatching here is a bit redundant, as the inner props already have
+            // a ConfigResult, they just don't expose it (they only expose the value).  This makes
+            // sense for a normal property--but it's a bit wasteful for a multi-property, it was
+            // just nice to re-use the code.  We could either have
+            // multiconfigproperty not creater inner property types (and just create
+            // attrs/readstrats and use those), or, we could expose ConfigResult
+            // in ConfigProperty and access that instead of wrapping the access of
+            // value in configRunCatching
             when (val result = configRunCatching { prop.value }) {
                 is ConfigResult.PropertyNotFound -> exceptions.add(result.exception)
                 is ConfigResult.PropertyFound -> return result
