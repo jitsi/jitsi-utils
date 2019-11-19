@@ -95,7 +95,7 @@ class ConfigPropertyBuilder<T : Any>(
  * order when looking for the value.
  */
 class MultiConfigPropertyBuilder<T : Any>(private val type: KClass<T>) {
-    val innerProperties = mutableListOf<ConfigProperty<T>>()
+    private val innerProperties = mutableListOf<ConfigProperty<T>>()
 
     fun property(block: ConfigPropertyBuilder<T>.() -> Unit) {
         innerProperties.add(ConfigPropertyBuilder(type).apply(block).buildProp())
@@ -117,8 +117,6 @@ class MultiConfigPropertyBuilder<T : Any>(private val type: KClass<T>) {
                 is ConfigResult.PropertyFound -> return result
             }
         }
-        //TODO: better error message here (include prop name, at least)--or make the inner
-        // exceptions better
         return ConfigResult.notFound(NoAcceptablePropertyInstanceFoundException(exceptions))
     }
 
