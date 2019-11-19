@@ -29,4 +29,10 @@ interface ConfigSource {
      * of the property at the given name as type [T]
      */
     fun <T : Any>getterFor(valueType: KClass<T>): (String) -> T
+
+    /**
+     * A name for this [ConfigSource] to give extra context in the
+     * event of errors
+     */
+    val name: String
 }

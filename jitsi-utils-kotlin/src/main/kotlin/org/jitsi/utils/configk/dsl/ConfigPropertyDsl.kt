@@ -70,7 +70,8 @@ class ConfigPropertyBuilder<T : Any>(
         fun build(attrs: ConfigPropertyAttributes<ActualType>) : ConfigProperty<ActualType> {
             if (!::converter.isInitialized) {
                 throw Exception("Property '${attrs.keyPath}' of type " +
-                        "${attrs.valueType.simpleName} was set to retrieve " +
+                        "${attrs.valueType.simpleName} from source " +
+                        "${attrs.configSource.name} was set to retrieve " +
                         "as type ${retrieveType.simpleName}, but no " +
                         "conversion function was " +
                         "given via 'convertedBy'")

@@ -23,6 +23,7 @@ import java.time.Duration
 import kotlin.reflect.KClass
 
 class TestConfigSource(
+    override val name: String,
     props: Map<String, Any>
 ) : ConfigSource {
     val props = props.toMutableMap()

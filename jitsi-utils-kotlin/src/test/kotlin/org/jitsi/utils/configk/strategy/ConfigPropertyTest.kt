@@ -29,12 +29,12 @@ class ConfigPropertyTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
     init {
-        val newConfig = TestConfigSource(mapOf(
+        val newConfig = TestConfigSource("newConfig", mapOf(
             "newPropInt" to 42,
             "newPropLong" to 43L,
             "onlyNewProp" to Duration.ofSeconds(10)
         ))
-        val legacyConfig = TestConfigSource(mapOf(
+        val legacyConfig = TestConfigSource("legacyConfig", mapOf(
             "oldPropInt" to 41,
             "oldPropLong" to 44L,
             "onlyOldProp" to 10

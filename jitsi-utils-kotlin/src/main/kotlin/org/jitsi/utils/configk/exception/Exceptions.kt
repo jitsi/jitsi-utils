@@ -19,12 +19,23 @@ package org.jitsi.utils.configk.exception
 import kotlin.reflect.KClass
 
 /**
+ * Prints only the exception's 'simple' name, not the fully qualified
+ * class name (which makes the error harder to decipher and doesn't
+ * add much in the case of config exceptions)
+ */
+open class SimpleToStringException(
+    message: String
+) : Exception(message) {
+    override fun toString(): String = "${this.javaClass.simpleName}: $message"
+}
+
+/**
  * Used for when the configuration source doesn't support parsing the requested
  * type
  */
 class ConfigurationValueTypeUnsupportedException private constructor(
     message: String
-) : Exception(message) {
+) : SimpleToStringException(message) {
     companion object {
         // We can't have a generic type on the class constructor, so use a helper here
         // to create the log message
@@ -39,11 +50,11 @@ class ConfigurationValueTypeUnsupportedException private constructor(
  */
 class ConfigPropertyNotFoundException(
     message: String
-) : Exception(message)
+) : SimpleToStringException(message)
 
 class ConfigValueParsingException(
     message: String
-) : Exception(message)
+) : SimpleToStringException(message)
 
 /**
  * Used when no instance of a property can be found across multiple
@@ -51,4 +62,4 @@ class ConfigValueParsingException(
  */
 class NoAcceptablePropertyInstanceFoundException(
     val exceptions: List<Throwable>
-) : Exception("Unable to find or parse configuration property due to: ${exceptions}")
+) : SimpleToStringException("Unable to find or parse configuration property due to: ${exceptions}")

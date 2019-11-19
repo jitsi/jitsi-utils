@@ -20,11 +20,16 @@ import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
 import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk.ConfigSource
 import org.jitsi.utils.configk.exception.ConfigValueParsingException
-import java.lang.ClassCastException
 import java.time.Duration
 import kotlin.reflect.KClass
 
+/**
+ * An example [ConfigSource].  This [ConfigSource] just reads from
+ * a given map which contains property key names mapped to their
+ * already-typed values.
+ */
 class ExampleConfigSource(
+    override val name: String,
     val props: Map<String, Any>
 ) : ConfigSource {
     @Suppress("UNCHECKED_CAST")
@@ -37,9 +42,9 @@ class ExampleConfigSource(
         }
     }
 
-    private fun getInt(path: String): Int = getValueHelper(path) { it as? Int }
-    private fun getLong(path: String): Long = getValueHelper(path) { it as? Long }
-    private fun getDuration(path: String): Duration? = getValueHelper(path) { it as? Duration }
+    private fun getInt(path: String): Int = getValueHelper(path, Int::class) { it as? Int }
+    private fun getLong(path: String): Long = getValueHelper(path, Long::class) { it as? Long }
+    private fun getDuration(path: String): Duration? = getValueHelper(path, Duration::class) { it as? Duration }
 
     /**
      * There are 2 possible things that can happen:
@@ -49,9 +54,14 @@ class ExampleConfigSource(
      * getValueHelper include some code to detect both of those situations and give
      * more useful exception messages
      */
-    private fun <T : Any> getValueHelper(path: String, caster: (Any) -> T?): T {
-        val result = props.getOrElse(path) { throw ConfigPropertyNotFoundException("Could not find value for property at '$path'")}
-        return caster(result) ?: throw ConfigValueParsingException("Value $result at path '$path' could not be parsed as Long")
+    private fun <T : Any> getValueHelper(path: String, desiredType: KClass<T>, typeCast: (Any) -> T?): T {
+        val result = props.getOrElse(path) {
+            throw ConfigPropertyNotFoundException("Could not find value for property at '$path' " +
+                    "in config $name")
+        }
+        return typeCast(result) ?: throw ConfigValueParsingException("Value '$result' " +
+                "(type ${result.javaClass.simpleName}) at path '$path' in config $name " +
+                "could not be cast to ${desiredType.simpleName}")
     }
 
     @Suppress("UNCHECKED_CAST")

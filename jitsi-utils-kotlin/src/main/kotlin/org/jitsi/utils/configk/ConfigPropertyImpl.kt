@@ -37,7 +37,7 @@ class ConfigPropertyImpl<T : Any>(
             val result = readFrequencyStrategy.get()
             if (attrs.isDeprecated && result.isFound()) {
                 logger.warn("Property ${attrs.keyPath} is marked as deprecated" +
-                        " but has a value set")
+                        " in config ${attrs.configSource.name} but has a value set.")
             }
             return result.getOrThrow()
         }

@@ -17,26 +17,22 @@
 package org.jitsi.utils.configk.examples
 
 import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.ConfigSource
 import org.jitsi.utils.configk.dsl.MultiConfigPropertyBuilder
 import org.jitsi.utils.configk.dsl.multiProperty
 import org.jitsi.utils.configk.dsl.property
 import java.time.Duration
 import kotlin.reflect.KClass
 
-private val newConfig = ExampleConfigSource(mapOf(
+private val newConfig = ExampleConfigSource("newConfig", mapOf(
     "newPropInt" to 42,
     "newPropLong" to 43L,
     "onlyNewProp" to Duration.ofSeconds(10)
 ))
-private val legacyConfig = ExampleConfigSource(mapOf(
+private val legacyConfig = ExampleConfigSource("legacyConfig", mapOf(
     "oldPropInt" to 41,
     "oldPropLong" to 44L,
     "onlyOldProp" to 10
 ))
-
-fun newConfig(): ConfigSource = newConfig
-fun legacyConfig(): ConfigSource = legacyConfig
 
 class ExampleProperties {
     companion object {
@@ -44,28 +40,28 @@ class ExampleProperties {
         val simpleProperty = property<Int> {
             name("newPropInt")
             readOnce()
-            fromConfig(newConfig())
+            fromConfig(newConfig)
         }
 
         // Property which retrieves the value as a different type and transforms it
         val transformingProperty = property<Long> {
             name("onlyNewProp")
             readOnce()
-            fromConfig(newConfig())
+            fromConfig(newConfig)
             retrievedAs<Duration>() convertedBy { it.toMillis() }
         }
 
-        // Property which was defined in a prior config source
+        // Property for which we search multiple ConfigSources (in the given order)
         val legacyProperty = multiProperty<Long> {
             property {
                 name("oldPropLong")
                 readOnce()
-                fromConfig(legacyConfig())
+                fromConfig(legacyConfig)
             }
             property {
                 name("newPropLong")
                 readOnce()
-                fromConfig(newConfig())
+                fromConfig(newConfig)
             }
         }
 
@@ -86,14 +82,14 @@ class ExampleProperties {
             property {
                 name("oldPropLong")
                 readOnce()
-                fromConfig(legacyConfig())
+                fromConfig(legacyConfig)
                 deprecated("'oldPropLong' is no longer supported, please use " +
                         "'newPropLong' in the new config file")
             }
             property {
                 name("newPropLong")
                 readOnce()
-                fromConfig(newConfig())
+                fromConfig(newConfig)
             }
         }
 
@@ -102,62 +98,62 @@ class ExampleProperties {
             property {
                 name("nonexistent")
                 readOnce()
-                fromConfig(legacyConfig())
+                fromConfig(legacyConfig)
             }
             property {
                 name("onlyNewProp")
                 readOnce()
-                fromConfig(newConfig())
+                fromConfig(newConfig)
                 retrievedAs<Duration>() convertedBy { it.toMillis() }
             }
         }
 
         // A property that's never found
+        // Accessing this will give the following error:
+        // NoAcceptablePropertyInstanceFoundException: Unable to find or parse configuration property due to: [ConfigPropertyNotFoundException: Could not find value for property at 'notFound' in config legacyConfig, ConfigPropertyNotFoundException: Could not find value for property at 'notFound' in config newConfig]
         val neverFoundProperty =
             simple<Long>(readOnce = true, legacyName = "notFound", newName = "notFound")
 
         // Trying to retrieve a value as the incorrect type
+        // Accessing this will give the following error:
+        // ConfigValueParsingException: Value '41' (type Integer) at path 'oldPropInt' in config legacyConfig could not be cast to Lon
         val wrongTypeProperty = property<Long> {
             name("oldPropInt")
             readOnce()
             fromConfig(legacyConfig)
         }
+
+        // A property which tries to retrieve a value type that isn't supported by
+        // the ConfigSource
+        // Accessing this will give the following error:
+        // ConfigurationValueTypeUnsupportedException: No getter found for value of type class org.jitsi.utils.configk.examples.ExampleProperties$Companion$Foo
+        class Foo
+        val unsupportedValueTypeProperty = property<Foo> {
+            name("propName")
+            readOnce()
+            fromConfig(newConfig)
+        }
     }
 }
 
-// An example helper to simplify a common case (a property that was in the old config and is now in
-// new config, doesn't do anything fancy with the type
-inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newName: String): ConfigProperty<T> {
-    return MultiConfigPropertyBuilder<T>(T::class).apply {
-        property {
-            name(legacyName)
-            if (readOnce) readOnce() else readEveryTime()
-            fromConfig(legacyConfig())
-        }
-        property {
-            name(newName)
-            if (readOnce) readOnce() else readEveryTime()
-            fromConfig(newConfig())
-        }
-    }.build()
-}
-
+// A class to simplify a common case (a property that was in the old config and is now in
+// new config, doesn't need to convert the type)
 open class SimpleConfig<T : Any>(
     valueType: KClass<T>,
     legacyName: String,
     newName: String,
     readOnce: Boolean
 ) : ConfigProperty<T> {
-    val multiProp = MultiConfigPropertyBuilder(valueType).apply {
+    private val multiProp = MultiConfigPropertyBuilder(valueType).apply {
         property {
             name(legacyName)
             if (readOnce) readOnce() else readEveryTime()
-            fromConfig(legacyConfig())
+            fromConfig(legacyConfig)
         }
         property {
             name(newName)
             if (readOnce) readOnce() else readEveryTime()
-            fromConfig(newConfig())
+            fromConfig(newConfig)
         }
     }.build()
 
@@ -165,7 +161,9 @@ open class SimpleConfig<T : Any>(
         get() = multiProp.value
 }
 
-
+// A helper to create an instance of SimpleConfig
+inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newName: String): ConfigProperty<T> =
+    SimpleConfig(T::class, legacyName, newName, readOnce)
 
 fun main() {
     println("simpleProperty = ${ExampleProperties.simpleProperty.value}")
@@ -184,5 +182,10 @@ fun main() {
         ExampleProperties.wrongTypeProperty.value
     } catch (t: Throwable) {
         println("wrongTypeProperty: $t")
+    }
+    try {
+        ExampleProperties.unsupportedValueTypeProperty.value
+    } catch (t: Throwable) {
+        println("unsupportedValueTypeProperty: $t")
     }
 }
