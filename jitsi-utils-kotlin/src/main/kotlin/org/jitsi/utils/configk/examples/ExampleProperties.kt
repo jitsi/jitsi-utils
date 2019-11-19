@@ -77,6 +77,21 @@ class ExampleProperties {
             readOnce = true
         )
 
+        val legacyDeprecatedProperty = multiProperty<Long> {
+            property {
+                name("oldPropLong")
+                readOnce()
+                fromConfig(legacyConfig())
+                deprecated("'oldPropLong' is no longer supported, please use " +
+                        "'newPropLong' in the new config file")
+            }
+            property {
+                name("newPropLong")
+                readOnce()
+                fromConfig(newConfig())
+            }
+        }
+
         // This prop won't be found in legacy config and will fall back to newConfig
         val legacyFallthroughProperty = multiProperty<Long> {
             property {
@@ -95,9 +110,6 @@ class ExampleProperties {
         val neverFoundProperty =
             simple<Int>(readOnce = true, legacyName = "notFound", newName = "notFound")
     }
-
-    //TODO: we should have an AbstractConfigProperty which would print a message if
-    // a prop was marked as deprecated/etc and it was found
 }
 
 // An example helper to simplify a common case (a property that was in the old config and is now in
@@ -148,6 +160,7 @@ fun main() {
     println("legacyProperty = ${ExampleProperties.legacyProperty.value}")
     println("legacyPropertyUsingHelper = ${ExampleProperties.legacyPropertyUsingHelper.value}")
     println("legacyPropertyUsingClass = ${ExampleProperties.Companion.LegacyPropertyUsingClass().value}")
+    println("legacyDeprecatedProperty = ${ExampleProperties.legacyDeprecatedProperty.value}")
     println("legacyFallthroughProperty = ${ExampleProperties.legacyFallthroughProperty.value}")
     try {
         println("neverFoundProperty = ${ExampleProperties.neverFoundProperty.value}")

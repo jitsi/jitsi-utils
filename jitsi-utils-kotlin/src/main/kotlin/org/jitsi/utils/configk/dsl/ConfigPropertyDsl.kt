@@ -16,6 +16,7 @@
 
 package org.jitsi.utils.configk.dsl
 
+import org.jitsi.utils.configk.ConfigPropertyImpl
 import org.jitsi.utils.configk.ConfigProperty
 import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
 import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
@@ -36,6 +37,7 @@ import kotlin.reflect.KClass
 class ConfigPropertyBuilder<T : Any>(
     type: KClass<T>
 ) {
+    //TODO: use a class delegate for this? all methods are passthrough
     private val attributesBuilder = ConfigPropertyAttributesBuilder(type)
     /**
      * If set, when building the [ConfigProperty] we'll use this
@@ -60,19 +62,16 @@ class ConfigPropertyBuilder<T : Any>(
         attributesBuilder.readEveryTime()
     }
 
+    fun deprecated(message: String) {
+        attributesBuilder.deprecated(message)
+    }
+
     inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> =
         RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
 
     fun build(): ConfigProperty<T> {
         val attrs = attributesBuilder.build()
-        return innerRetriever?.build(attrs) ?: run {
-            object : ConfigProperty<T> {
-                private val readFrequencyStrategy: ReadFrequencyStrategy<T> =
-                    getReadStrategy(attrs.readOnce, attrs.supplier)
-                override val value: T
-                    get() = readFrequencyStrategy.get().getOrThrow()
-            }
-        }
+        return innerRetriever?.build(attrs) ?: run { ConfigPropertyImpl(attrs) }
     }
 
     /**
@@ -100,20 +99,14 @@ class ConfigPropertyBuilder<T : Any>(
                         "given via 'convertedBy'")
             }
 
-            return object : ConfigProperty<ActualType> {
-                private val retrievedTypeAttrs =
-                    ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
-                // The supplier which retrieves the value as RetrievedType
-                private val retrievedTypeSupplier = retrievedTypeAttrs.supplier
-                // The supplier which invokes the retrievedTypeSupplier and converts the result to ActualType
-                private val actualTypeSupplier = { converter(retrievedTypeSupplier()) }
+            val retrievedTypeAttrs =
+                ConfigPropertyAttributes(attrs.keyPath, retrieveType, attrs.readOnce, attrs.configSource)
+            // The supplier which retrieves the value as RetrievedType
+            val retrievedTypeSupplier = retrievedTypeAttrs.supplier
+            // The supplier which invokes the retrievedTypeSupplier and converts the result to ActualType
+            val actualTypeSupplier = { converter(retrievedTypeSupplier()) }
 
-                private val readFrequencyStrategy: ReadFrequencyStrategy<ActualType> =
-                    getReadStrategy(retrievedTypeAttrs.readOnce, actualTypeSupplier)
-
-                override val value: ActualType
-                    get() = readFrequencyStrategy.get().getOrThrow()
-            }
+            return ConfigPropertyImpl(attrs, actualTypeSupplier)
         }
     }
 }

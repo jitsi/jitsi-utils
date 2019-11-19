@@ -51,6 +51,9 @@ fun<T : Any> ConfigResult<T>.getOrThrow(): T {
     }
 }
 
+fun<T : Any> ConfigResult<T>.isFound(): Boolean =
+    this is ConfigResult.PropertyFound
+
 fun<T : Any> ConfigResult<T>.getOrElse(onFailure: (exception: Throwable) -> T): T {
     return when (this) {
         is ConfigResult.PropertyNotFound -> throw this.exception
