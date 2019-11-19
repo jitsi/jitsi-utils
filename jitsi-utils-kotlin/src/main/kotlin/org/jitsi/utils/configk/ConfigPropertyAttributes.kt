@@ -40,9 +40,14 @@ data class ConfigPropertyAttributes<T : Any>(
      * be read
      */
     val configSource: ConfigSource,
-
+    /**
+     * A deprecation notice (if applicable) for this property
+     */
     val deprecationNotice: DeprecationNotice? = null
 ) {
+    /**
+     * Whether or not this property has been marked as deprecated
+     */
     val isDeprecated: Boolean = deprecationNotice != null
 }
 
