@@ -40,12 +40,14 @@ fun legacyConfig(): ConfigSource = legacyConfig
 
 class ExampleProperties {
     companion object {
+        // Simple property defined using the DSL
         val simpleProperty = property<Int> {
             name("newPropInt")
             readOnce()
             fromConfig(newConfig())
         }
 
+        // Property which retrieves the value as a different type and transforms it
         val transformingProperty = property<Long> {
             name("onlyNewProp")
             readOnce()
@@ -53,6 +55,7 @@ class ExampleProperties {
             retrievedAs<Duration>() convertedBy { it.toMillis() }
         }
 
+        // Property which was defined in a prior config source
         val legacyProperty = multiProperty<Long> {
             property {
                 name("oldPropLong")
@@ -66,10 +69,11 @@ class ExampleProperties {
             }
         }
 
+        // Same as above, using a helper DSL method
         val legacyPropertyUsingHelper =
             simple<Long>(readOnce = true, legacyName = "oldPropLong", newName = "newPropLong")
 
-        // Defining a class for a property instead of just a value
+        // Same as above, but defining a class for the property instead of a value
         class LegacyPropertyUsingClass : SimpleConfig<Long>(
             valueType = Long::class,
             legacyName = "oldPropLong",
@@ -77,6 +81,7 @@ class ExampleProperties {
             readOnce = true
         )
 
+        // A property where one source is deprecated
         val legacyDeprecatedProperty = multiProperty<Long> {
             property {
                 name("oldPropLong")
@@ -107,8 +112,16 @@ class ExampleProperties {
             }
         }
 
+        // A property that's never found
         val neverFoundProperty =
-            simple<Int>(readOnce = true, legacyName = "notFound", newName = "notFound")
+            simple<Long>(readOnce = true, legacyName = "notFound", newName = "notFound")
+
+        // Trying to retrieve a value as the incorrect type
+        val wrongTypeProperty = property<Long> {
+            name("oldPropInt")
+            readOnce()
+            fromConfig(legacyConfig)
+        }
     }
 }
 
@@ -163,8 +176,13 @@ fun main() {
     println("legacyDeprecatedProperty = ${ExampleProperties.legacyDeprecatedProperty.value}")
     println("legacyFallthroughProperty = ${ExampleProperties.legacyFallthroughProperty.value}")
     try {
-        println("neverFoundProperty = ${ExampleProperties.neverFoundProperty.value}")
+        ExampleProperties.neverFoundProperty.value
     } catch (t: Throwable) {
-        println(t)
+        println("neverFoundProperty: $t")
+    }
+    try {
+        ExampleProperties.wrongTypeProperty.value
+    } catch (t: Throwable) {
+        println("wrongTypeProperty: $t")
     }
 }

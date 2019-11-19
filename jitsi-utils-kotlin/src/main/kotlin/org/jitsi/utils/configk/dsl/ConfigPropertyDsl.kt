@@ -54,9 +54,9 @@ class ConfigPropertyBuilder<T : Any>(
     /**
      * A helper class used when a configuration value is retrieved as a
      * different type than the eventual value type.  For example,
-     * this allows creating a [ConfigurationProperty] with a value
+     * this allows creating a [ConfigProperty] with a value
      * type of [Int], but retrieving it from the [ConfigSource] as
-     * another type (say, [Duration]) and then converting it to [Int]
+     * another type (say, [java.time.Duration] and then converting it to [Long])
      */
     class RetrievedTypeHelper<RetrievedType : Any, ActualType : Any>(
         private val retrieveType: KClass<RetrievedType>
@@ -93,7 +93,7 @@ class ConfigPropertyBuilder<T : Any>(
  * of multiple 'inner' properties.  Each of these properties is queried in
  * order when looking for the value.
  */
-class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
+class MultiConfigPropertyBuilder<T : Any>(private val type: KClass<T>) {
     val innerProperties = mutableListOf<ConfigProperty<T>>()
 
     fun property(block: ConfigPropertyBuilder<T>.() -> Unit) {

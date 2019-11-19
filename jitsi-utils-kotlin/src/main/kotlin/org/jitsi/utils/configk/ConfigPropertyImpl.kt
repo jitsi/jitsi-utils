@@ -19,6 +19,12 @@ package org.jitsi.utils.configk
 import org.jitsi.utils.configk.strategy.getReadStrategy
 import org.jitsi.utils.logging2.LoggerImpl
 
+/**
+ * A generic [ConfigProperty] implementation which takes in
+ * a set of attributes and, optionally, a custom supplier
+ * and derives a read frequency strategy to retrieve
+ * the configuration value via [get]
+ */
 class ConfigPropertyImpl<T : Any>(
     private val attrs: ConfigPropertyAttributes<T>,
     supplier: () -> T = attrs.supplier

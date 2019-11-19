@@ -19,6 +19,8 @@ package org.jitsi.utils.configk.examples
 import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
 import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
 import org.jitsi.utils.configk.ConfigSource
+import org.jitsi.utils.configk.exception.ConfigValueParsingException
+import java.lang.ClassCastException
 import java.time.Duration
 import kotlin.reflect.KClass
 
@@ -35,13 +37,22 @@ class ExampleConfigSource(
         }
     }
 
-    //TODO: if the type is wrong, we end up getting 'config property not found exception'
-    // (because we return null here).  should maybe throw something from the getter
-    // methods which can give more info (i.e. it was found, but not as the expected
-    // type)
-    private fun getInt(path: String): Int? = props[path] as? Int
-    private fun getLong(path: String): Long? = props[path] as? Long
-    private fun getDuration(path: String): Duration? = props[path] as? Duration
+    private fun getInt(path: String): Int = getValueHelper(path) { it as? Int }
+    private fun getLong(path: String): Long = getValueHelper(path) { it as? Long }
+    private fun getDuration(path: String): Duration? = getValueHelper(path) { it as? Duration }
+
+    /**
+     * There are 2 possible things that can happen:
+     * 1) The property wasn't found at all
+     * 2) The property was found but we can't cast/parse it to the requested type
+     *
+     * getValueHelper include some code to detect both of those situations and give
+     * more useful exception messages
+     */
+    private fun <T : Any> getValueHelper(path: String, caster: (Any) -> T?): T {
+        val result = props.getOrElse(path) { throw ConfigPropertyNotFoundException("Could not find value for property at '$path'")}
+        return caster(result) ?: throw ConfigValueParsingException("Value $result at path '$path' could not be parsed as Long")
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun <U, T : Any> getterHelper(getter: (String) -> U): (String) -> T {

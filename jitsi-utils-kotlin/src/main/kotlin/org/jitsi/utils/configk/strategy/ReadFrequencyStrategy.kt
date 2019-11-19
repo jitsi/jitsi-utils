@@ -29,10 +29,11 @@ sealed class ReadFrequencyStrategy<T : Any>(
     /**
      * Get this configuration property's value in the form
      * of a [ConfigResult<T>]: if the property was not found or
-     * reading encountered an error, a [ConfigResult.NotFound]
-     * will be returned
+     * reading encountered an error, a [ConfigResult.PropertyNotFound]
+     * containing the exception will be returned,
+     * otherwise a [ConfigResult.PropertyFound] will be returned
+     * containing the value
      */
-    //TODO: rename (read?)
     abstract fun get(): ConfigResult<T>
 }
 
