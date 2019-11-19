@@ -19,10 +19,9 @@ package org.jitsi.utils.configk.dsl
 import org.jitsi.utils.configk.ConfigPropertyImpl
 import org.jitsi.utils.configk.ConfigProperty
 import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
-import org.jitsi.utils.configk.strategy.ReadFrequencyStrategy
-import org.jitsi.utils.configk.strategy.getReadStrategy
 import org.jitsi.utils.configk.ConfigPropertyAttributes
 import org.jitsi.utils.configk.ConfigPropertyAttributesBuilder
+import org.jitsi.utils.configk.ConfigPropertyAttributesBuilderImpl
 import org.jitsi.utils.configk.ConfigResult
 import org.jitsi.utils.configk.ConfigSource
 import org.jitsi.utils.configk.configRunCatching
@@ -36,9 +35,7 @@ import kotlin.reflect.KClass
  */
 class ConfigPropertyBuilder<T : Any>(
     type: KClass<T>
-) {
-    //TODO: use a class delegate for this? all methods are passthrough
-    private val attributesBuilder = ConfigPropertyAttributesBuilder(type)
+) : ConfigPropertyAttributesBuilder<T> by ConfigPropertyAttributesBuilderImpl(type){
     /**
      * If set, when building the [ConfigProperty] we'll use this
      * helper to retrieve the value as a type other than [T]
@@ -46,31 +43,11 @@ class ConfigPropertyBuilder<T : Any>(
      */
     var innerRetriever: RetrievedTypeHelper<*, T>? = null
 
-    fun name(name: String) {
-        attributesBuilder.name(name)
-    }
-
-    fun fromConfig(configSource: ConfigSource) {
-        attributesBuilder.fromConfig(configSource)
-    }
-
-    fun readOnce() {
-        attributesBuilder.readOnce()
-    }
-
-    fun readEveryTime() {
-        attributesBuilder.readEveryTime()
-    }
-
-    fun deprecated(message: String) {
-        attributesBuilder.deprecated(message)
-    }
-
     inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> =
         RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
 
-    fun build(): ConfigProperty<T> {
-        val attrs = attributesBuilder.build()
+    fun buildProp(): ConfigProperty<T> {
+        val attrs = this.build()
         return innerRetriever?.build(attrs) ?: run { ConfigPropertyImpl(attrs) }
     }
 
@@ -82,7 +59,7 @@ class ConfigPropertyBuilder<T : Any>(
      * another type (say, [Duration]) and then converting it to [Int]
      */
     class RetrievedTypeHelper<RetrievedType : Any, ActualType : Any>(
-        val retrieveType: KClass<RetrievedType>
+        private val retrieveType: KClass<RetrievedType>
     ) {
         private lateinit var converter: ((RetrievedType) -> ActualType)
 
@@ -120,7 +97,7 @@ class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
     val innerProperties = mutableListOf<ConfigProperty<T>>()
 
     fun property(block: ConfigPropertyBuilder<T>.() -> Unit) {
-        innerProperties.add(ConfigPropertyBuilder(type).apply(block).build())
+        innerProperties.add(ConfigPropertyBuilder(type).apply(block).buildProp())
     }
 
     private fun findResultOrAggregateExceptions(configProperties: Iterable<ConfigProperty<T>>): ConfigResult<T> {
@@ -153,7 +130,7 @@ class MultiConfigPropertyBuilder<T : Any>(val type: KClass<T>) {
 }
 
 inline fun <reified T : Any> property(block: ConfigPropertyBuilder<T>.() -> Unit): ConfigProperty<T> =
-    ConfigPropertyBuilder(T::class).also(block).build()
+    ConfigPropertyBuilder(T::class).also(block).buildProp()
 
 inline fun <reified T : Any> multiProperty(block: MultiConfigPropertyBuilder<T>.() -> Unit): ConfigProperty<T> =
     MultiConfigPropertyBuilder(T::class).also(block).build()
