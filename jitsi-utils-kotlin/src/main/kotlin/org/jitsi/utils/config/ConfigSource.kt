@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.config.strategy.read_frequency;
+package org.jitsi.utils.config
+
+import kotlin.reflect.KClass
 
 /**
- * A strategy which defines how often we'll read a
- * property's value from the config library.
- *
- * @param <T> the type of the property's value
+ * A [ConfigSource] is what is used to retrieve configuration values
+ * from some location.
  */
-public interface ReadFrequencyStrategy<T>
-{
-    T getValue();
+interface ConfigSource {
+    /**
+     * Given a [valueType], return a function which takes in a
+     * configuration property key (aka a key 'name') and returns the value
+     * of the property at the given name as type [T]
+     */
+    fun <T : Any>getterFor(valueType: KClass<T>): (String) -> T
+
+    /**
+     * A name for this [ConfigSource] to give extra context in the
+     * event of errors
+     */
+    val name: String
 }

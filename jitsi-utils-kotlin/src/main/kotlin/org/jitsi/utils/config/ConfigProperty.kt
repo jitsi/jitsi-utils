@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.config.strategy.prop_not_found;
+package org.jitsi.utils.config
 
-public class ReturnNullIfNotFoundStrategy<T> implements PropNotFoundStrategy<T>
-{
-    @Override
-    public T handleNotFound(String propName)
-    {
-        return null;
-    }
+/**
+ * A configuration property with a value of type [T]
+ */
+interface ConfigProperty<T : Any> {
+    val value: T
 }
+
