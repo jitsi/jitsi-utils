@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.examples
+package org.jitsi.utils.config.examples
 
-import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.dsl.MultiConfigPropertyBuilder
-import org.jitsi.utils.configk.dsl.multiProperty
-import org.jitsi.utils.configk.dsl.property
+import org.jitsi.utils.config.ConfigProperty
+import org.jitsi.utils.config.dsl.MultiConfigPropertyBuilder
+import org.jitsi.utils.config.dsl.multiProperty
+import org.jitsi.utils.config.dsl.property
 import java.time.Duration
 import kotlin.reflect.KClass
 

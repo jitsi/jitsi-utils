@@ -16,7 +16,7 @@
 
 @file:Suppress("unused")
 
-package org.jitsi.utils.configk
+package org.jitsi.utils.config
 
 /**
  * A [ConfigResult] represents the result of a 'search' for a configuration

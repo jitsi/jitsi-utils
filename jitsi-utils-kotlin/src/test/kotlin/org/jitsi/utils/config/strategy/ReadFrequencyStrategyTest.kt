@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.strategy
+package org.jitsi.utils.config.strategy
 
 import io.kotlintest.IsolationMode
 import io.kotlintest.matchers.types.shouldBeInstanceOf
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
-import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.ConfigResult
-import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.config.ConfigResult
+import org.jitsi.utils.config.exception.ConfigPropertyNotFoundException
 
 class ReadFrequencyStrategyTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf

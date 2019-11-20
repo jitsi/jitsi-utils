@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.strategy
+package org.jitsi.utils.config.strategy
 
-import org.jitsi.utils.configk.ConfigResult
-import org.jitsi.utils.configk.configRunCatching
+import org.jitsi.utils.config.ConfigResult
+import org.jitsi.utils.config.configRunCatching
 
 /**
  * A strategy which defines how frequently a configuration

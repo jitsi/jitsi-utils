@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.strategy
+package org.jitsi.utils.config.strategy
 
 import io.kotlintest.IsolationMode
-import io.kotlintest.TestCase
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
-import org.jitsi.utils.configk.dsl.multiProperty
-import org.jitsi.utils.configk.dsl.property
-import org.jitsi.utils.configk.testutils.TestConfigSource
+import org.jitsi.utils.config.dsl.multiProperty
+import org.jitsi.utils.config.dsl.property
+import org.jitsi.utils.config.testutils.TestConfigSource
 import java.time.Duration
 
 class ConfigPropertyTest : ShouldSpec() {

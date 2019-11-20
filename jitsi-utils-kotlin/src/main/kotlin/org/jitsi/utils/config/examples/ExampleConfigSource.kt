@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.examples
+package org.jitsi.utils.config.examples
 
-import org.jitsi.utils.configk.exception.ConfigPropertyNotFoundException
-import org.jitsi.utils.configk.exception.ConfigurationValueTypeUnsupportedException
-import org.jitsi.utils.configk.ConfigSource
-import org.jitsi.utils.configk.exception.ConfigValueParsingException
+import org.jitsi.utils.config.exception.ConfigPropertyNotFoundException
+import org.jitsi.utils.config.exception.ConfigurationValueTypeUnsupportedException
+import org.jitsi.utils.config.ConfigSource
+import org.jitsi.utils.config.exception.ConfigValueParsingException
 import java.time.Duration
 import kotlin.reflect.KClass
 

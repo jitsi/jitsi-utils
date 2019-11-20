@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk.dsl
+package org.jitsi.utils.config.dsl
 
-import org.jitsi.utils.configk.ConfigPropertyImpl
-import org.jitsi.utils.configk.ConfigProperty
-import org.jitsi.utils.configk.exception.NoAcceptablePropertyInstanceFoundException
-import org.jitsi.utils.configk.ConfigPropertyAttributes
-import org.jitsi.utils.configk.ConfigPropertyAttributesBuilder
-import org.jitsi.utils.configk.ConfigPropertyAttributesBuilderImpl
-import org.jitsi.utils.configk.ConfigResult
-import org.jitsi.utils.configk.ConfigSource
-import org.jitsi.utils.configk.configRunCatching
-import org.jitsi.utils.configk.getOrThrow
-import org.jitsi.utils.configk.supplier
+import org.jitsi.utils.config.ConfigPropertyImpl
+import org.jitsi.utils.config.ConfigProperty
+import org.jitsi.utils.config.exception.NoAcceptablePropertyInstanceFoundException
+import org.jitsi.utils.config.ConfigPropertyAttributes
+import org.jitsi.utils.config.ConfigPropertyAttributesBuilder
+import org.jitsi.utils.config.ConfigPropertyAttributesBuilderImpl
+import org.jitsi.utils.config.ConfigResult
+import org.jitsi.utils.config.ConfigSource
+import org.jitsi.utils.config.configRunCatching
+import org.jitsi.utils.config.getOrThrow
+import org.jitsi.utils.config.supplier
 import kotlin.reflect.KClass
 
 /**

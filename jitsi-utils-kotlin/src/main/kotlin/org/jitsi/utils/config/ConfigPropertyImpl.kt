@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.configk
+package org.jitsi.utils.config
 
-import org.jitsi.utils.configk.strategy.getReadStrategy
+import org.jitsi.utils.config.strategy.getReadStrategy
 import org.jitsi.utils.logging2.LoggerImpl
 
 /**
