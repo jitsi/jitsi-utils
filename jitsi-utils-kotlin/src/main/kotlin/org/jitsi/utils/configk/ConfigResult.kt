@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("unused")
+
 package org.jitsi.utils.configk
 
 /**
@@ -24,6 +26,9 @@ package org.jitsi.utils.configk
  * exception.
  */
 sealed class ConfigResult<T : Any> {
+    /**
+     * Models a property whose value was found.  The parsed value is held.
+     */
     class PropertyFound<T : Any>(val value: T) : ConfigResult<T>() {
         override fun equals(other: Any?): Boolean =
             other is PropertyFound<*> && value == other.value
@@ -31,6 +36,10 @@ sealed class ConfigResult<T : Any> {
         override fun toString(): String = "Found($value)"
     }
 
+    /**
+     * Models a property whose value was not found.  The exception
+     * encountered when searching is held.
+     */
     class PropertyNotFound<T : Any>(val exception: Throwable) : ConfigResult<T>() {
         override fun equals(other: Any?): Boolean =
             other is PropertyNotFound<*> && exception == other.exception
@@ -44,6 +53,10 @@ sealed class ConfigResult<T : Any> {
     }
 }
 
+/**
+ * If this [ConfigResult] is a [ConfigResult.PropertyFound], return
+ * the contained value.  Else throw the contained exception.
+ */
 fun<T : Any> ConfigResult<T>.getOrThrow(): T {
     return when (this) {
         is ConfigResult.PropertyNotFound -> throw this.exception
@@ -51,16 +64,29 @@ fun<T : Any> ConfigResult<T>.getOrThrow(): T {
     }
 }
 
+/**
+ * Return true if a value for this property was found,
+ * false otherwise.
+ */
 fun<T : Any> ConfigResult<T>.isFound(): Boolean =
     this is ConfigResult.PropertyFound
 
+/**
+ * If this [ConfigResult] is a [ConfigResult.PropertyFound], return
+ * the contained value.  Otherwise call [onFailure] with the exception
+ */
 fun<T : Any> ConfigResult<T>.getOrElse(onFailure: (exception: Throwable) -> T): T {
     return when (this) {
-        is ConfigResult.PropertyNotFound -> throw this.exception
+        is ConfigResult.PropertyNotFound -> onFailure(this.exception)
         is ConfigResult.PropertyFound -> this.value
     }
 }
 
+/**
+ * If this [ConfigResult] is a [ConfigResult.PropertyFound], invoke
+ * [onSuccess] with the contained value.  Otherwise call
+ * [onFailure] with the exception
+ */
 fun<T : Any, R> ConfigResult<T>.fold(
     onSuccess: (value: T) -> R,
     onFailure: (exception: Throwable) -> R
@@ -71,6 +97,12 @@ fun<T : Any, R> ConfigResult<T>.fold(
     }
 }
 
+/**
+ * Run [block], returning a [ConfigResult.PropertyFound]
+ * instance with the returned value if it succeeds, otherwise
+ * a [ConfigResult.PropertyNotFound] instance with the exception
+ * if it throws.
+ */
 inline fun<T : Any> configRunCatching(block: () -> T): ConfigResult<T> {
     return try {
         ConfigResult.found(block())
