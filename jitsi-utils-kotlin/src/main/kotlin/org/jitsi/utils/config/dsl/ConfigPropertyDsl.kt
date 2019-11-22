@@ -34,7 +34,7 @@ import kotlin.reflect.KClass
  * [ConfigProperty].
  */
 class ConfigPropertyBuilder<T : Any>(
-    type: KClass<T>
+    private val type: KClass<T>
 ) : ConfigPropertyAttributesBuilder<T> by ConfigPropertyAttributesBuilderImpl(type){
     /**
      * If set, when building the [ConfigProperty] we'll use this
@@ -43,8 +43,27 @@ class ConfigPropertyBuilder<T : Any>(
      */
     var innerRetriever: RetrievedTypeHelper<*, T>? = null
 
-    inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> =
-        RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
+    inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> {
+        if (innerRetriever != null) {
+            throw Exception("Cannot use both 'retrievedAs' and 'transformedBy")
+        }
+        return RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
+    }
+
+    /**
+     * Allow a transformation of the value without changing the type.
+     * To implement this, we re-use the type-changing [RetrievedTypeHelper]
+     * but just set the before and after types to be the same, and call
+     * 'convertedBy' ourselves with the given function
+     */
+    fun transformedBy(transformer: (T) -> T) {
+        if (innerRetriever != null) {
+            throw Exception("Cannot use both 'retrievedAs' and 'transformedBy")
+        }
+        val helper = RetrievedTypeHelper<T, T>(type)
+        helper convertedBy transformer
+        innerRetriever = helper
+    }
 
     fun buildProp(): ConfigProperty<T> {
         val attrs = this.build()

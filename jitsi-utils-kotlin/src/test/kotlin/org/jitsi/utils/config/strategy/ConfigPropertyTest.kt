@@ -18,6 +18,7 @@ package org.jitsi.utils.config.strategy
 
 import io.kotlintest.IsolationMode
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldThrow
 import io.kotlintest.specs.ShouldSpec
 import org.jitsi.utils.config.dsl.multiProperty
 import org.jitsi.utils.config.dsl.property
@@ -98,10 +99,55 @@ class ConfigPropertyTest : ShouldSpec() {
             should("read the correct value") {
                 property.value shouldBe 10000
             }
-            should("only query the value and converter once") {
+            should("query the value and converter every time") {
                 repeat (5) { property.value }
                 newConfig.numGetsCalled shouldBe 5
                 numTimesConverterCalled shouldBe 5
+            }
+        }
+        "Transforming, read-once property" {
+            var numTimesTransformerCalled = 0
+            val property = property<Int> {
+                name("newPropInt")
+                readOnce()
+                fromConfig(newConfig)
+                transformedBy { numTimesTransformerCalled++; 42 }
+            }
+            should("read the correct value") {
+                property.value shouldBe 42
+            }
+            should("only query the value and converter once") {
+                repeat (5) { property.value }
+                newConfig.numGetsCalled shouldBe 1
+                numTimesTransformerCalled shouldBe 1
+            }
+        }
+        "Transforming, read-every-time property" {
+            var numTimesTransformerCalled = 0
+            val property = property<Int> {
+                name("newPropInt")
+                readEveryTime()
+                fromConfig(newConfig)
+                transformedBy { numTimesTransformerCalled++; 42 }
+            }
+            should("read the correct value") {
+                property.value shouldBe 42
+            }
+            should("query the value and converter every time") {
+                repeat (5) { property.value }
+                newConfig.numGetsCalled shouldBe 5
+                numTimesTransformerCalled shouldBe 5
+            }
+        }
+        "Using both retrievedAs and transformedBy" {
+            shouldThrow<Exception> {
+                property<Long> {
+                    name("newPropLong")
+                    readEveryTime()
+                    fromConfig(newConfig)
+                    transformedBy { it }
+                    retrievedAs<Duration>() convertedBy { it.toMillis() }
+                }
             }
         }
         "Multi, read-once property" {
