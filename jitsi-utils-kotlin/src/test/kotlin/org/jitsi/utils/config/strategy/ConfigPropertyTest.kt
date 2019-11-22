@@ -140,7 +140,7 @@ class ConfigPropertyTest : ShouldSpec() {
             }
         }
         "Using both retrievedAs and transformedBy" {
-            shouldThrow<Exception> {
+            shouldThrow<IllegalStateException> {
                 property<Long> {
                     name("newPropLong")
                     readEveryTime()

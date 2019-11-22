@@ -44,9 +44,7 @@ class ConfigPropertyBuilder<T : Any>(
     var innerRetriever: RetrievedTypeHelper<*, T>? = null
 
     inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U, T> {
-        if (innerRetriever != null) {
-            throw Exception("Cannot use both 'retrievedAs' and 'transformedBy")
-        }
+        check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy"}
         return RetrievedTypeHelper<U, T>(U::class).also { innerRetriever = it }
     }
 
@@ -57,9 +55,7 @@ class ConfigPropertyBuilder<T : Any>(
      * 'convertedBy' ourselves with the given function
      */
     fun transformedBy(transformer: (T) -> T) {
-        if (innerRetriever != null) {
-            throw Exception("Cannot use both 'retrievedAs' and 'transformedBy")
-        }
+        check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy"}
         innerRetriever = (RetrievedTypeHelper<T, T>(type)).apply {
             convertedBy(transformer)
         }
