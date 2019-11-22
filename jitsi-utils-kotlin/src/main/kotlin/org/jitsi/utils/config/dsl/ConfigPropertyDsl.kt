@@ -60,9 +60,9 @@ class ConfigPropertyBuilder<T : Any>(
         if (innerRetriever != null) {
             throw Exception("Cannot use both 'retrievedAs' and 'transformedBy")
         }
-        val helper = RetrievedTypeHelper<T, T>(type)
-        helper convertedBy transformer
-        innerRetriever = helper
+        innerRetriever = (RetrievedTypeHelper<T, T>(type)).apply {
+            convertedBy(transformer)
+        }
     }
 
     fun buildProp(): ConfigProperty<T> {
