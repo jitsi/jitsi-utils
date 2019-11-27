@@ -273,13 +273,10 @@ public class ConfigUtils
     public static String PASSWORD_SYS_PROPS;
 
     /**
-     * Goes over all system properties and outputs their names and values for
-     * debug purposes. The method has no effect if the logger is at a log level
-     * other than DEBUG or TRACE (FINE or FINEST).
-     * * Changed that system properties are printed in INFO level and this way
-     *   they are included in the beginning of every users log file.
+     * Goes over all system properties and builds a string of their names and
+     * values for debug purposes.
      */
-    public static String debugPrintSystemProperties()
+    public static String getSystemPropertiesDebugString()
     {
         StringBuilder str = new StringBuilder();
         try
