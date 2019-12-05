@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * a given map which contains property key names mapped to their
  * already-typed values.
  */
-class ExampleConfigSource(
+internal class ExampleConfigSource(
     override val name: String,
     val props: Map<String, Any>
 ) : ConfigSource {

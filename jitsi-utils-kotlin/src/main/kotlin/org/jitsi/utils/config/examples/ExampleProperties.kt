@@ -34,7 +34,7 @@ private val legacyConfig = ExampleConfigSource("legacyConfig", mapOf(
     "onlyOldProp" to 10
 ))
 
-class ExampleProperties {
+internal class ExampleProperties {
     companion object {
         // Simple property defined using the DSL
         val simpleProperty = property<Int> {
@@ -138,7 +138,7 @@ class ExampleProperties {
 
 // A class to simplify a common case (a property that was in the old config and is now in
 // new config, doesn't need to convert the type)
-open class SimpleConfig<T : Any>(
+internal open class SimpleConfig<T : Any>(
     valueType: KClass<T>,
     legacyName: String,
     newName: String,
@@ -162,10 +162,10 @@ open class SimpleConfig<T : Any>(
 }
 
 // A helper to create an instance of SimpleConfig
-inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newName: String): ConfigProperty<T> =
+internal inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newName: String): ConfigProperty<T> =
     SimpleConfig(T::class, legacyName, newName, readOnce)
 
-fun main() {
+internal fun main() {
     println("simpleProperty = ${ExampleProperties.simpleProperty.value}")
     println("transformingProperty = ${ExampleProperties.transformingProperty.value}")
     println("legacyProperty = ${ExampleProperties.legacyProperty.value}")

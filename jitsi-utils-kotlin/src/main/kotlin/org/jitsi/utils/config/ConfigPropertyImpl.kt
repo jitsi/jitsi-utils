@@ -32,15 +32,17 @@ class ConfigPropertyImpl<T : Any>(
     private val readFrequencyStrategy =
         getReadStrategy(attrs.readOnce, supplier)
 
-    override val value: T
-        get() {
-            val result = readFrequencyStrategy.get()
-            if (attrs.isDeprecated && result.isFound()) {
-                logger.warn("Property ${attrs.keyPath} is marked as deprecated" +
-                        " in config ${attrs.configSource.name} but has a value set.")
-            }
-            return result.getOrThrow()
+    init {
+        val result = readFrequencyStrategy.get()
+        if (attrs.isDeprecated && result.isFound()) {
+            logger.warn("Property ${attrs.keyPath} is marked as deprecated" +
+                    " in config ${attrs.configSource.name} but has a value set: +" +
+                    attrs.deprecationNotice?.message)
         }
+    }
+
+    override val value: T
+        get() = readFrequencyStrategy.get().getOrThrow()
 
     companion object {
         private val logger = LoggerImpl("ConfigProperty")

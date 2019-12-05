@@ -68,7 +68,7 @@ class ConfigPropertyTest : ShouldSpec() {
             }
             should("query the value every time") {
                 repeat (5) { property.value }
-                newConfig.numGetsCalled shouldBe 5
+                newConfig.numGetsCalled shouldBe expectedAccessCount(5)
             }
         }
         "Converting, read-once property" {
@@ -101,8 +101,8 @@ class ConfigPropertyTest : ShouldSpec() {
             }
             should("query the value and converter every time") {
                 repeat (5) { property.value }
-                newConfig.numGetsCalled shouldBe 5
-                numTimesConverterCalled shouldBe 5
+                newConfig.numGetsCalled shouldBe expectedAccessCount(5)
+                numTimesConverterCalled shouldBe expectedAccessCount(5)
             }
         }
         "Transforming, read-once property" {
@@ -135,8 +135,8 @@ class ConfigPropertyTest : ShouldSpec() {
             }
             should("query the value and converter every time") {
                 repeat (5) { property.value }
-                newConfig.numGetsCalled shouldBe 5
-                numTimesTransformerCalled shouldBe 5
+                newConfig.numGetsCalled shouldBe expectedAccessCount(5)
+                numTimesTransformerCalled shouldBe expectedAccessCount(5)
             }
         }
         "Using both retrievedAs and transformedBy" {
@@ -194,16 +194,18 @@ class ConfigPropertyTest : ShouldSpec() {
             }
             should("query the value every time") {
                 repeat (5) { property.value }
-                legacyConfig.numGetsCalled shouldBe 5
-                // NOTE: A Multi property walks through each inner property
-                // and stops at the first one that gives a value.  Since
-                // read-every-time properties don't query the value on
-                // creation, that means we never end up checking newConfig
-                // for this value (since it exists in old config)
-                newConfig.numGetsCalled shouldBe 0
+                legacyConfig.numGetsCalled shouldBe expectedAccessCount(5)
+                newConfig.numGetsCalled shouldBe expectedAccessCount(0)
             }
         }
     }
+
+    //NOTE: The "+ 1" in read-every-time properties when checking invocation
+    // counts it to take into account the fact that we retrieve the value
+    // at creation time for all props in order to print a deprecation message
+    // (since normally those props won't be accessed)
+    private fun expectedAccessCount(explicitAccessCount: Int): Int =
+        explicitAccessCount + 1
 }
 
 
