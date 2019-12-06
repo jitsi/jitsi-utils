@@ -38,6 +38,10 @@ class TestConfigSource(
         }
     }
 
+    override fun reload() { /* No op */ }
+
+    override fun toStringMasked(): String = props.toString()
+
     private fun getInt(path: String): Int? = props[path] as? Int
     private fun getLong(path: String): Long? = props[path] as? Long
     private fun getDuration(path: String): Duration? = props[path] as? Duration

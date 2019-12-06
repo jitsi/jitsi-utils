@@ -42,6 +42,10 @@ internal class ExampleConfigSource(
         }
     }
 
+    override fun reload() { /* No op */ }
+
+    override fun toStringMasked(): String = props.toString()
+
     private fun getInt(path: String): Int = getValueHelper(path, Int::class) { it as? Int }
     private fun getLong(path: String): Long = getValueHelper(path, Long::class) { it as? Long }
     private fun getDuration(path: String): Duration? = getValueHelper(path, Duration::class) { it as? Duration }

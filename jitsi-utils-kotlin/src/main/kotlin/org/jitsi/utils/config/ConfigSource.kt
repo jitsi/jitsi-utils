@@ -35,4 +35,16 @@ interface ConfigSource {
      * event of errors
      */
     val name: String
+
+    /**
+     * Tell this [ConfigSource] to reload its config from wherever it
+     * was obtained
+     */
+    fun reload()
+
+    /**
+     * Dump the contents of this [ConfigSource], masking any sensitive
+     * fields
+     */
+    fun toStringMasked(): String
 }
