@@ -16,12 +16,11 @@
 
 package org.jitsi.utils.config
 
-import org.jitsi.utils.config.examples.ExampleConfigSource
-import org.jitsi.utils.config.exception.NoAcceptablePropertyInstanceFoundException
-import org.jitsi.utils.config.strategy.getReadStrategy
-import java.time.Duration
 import kotlin.reflect.KClass
 
+/**
+ * A helper for creating [ConfigPropertyAttributes]
+ */
 class ConfigPropertyAttributesBuilder<T : Any>(
     private val valueType: KClass<T>
 ) {
@@ -67,6 +66,13 @@ class ConfigPropertyAttributesBuilder<T : Any>(
             keyPath, valueType, readOnce, configSource, supplier, deprecationNotice
         )
     }
+
+    /**
+     * Signal that this value is retrieved from the [ConfigSource] as type [U]
+     * (different from type [T]).  Use of this should be paired with an
+     * accompanying call to [RetrievedTypeHelper.convertedBy] to describe how
+     * to convert the retrieved value from type [U] to type [T].
+     */
     inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U> {
         check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy'"}
         return RetrievedTypeHelper(U::class).also { this.innerRetriever = it }
@@ -107,92 +113,3 @@ class ConfigPropertyAttributesBuilder<T : Any>(
         ): () -> T = { converter(configSource.getterFor(valueType).invoke(keyPath)) }
     }
 }
-
-open class SingleConfigProp <T : Any> (
-    val attrs: ConfigPropertyAttributes<T>
-) : ConfigProperty<T> {
-    val getter = getReadStrategy(attrs.readOnce, attrs.supplier)
-
-    override val value: T
-        get() = getter.get().getOrThrow()
-}
-
-class ActualProp : SingleConfigProp<Int>(
-    with(ConfigPropertyAttributesBuilder(Int::class)) {
-        name("blah")
-        readOnce()
-        fromConfig(ExampleConfigSource("test", mapOf("blah" to "1")))
-        retrievedAs<String>() convertedBy { it.toInt() }
-        build()
-    }
-)
-
-open class MultiConfigProp <T : Any>(
-    vararg attrs: ConfigPropertyAttributes<T>
-) : ConfigProperty<T> {
-    protected val getters =
-        attrs.map { getReadStrategy(it.readOnce, it.supplier)}
-
-    override val value: T
-        get() {
-            val exceptions = mutableListOf<Throwable>()
-            for (getter in getters) {
-                when (val result = getter.get()) {
-                    is ConfigResult.PropertyNotFound -> exceptions.add(result.exception)
-                    is ConfigResult.PropertyFound -> return result.value
-                }
-            }
-            throw NoAcceptablePropertyInstanceFoundException(exceptions)
-        }
-}
-
-class LegacyConfigSource : ConfigSource {
-    override val name: String
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-    override fun <T : Any> getterFor(valueType: KClass<T>): (String) -> T {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun reload() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun toStringMasked(): String {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-}
-
-inline fun <reified T : Any> legacyProperty(block: ConfigPropertyAttributesBuilder<T>.() -> Unit): ConfigPropertyAttributes<T> {
-    return with (ConfigPropertyAttributesBuilder(T::class)) {
-        block()
-        fromConfig(LegacyConfigSource())
-        build()
-    }
-}
-
-inline fun <reified T : Any> newProperty(block: ConfigPropertyAttributesBuilder<T>.() -> Unit): ConfigPropertyAttributes<T> {
-    return with (ConfigPropertyAttributesBuilder(T::class)) {
-        block()
-        fromConfig(LegacyConfigSource())
-        build()
-    }
-}
-
-class ActualMultiProp : MultiConfigProp<Long>(
-    legacyProperty {
-        name("name")
-        readOnce()
-    },
-    newProperty {
-        name("name")
-        readOnce()
-        retrievedAs<Duration>() convertedBy { it.toMillis() }
-    }
-)
-
-fun main() {
-    val x = ActualProp()
-    println(x.value)
-}
-

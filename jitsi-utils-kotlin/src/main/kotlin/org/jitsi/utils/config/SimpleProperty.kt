@@ -17,7 +17,6 @@
 package org.jitsi.utils.config
 
 import org.jitsi.utils.config.strategy.getReadStrategy
-import kotlin.reflect.KClass
 
 /**
  * A config property which reads a single value from a single [ConfigSource]
@@ -31,6 +30,3 @@ abstract class SimpleProperty <T : Any>(
     override val value: T
         get() = getter.get().getOrThrow()
 }
-
-//TODO: move this to dsl/helpers file--it's not tied to SimpleProperty.
-// rename to attrs/withAttrs/fromAttrs?
