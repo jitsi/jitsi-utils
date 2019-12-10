@@ -16,10 +16,9 @@
 
 package org.jitsi.utils.config.examples
 
-import org.jitsi.utils.config.ConfigProperty
-import org.jitsi.utils.config.dsl.MultiConfigPropertyBuilder
-import org.jitsi.utils.config.dsl.multiProperty
-import org.jitsi.utils.config.dsl.property
+import org.jitsi.utils.config.FallbackProperty
+import org.jitsi.utils.config.SimpleProperty
+import org.jitsi.utils.config.helpers.attributes
 import java.time.Duration
 import kotlin.reflect.KClass
 
@@ -35,156 +34,155 @@ private val legacyConfig = ExampleConfigSource("legacyConfig", mapOf(
 ))
 
 internal class ExampleProperties {
-    companion object {
-        // Simple property defined using the DSL
-        val simpleProperty = property<Int> {
+    // Basic property using a class
+    class BasicProperty : SimpleProperty<Int>(
+        attributes {
             name("newPropInt")
             readOnce()
             fromConfig(newConfig)
         }
+    )
 
-        // Property which retrieves the value as a different type and transforms it
-        val transformingProperty = property<Long> {
+    // Property which retrieves the value as a different type and transforms it
+    class TransformingProperty : SimpleProperty<Long>(
+        attributes {
             name("onlyNewProp")
             readOnce()
             fromConfig(newConfig)
             retrievedAs<Duration>() convertedBy { it.toMillis() }
         }
+    )
 
-        // Property for which we search multiple ConfigSources (in the given order)
-        val legacyProperty = multiProperty<Long> {
-            property {
-                name("oldPropLong")
-                readOnce()
-                fromConfig(legacyConfig)
-            }
-            property {
-                name("newPropLong")
-                readOnce()
-                fromConfig(newConfig)
-            }
+    // Property for which we search multiple ConfigSources (in the given order)
+    class LegacyProperty : FallbackProperty<Long>(
+        attributes {
+            name("oldPropLong")
+            readOnce()
+            fromConfig(legacyConfig)
+        },
+        attributes {
+            name("newPropLong")
+            readOnce()
+            fromConfig(newConfig)
         }
+    )
 
-        // Same as above, using a helper DSL method
-        val legacyPropertyUsingHelper =
-            simple<Long>(readOnce = true, legacyName = "oldPropLong", newName = "newPropLong")
+    // Same as above, but using a helper class which takes care of the
+    // boilerplate
+    class LegacyPropertyShort : LegacyFallbackProperty<Long>(
+        Long::class,
+        readOnce = true,
+        legacyName = "oldPropLong",
+        newName = "newPropLong"
+    )
 
-        // Same as above, but defining a class for the property instead of a value
-        class LegacyPropertyUsingClass : SimpleConfig<Long>(
-            valueType = Long::class,
-            legacyName = "oldPropLong",
-            newName = "newPropLong",
-            readOnce = true
-        )
-
-        // A property where one source is deprecated
-        val legacyDeprecatedProperty = multiProperty<Long> {
-            property {
-                name("oldPropLong")
-                readOnce()
-                fromConfig(legacyConfig)
-                deprecated("'oldPropLong' is no longer supported, please use " +
-                        "'newPropLong' in the new config file")
-            }
-            property {
-                name("newPropLong")
-                readOnce()
-                fromConfig(newConfig)
-            }
+    // A property where one source is deprecated
+    class LegacyDeprecatedProperty : FallbackProperty<Long>(
+        attributes {
+            name("oldPropLong")
+            readOnce()
+            fromConfig(legacyConfig)
+            deprecated("'oldPropLong' is no longer supported, please use " +
+                    "'newPropLong' in the new config file")
+        },
+        attributes {
+            name("newPropLong")
+            readOnce()
+            fromConfig(newConfig)
         }
+    )
 
-        // This prop won't be found in legacy config and will fall back to newConfig
-        val legacyFallthroughProperty = multiProperty<Long> {
-            property {
-                name("nonexistent")
-                readOnce()
-                fromConfig(legacyConfig)
-            }
-            property {
-                name("onlyNewProp")
-                readOnce()
-                fromConfig(newConfig)
-                retrievedAs<Duration>() convertedBy { it.toMillis() }
-            }
+    // This prop won't be found in legacy config and will fall back to newConfig
+    class LegacyFallthroughProperty : FallbackProperty<Long>(
+        attributes {
+            name("nonexistent")
+            readOnce()
+            fromConfig(legacyConfig)
+        },
+        attributes {
+            name("onlyNewProp")
+            readOnce()
+            fromConfig(newConfig)
+            retrievedAs<Duration>() convertedBy { it.toMillis() }
         }
+    )
 
-        // A property that's never found
-        // Accessing this will give the following error:
-        // NoAcceptablePropertyInstanceFoundException: Unable to find or parse configuration property due to: [ConfigPropertyNotFoundException: Could not find value for property at 'notFound' in config legacyConfig, ConfigPropertyNotFoundException: Could not find value for property at 'notFound' in config newConfig]
-        val neverFoundProperty =
-            simple<Long>(readOnce = true, legacyName = "notFound", newName = "notFound")
+    // A property that's never found
+    // Accessing this will give the following error:
+    // NoAcceptablePropertyInstanceFoundException: Unable to find or parse configuration property due to: [ConfigPropertyNotFoundException: Could not find value for property at 'notFound' in config legacyConfig, ConfigPropertyNotFoundException: Could not find value for property at 'notFound' in config newConfig]
+    class NeverFoundProperty : LegacyFallbackProperty<Long>(
+        Long::class,
+        readOnce = true,
+        legacyName = "notFound",
+        newName = "notFound"
+    )
 
-        // Trying to retrieve a value as the incorrect type
-        // Accessing this will give the following error:
-        // ConfigValueParsingException: Value '41' (type Integer) at path 'oldPropInt' in config legacyConfig could not be cast to Lon
-        val wrongTypeProperty = property<Long> {
+    // Trying to retrieve a value as the incorrect type
+    // Accessing this will give the following error:
+    // ConfigValueParsingException: Value '41' (type Integer) at path 'oldPropInt' in config legacyConfig could not be cast to Lon
+    class WrongTypeProperty : SimpleProperty<Long>(
+        attributes {
             name("oldPropInt")
             readOnce()
             fromConfig(legacyConfig)
         }
+    )
 
-        // A property which tries to retrieve a value type that isn't supported by
-        // the ConfigSource
-        // Accessing this will give the following error:
-        // ConfigurationValueTypeUnsupportedException: No getter found for value of type class org.jitsi.utils.configk.examples.ExampleProperties$Companion$Foo
-        class Foo
-        val unsupportedValueTypeProperty = property<Foo> {
+    // A property which tries to retrieve a value type that isn't supported by
+    // the ConfigSource
+    // Accessing this will give the following error:
+    // ConfigurationValueTypeUnsupportedException: No getter found for value of type class org.jitsi.utils.configk.examples.ExampleProperties$Companion$Foo
+    class Foo
+    class UnsupportedValueTypeProperty : SimpleProperty<Foo>(
+        attributes {
             name("propName")
             readOnce()
             fromConfig(newConfig)
         }
-    }
+    )
 }
 
-// A class to simplify a common case (a property that was in the old config and is now in
-// new config, doesn't need to convert the type)
-internal open class SimpleConfig<T : Any>(
+/**
+ * A helper class which assumes the property is held in [legacyConfig] under
+ * one name and [newConfig] under another name
+ */
+internal abstract class LegacyFallbackProperty <T: Any>(
     valueType: KClass<T>,
+    readOnce: Boolean,
     legacyName: String,
-    newName: String,
-    readOnce: Boolean
-) : ConfigProperty<T> {
-    private val multiProp = MultiConfigPropertyBuilder(valueType).apply {
-        property {
-            name(legacyName)
-            if (readOnce) readOnce() else readEveryTime()
-            fromConfig(legacyConfig)
-        }
-        property {
-            name(newName)
-            if (readOnce) readOnce() else readEveryTime()
-            fromConfig(newConfig)
-        }
-    }.build()
-
-    override val value: T
-        get() = multiProp.value
-}
-
-// A helper to create an instance of SimpleConfig
-internal inline fun <reified T : Any> simple(readOnce: Boolean, legacyName: String, newName: String): ConfigProperty<T> =
-    SimpleConfig(T::class, legacyName, newName, readOnce)
+    newName: String
+) : FallbackProperty<T>(
+    attributes(valueType) {
+        if (readOnce) readOnce() else readEveryTime()
+        name(legacyName)
+        fromConfig(legacyConfig)
+    },
+    attributes(valueType) {
+        if (readOnce) readOnce() else readEveryTime()
+        name(newName)
+        fromConfig(newConfig)
+    }
+)
 
 internal fun main() {
-    println("simpleProperty = ${ExampleProperties.simpleProperty.value}")
-    println("transformingProperty = ${ExampleProperties.transformingProperty.value}")
-    println("legacyProperty = ${ExampleProperties.legacyProperty.value}")
-    println("legacyPropertyUsingHelper = ${ExampleProperties.legacyPropertyUsingHelper.value}")
-    println("legacyPropertyUsingClass = ${ExampleProperties.Companion.LegacyPropertyUsingClass().value}")
-    println("legacyDeprecatedProperty = ${ExampleProperties.legacyDeprecatedProperty.value}")
-    println("legacyFallthroughProperty = ${ExampleProperties.legacyFallthroughProperty.value}")
+    println("simpleProperty = ${ExampleProperties.BasicProperty().value}")
+    println("transformingProperty = ${ExampleProperties.TransformingProperty().value}")
+    println("legacyProperty = ${ExampleProperties.LegacyProperty().value}")
+    println("legacyPropertyUsingHelper = ${ExampleProperties.LegacyPropertyShort().value}")
+    println("legacyDeprecatedProperty = ${ExampleProperties.LegacyDeprecatedProperty().value}")
+    println("legacyFallthroughProperty = ${ExampleProperties.LegacyFallthroughProperty().value}")
     try {
-        ExampleProperties.neverFoundProperty.value
+        ExampleProperties.NeverFoundProperty().value
     } catch (t: Throwable) {
         println("neverFoundProperty: $t")
     }
     try {
-        ExampleProperties.wrongTypeProperty.value
+        ExampleProperties.WrongTypeProperty().value
     } catch (t: Throwable) {
         println("wrongTypeProperty: $t")
     }
     try {
-        ExampleProperties.unsupportedValueTypeProperty.value
+        ExampleProperties.UnsupportedValueTypeProperty().value
     } catch (t: Throwable) {
         println("unsupportedValueTypeProperty: $t")
     }

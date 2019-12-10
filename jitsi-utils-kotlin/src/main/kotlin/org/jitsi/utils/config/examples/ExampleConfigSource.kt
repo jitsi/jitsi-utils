@@ -38,6 +38,7 @@ internal class ExampleConfigSource(
             Int::class -> getterHelper(::getInt)
             Long::class -> getterHelper(::getLong)
             Duration::class -> getterHelper(::getDuration)
+            String::class -> getterHelper(::getString)
             else -> throw ConfigurationValueTypeUnsupportedException.new(valueType)
         }
     }
@@ -49,6 +50,7 @@ internal class ExampleConfigSource(
     private fun getInt(path: String): Int = getValueHelper(path, Int::class) { it as? Int }
     private fun getLong(path: String): Long = getValueHelper(path, Long::class) { it as? Long }
     private fun getDuration(path: String): Duration? = getValueHelper(path, Duration::class) { it as? Duration }
+    private fun getString(path: String): String? = getValueHelper(path, String::class) { it as? String }
 
     /**
      * There are 2 possible things that can happen:

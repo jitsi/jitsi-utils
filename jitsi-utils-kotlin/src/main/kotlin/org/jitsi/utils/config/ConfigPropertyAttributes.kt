@@ -18,6 +18,11 @@ package org.jitsi.utils.config
 
 import kotlin.reflect.KClass
 
+/**
+ * Various attributes of a configuration property pulled from a specific
+ * [ConfigSource]
+ */
+@Suppress("unused")
 data class ConfigPropertyAttributes<T : Any>(
     /**
      * The 'path' at which this property lives (also known as the
@@ -41,6 +46,14 @@ data class ConfigPropertyAttributes<T : Any>(
      */
     val configSource: ConfigSource,
     /**
+     * A function which will retrieve the value of the property described
+     * by the attributes here.  We keep this with the attributes themselves
+     * because it's most natural to describe how a property's value is
+     * retrieved/transformed/etc alongside its other attributes, and those
+     * settings go into the creation of this supplier.
+     */
+    val supplier: () -> T,
+    /**
      * A deprecation notice (if applicable) for this property
      */
     val deprecationNotice: DeprecationNotice? = null
@@ -52,39 +65,3 @@ data class ConfigPropertyAttributes<T : Any>(
 }
 
 data class DeprecationNotice(val message: String)
-
-/**
-* A helper method to define a supplier function for [ConfigPropertyAttributes]
-*/
-val <T : Any> ConfigPropertyAttributes<T>.supplier: () -> T
-    get() = { configSource.getterFor(valueType).invoke(keyPath) }
-
-interface ConfigPropertyAttributesBuilder<T : Any> {
-    fun readOnce()
-    fun readEveryTime()
-    fun name(propName: String)
-    fun fromConfig(configSource: ConfigSource)
-    fun deprecated(message: String)
-    fun build(): ConfigPropertyAttributes<T>
-}
-
-class ConfigPropertyAttributesBuilderImpl<T : Any>(
-    private val valueType: KClass<T>,
-    private var keyPath: String? = null,
-    private var readOnce: Boolean? = null,
-    private var configSource: ConfigSource? = null,
-    private var deprecationNotice: DeprecationNotice? = null
-) : ConfigPropertyAttributesBuilder<T> {
-
-    override fun readOnce() { readOnce = true }
-    override fun readEveryTime() { readOnce = false }
-    override fun name(propName: String) { keyPath = propName }
-    override fun fromConfig(configSource: ConfigSource) { this.configSource = configSource }
-    override fun deprecated(message: String) { this.deprecationNotice = DeprecationNotice(message) }
-    override fun build(): ConfigPropertyAttributes<T> {
-        val keyPath: String = keyPath ?: throw Exception("Property name not set")
-        val readOnce: Boolean = readOnce ?: throw Exception("Read frequency not set")
-        val configSource: ConfigSource = configSource ?: throw Exception("Config source not set")
-        return ConfigPropertyAttributes(keyPath, valueType, readOnce, configSource, deprecationNotice)
-    }
-}
