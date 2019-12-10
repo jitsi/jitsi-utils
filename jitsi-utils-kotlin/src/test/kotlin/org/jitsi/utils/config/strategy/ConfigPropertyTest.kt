@@ -20,31 +20,35 @@ import io.kotlintest.IsolationMode
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.ShouldSpec
-import org.jitsi.utils.config.dsl.multiProperty
-import org.jitsi.utils.config.dsl.property
+import org.jitsi.utils.config.FallbackProperty
+import org.jitsi.utils.config.SimpleProperty
+import org.jitsi.utils.config.helpers.attributes
 import org.jitsi.utils.config.testutils.TestConfigSource
 import java.time.Duration
 
 class ConfigPropertyTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
+    val newConfig = TestConfigSource("newConfig", mapOf(
+        "newPropInt" to 42,
+        "newPropLong" to 43L,
+        "onlyNewProp" to Duration.ofSeconds(10)
+    ))
+    val legacyConfig = TestConfigSource("legacyConfig", mapOf(
+        "oldPropInt" to 41,
+        "oldPropLong" to 44L,
+        "onlyOldProp" to 10
+    ))
+
     init {
-        val newConfig = TestConfigSource("newConfig", mapOf(
-            "newPropInt" to 42,
-            "newPropLong" to 43L,
-            "onlyNewProp" to Duration.ofSeconds(10)
-        ))
-        val legacyConfig = TestConfigSource("legacyConfig", mapOf(
-            "oldPropInt" to 41,
-            "oldPropLong" to 44L,
-            "onlyOldProp" to 10
-        ))
         "Simple, read-once property" {
-            val property = property<Int> {
-                name("newPropInt")
-                readOnce()
-                fromConfig(newConfig)
-            }
+            val property = object : SimpleProperty<Int>(
+                attributes {
+                    name("newPropInt")
+                    readOnce()
+                    fromConfig(newConfig)
+                }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 42
             }
@@ -54,11 +58,13 @@ class ConfigPropertyTest : ShouldSpec() {
             }
         }
         "Simple, read-every-time property" {
-            val property = property<Int> {
-                name("newPropInt")
-                readEveryTime()
-                fromConfig(newConfig)
-            }
+            val property = object : SimpleProperty<Int>(
+                attributes {
+                    name("newPropInt")
+                    readEveryTime()
+                    fromConfig(newConfig)
+                }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 42
             }
@@ -68,17 +74,19 @@ class ConfigPropertyTest : ShouldSpec() {
             }
             should("query the value every time") {
                 repeat (5) { property.value }
-                newConfig.numGetsCalled shouldBe expectedAccessCount(5)
+                newConfig.numGetsCalled shouldBe 5
             }
         }
         "Converting, read-once property" {
             var numTimesConverterCalled = 0
-            val property = property<Long> {
-                name("onlyNewProp")
-                readOnce()
-                fromConfig(newConfig)
-                retrievedAs<Duration>() convertedBy { numTimesConverterCalled++; it.toMillis() }
-            }
+            val property = object : SimpleProperty<Long>(
+                attributes {
+                    name("onlyNewProp")
+                    readOnce()
+                    fromConfig(newConfig)
+                    retrievedAs<Duration>() convertedBy { numTimesConverterCalled++; it.toMillis() }
+                }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 10000
             }
@@ -90,29 +98,33 @@ class ConfigPropertyTest : ShouldSpec() {
         }
         "Converting, read-every-time property" {
             var numTimesConverterCalled = 0
-            val property = property<Long> {
-                name("onlyNewProp")
-                readEveryTime()
-                fromConfig(newConfig)
-                retrievedAs<Duration>() convertedBy { numTimesConverterCalled++; it.toMillis() }
-            }
+            val property = object : SimpleProperty<Long>(
+                attributes {
+                    name("onlyNewProp")
+                    readEveryTime()
+                    fromConfig(newConfig)
+                    retrievedAs<Duration>() convertedBy { numTimesConverterCalled++; it.toMillis() }
+                }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 10000
             }
             should("query the value and converter every time") {
                 repeat (5) { property.value }
-                newConfig.numGetsCalled shouldBe expectedAccessCount(5)
-                numTimesConverterCalled shouldBe expectedAccessCount(5)
+                newConfig.numGetsCalled shouldBe 5
+                numTimesConverterCalled shouldBe 5
             }
         }
         "Transforming, read-once property" {
             var numTimesTransformerCalled = 0
-            val property = property<Int> {
-                name("newPropInt")
-                readOnce()
-                fromConfig(newConfig)
-                transformedBy { numTimesTransformerCalled++; 42 }
-            }
+            val property = object : SimpleProperty<Int>(
+                attributes {
+                    name("newPropInt")
+                    readOnce()
+                    fromConfig(newConfig)
+                    transformedBy { numTimesTransformerCalled++; 42 }
+                }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 42
             }
@@ -124,24 +136,26 @@ class ConfigPropertyTest : ShouldSpec() {
         }
         "Transforming, read-every-time property" {
             var numTimesTransformerCalled = 0
-            val property = property<Int> {
-                name("newPropInt")
-                readEveryTime()
-                fromConfig(newConfig)
-                transformedBy { numTimesTransformerCalled++; 42 }
-            }
+            val property = object : SimpleProperty<Int>(
+                attributes {
+                    name("newPropInt")
+                    readEveryTime()
+                    fromConfig(newConfig)
+                    transformedBy { numTimesTransformerCalled++; 42 }
+                }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 42
             }
             should("query the value and converter every time") {
                 repeat (5) { property.value }
-                newConfig.numGetsCalled shouldBe expectedAccessCount(5)
-                numTimesTransformerCalled shouldBe expectedAccessCount(5)
+                newConfig.numGetsCalled shouldBe 5
+                numTimesTransformerCalled shouldBe 5
             }
         }
         "Using both retrievedAs and transformedBy" {
             shouldThrow<IllegalStateException> {
-                property<Long> {
+                attributes<Long> {
                     name("newPropLong")
                     readEveryTime()
                     fromConfig(newConfig)
@@ -151,18 +165,18 @@ class ConfigPropertyTest : ShouldSpec() {
             }
         }
         "Multi, read-once property" {
-            val property = multiProperty<Long> {
-                property {
+            val property = object : FallbackProperty<Long>(
+                attributes {
                     name("oldPropLong")
                     readOnce()
                     fromConfig(legacyConfig)
-                }
-                property {
+                },
+                attributes {
                     name("newPropLong")
                     readOnce()
                     fromConfig(newConfig)
                 }
-            }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 44
             }
@@ -173,18 +187,18 @@ class ConfigPropertyTest : ShouldSpec() {
             }
         }
         "Multi, read-every-time property" {
-            val property = multiProperty<Long> {
-                property {
+            val property = object : FallbackProperty<Long>(
+                attributes {
                     name("oldPropLong")
                     readEveryTime()
                     fromConfig(legacyConfig)
-                }
-                property {
+                },
+                attributes {
                     name("newPropLong")
                     readEveryTime()
                     fromConfig(newConfig)
                 }
-            }
+            ) {}
             should("read the correct value") {
                 property.value shouldBe 44
             }
@@ -194,18 +208,9 @@ class ConfigPropertyTest : ShouldSpec() {
             }
             should("query the value every time") {
                 repeat (5) { property.value }
-                legacyConfig.numGetsCalled shouldBe expectedAccessCount(5)
-                newConfig.numGetsCalled shouldBe expectedAccessCount(0)
+                legacyConfig.numGetsCalled shouldBe 5
+                newConfig.numGetsCalled shouldBe 0
             }
         }
     }
-
-    //NOTE: The "+ 1" in read-every-time properties when checking invocation
-    // counts it to take into account the fact that we retrieve the value
-    // at creation time for all props in order to print a deprecation message
-    // (since normally those props won't be accessed)
-    private fun expectedAccessCount(explicitAccessCount: Int): Int =
-        explicitAccessCount + 1
 }
-
-
