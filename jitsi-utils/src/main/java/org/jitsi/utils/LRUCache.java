@@ -23,17 +23,34 @@ import java.util.*;
 public class LRUCache<K, V> extends LinkedHashMap<K, V>
 {
     /**
-     *
+     * The maximum number of entries this cache will store.
      */
     private int cacheSize;
 
     /**
-     * Ctor.
+     * Initializes a {@link LRUCache} with a given size using insertion
+     * order.
      *
-     * @param cacheSize
+     * @param cacheSize the maximum number of entries.
      */
     public LRUCache(int cacheSize)
     {
+        this(cacheSize, false);
+    }
+
+    /**
+     * Initializes a {@link LRUCache} with a given size using either
+     * insertion or access order depending on {@code accessOrder}.
+     *
+     * @param cacheSize the maximum number of entries.
+     * @param accessOrder {@code true} to use access order, and {@code false}
+     * to use insertion order.
+     */
+    public LRUCache(int cacheSize, boolean accessOrder)
+    {
+        super(16 /* DEFAULT_INITIAL_CAPACITY */,
+              0.75f /* DEFAULT_LOAD_FACTOR */,
+              accessOrder);
         this.cacheSize = cacheSize;
     }
 
