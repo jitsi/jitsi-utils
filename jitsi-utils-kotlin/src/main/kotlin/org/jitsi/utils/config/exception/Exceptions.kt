@@ -62,4 +62,4 @@ class ConfigValueParsingException(
  */
 class NoAcceptablePropertyInstanceFoundException(
     val exceptions: List<Throwable>
-) : SimpleToStringException("Unable to find or parse configuration property due to: ${exceptions}")
+) : SimpleToStringException("Unable to find or parse configuration property due to: $exceptions")

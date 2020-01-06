@@ -53,7 +53,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 42
             }
             should("only query the value once") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 newConfig.numGetsCalled shouldBe 1
             }
         }
@@ -73,7 +73,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 43
             }
             should("query the value every time") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 newConfig.numGetsCalled shouldBe 5
             }
         }
@@ -91,7 +91,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 10000
             }
             should("only query the value and converter once") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 newConfig.numGetsCalled shouldBe 1
                 numTimesConverterCalled shouldBe 1
             }
@@ -110,7 +110,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 10000
             }
             should("query the value and converter every time") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 newConfig.numGetsCalled shouldBe 5
                 numTimesConverterCalled shouldBe 5
             }
@@ -129,7 +129,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 42
             }
             should("only query the value and converter once") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 newConfig.numGetsCalled shouldBe 1
                 numTimesTransformerCalled shouldBe 1
             }
@@ -148,7 +148,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 42
             }
             should("query the value and converter every time") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 newConfig.numGetsCalled shouldBe 5
                 numTimesTransformerCalled shouldBe 5
             }
@@ -181,7 +181,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 44
             }
             should("only query the value once and stop") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 legacyConfig.numGetsCalled shouldBe 1
                 newConfig.numGetsCalled shouldBe 1
             }
@@ -207,7 +207,7 @@ class ConfigPropertyTest : ShouldSpec() {
                 property.value shouldBe 43
             }
             should("query the value every time") {
-                repeat (5) { property.value }
+                repeat(5) { property.value }
                 legacyConfig.numGetsCalled shouldBe 5
                 newConfig.numGetsCalled shouldBe 0
             }

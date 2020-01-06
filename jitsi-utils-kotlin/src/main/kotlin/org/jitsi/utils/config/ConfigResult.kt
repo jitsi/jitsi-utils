@@ -48,8 +48,8 @@ sealed class ConfigResult<T : Any> {
     }
 
     companion object {
-        fun<T : Any> found(value: T): ConfigResult<T> = PropertyFound(value)
-        fun<T : Any> notFound(exception: Throwable): ConfigResult<T> = PropertyNotFound(exception)
+        fun <T : Any> found(value: T): ConfigResult<T> = PropertyFound(value)
+        fun <T : Any> notFound(exception: Throwable): ConfigResult<T> = PropertyNotFound(exception)
     }
 }
 
@@ -57,7 +57,7 @@ sealed class ConfigResult<T : Any> {
  * If this [ConfigResult] is a [ConfigResult.PropertyFound], return
  * the contained value.  Else throw the contained exception.
  */
-fun<T : Any> ConfigResult<T>.getOrThrow(): T {
+fun <T : Any> ConfigResult<T>.getOrThrow(): T {
     return when (this) {
         is ConfigResult.PropertyNotFound -> throw this.exception
         is ConfigResult.PropertyFound -> this.value
@@ -68,14 +68,14 @@ fun<T : Any> ConfigResult<T>.getOrThrow(): T {
  * Return true if a value for this property was found,
  * false otherwise.
  */
-fun<T : Any> ConfigResult<T>.isFound(): Boolean =
+fun <T : Any> ConfigResult<T>.isFound(): Boolean =
     this is ConfigResult.PropertyFound
 
 /**
  * If this [ConfigResult] is a [ConfigResult.PropertyFound], return
  * the contained value.  Otherwise call [onFailure] with the exception
  */
-fun<T : Any> ConfigResult<T>.getOrElse(onFailure: (exception: Throwable) -> T): T {
+fun <T : Any> ConfigResult<T>.getOrElse(onFailure: (exception: Throwable) -> T): T {
     return when (this) {
         is ConfigResult.PropertyNotFound -> onFailure(this.exception)
         is ConfigResult.PropertyFound -> this.value
@@ -87,7 +87,7 @@ fun<T : Any> ConfigResult<T>.getOrElse(onFailure: (exception: Throwable) -> T): 
  * [onSuccess] with the contained value.  Otherwise call
  * [onFailure] with the exception
  */
-fun<T : Any, R> ConfigResult<T>.fold(
+fun <T : Any, R> ConfigResult<T>.fold(
     onSuccess: (value: T) -> R,
     onFailure: (exception: Throwable) -> R
 ): R {
@@ -103,11 +103,10 @@ fun<T : Any, R> ConfigResult<T>.fold(
  * a [ConfigResult.PropertyNotFound] instance with the exception
  * if it throws.
  */
-inline fun<T : Any> configRunCatching(block: () -> T): ConfigResult<T> {
+inline fun <T : Any> configRunCatching(block: () -> T): ConfigResult<T> {
     return try {
         ConfigResult.found(block())
     } catch (t: Throwable) {
         ConfigResult.notFound(t)
     }
 }
-

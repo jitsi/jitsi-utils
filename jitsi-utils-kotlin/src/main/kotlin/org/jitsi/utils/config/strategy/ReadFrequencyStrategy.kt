@@ -57,7 +57,7 @@ class ReadEveryTimeStrategy<T : Any>(configurationValueSupplier: () -> T) : Read
  * Based on whether or not a configuration property's value should be read only
  * a single time, return the appropriate [ReadFrequencyStrategy] which will return a [ConfigResult<T]]
  */
-fun <T : Any> getReadStrategy(readOnce: Boolean, configurationValueSupplier: () -> T): ReadFrequencyStrategy<T>  {
+fun <T : Any> getReadStrategy(readOnce: Boolean, configurationValueSupplier: () -> T): ReadFrequencyStrategy<T> {
     return if (readOnce) {
         ReadOnceStrategy(configurationValueSupplier)
     } else {

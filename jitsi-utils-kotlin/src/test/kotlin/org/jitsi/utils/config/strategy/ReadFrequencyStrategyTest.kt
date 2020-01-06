@@ -35,7 +35,7 @@ class ReadFrequencyStrategyTest : ShouldSpec() {
                 strat.get() shouldBe expectedResult
             }
             should("only invoke the supplier once") {
-                repeat (5) { strat.get() }
+                repeat(5) { strat.get() }
                 supplier.numTimesCalled shouldBe 1
             }
             should("read the value on creation") {
@@ -55,7 +55,7 @@ class ReadFrequencyStrategyTest : ShouldSpec() {
                 strat.get() shouldBe expectedResult
             }
             should("invoke the supplier every time") {
-                repeat (5) { strat.get() }
+                repeat(5) { strat.get() }
                 supplier.numTimesCalled shouldBe 5
             }
             should("read the value every time") {
