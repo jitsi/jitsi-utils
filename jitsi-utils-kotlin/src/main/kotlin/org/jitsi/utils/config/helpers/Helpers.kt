@@ -28,7 +28,7 @@ fun <T : Any> attributes(
     valueType: KClass<T>,
     block: ConfigPropertyAttributesBuilder<T>.() -> Unit
 ): ConfigPropertyAttributes<T> {
-    return with (ConfigPropertyAttributesBuilder(valueType)) {
+    return with(ConfigPropertyAttributesBuilder(valueType)) {
         block()
         build()
     }

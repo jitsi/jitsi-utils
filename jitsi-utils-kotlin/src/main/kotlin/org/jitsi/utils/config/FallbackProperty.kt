@@ -23,7 +23,7 @@ import org.jitsi.utils.config.strategy.getReadStrategy
  * A config property for which we search multiple [ConfigSource]s, in order,
  * to find the value
  */
-abstract class FallbackProperty <T: Any>(
+abstract class FallbackProperty <T : Any>(
     vararg val attrs: ConfigPropertyAttributes<T>
 ) : ConfigProperty<T> {
     protected val getters =

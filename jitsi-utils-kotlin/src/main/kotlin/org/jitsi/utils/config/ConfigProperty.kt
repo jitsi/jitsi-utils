@@ -22,4 +22,3 @@ package org.jitsi.utils.config
 interface ConfigProperty<T : Any> {
     val value: T
 }
-

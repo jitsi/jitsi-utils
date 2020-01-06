@@ -59,8 +59,8 @@ class ConfigPropertyAttributesBuilder<T : Any>(
         val readOnce: Boolean = readOnce ?: throw Exception("Read frequency not set")
         val configSource: ConfigSource = configSource ?: throw Exception("Config source not set")
 
-        val supplier = innerRetriever?.toSupplier(keyPath, configSource) ?:
-            { configSource.getterFor(valueType).invoke(keyPath)}
+        val supplier = innerRetriever?.toSupplier(keyPath, configSource)
+            ?: { configSource.getterFor(valueType).invoke(keyPath) }
 
         return ConfigPropertyAttributes(
             keyPath, valueType, readOnce, configSource, supplier, deprecationNotice
@@ -74,7 +74,7 @@ class ConfigPropertyAttributesBuilder<T : Any>(
      * to convert the retrieved value from type [U] to type [T].
      */
     inline fun <reified U : Any> retrievedAs(): RetrievedTypeHelper<U> {
-        check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy'"}
+        check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy'" }
         return RetrievedTypeHelper(U::class).also { this.innerRetriever = it }
     }
 
@@ -85,7 +85,7 @@ class ConfigPropertyAttributesBuilder<T : Any>(
      * 'convertedBy' ourselves with the given function
      */
     fun transformedBy(transformer: (T) -> T) {
-        check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy'"}
+        check(innerRetriever == null) { "Cannot use both 'retrievedAs' and 'transformedBy'" }
         innerRetriever = RetrievedTypeHelper(valueType).apply {
             convertedBy(transformer)
         }

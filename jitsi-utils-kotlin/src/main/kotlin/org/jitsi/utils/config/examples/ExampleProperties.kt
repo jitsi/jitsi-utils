@@ -146,7 +146,7 @@ internal class ExampleProperties {
  * A helper class which assumes the property is held in [legacyConfig] under
  * one name and [newConfig] under another name
  */
-internal abstract class LegacyFallbackProperty <T: Any>(
+internal abstract class LegacyFallbackProperty <T : Any>(
     valueType: KClass<T>,
     readOnce: Boolean,
     legacyName: String,
