@@ -16,7 +16,13 @@
 
 package org.jitsi.utils
 
-/** Format a sequence of ints as a ranged string, e.g. "1, 3-8, 9-10" */
+/** Format a sequence of ints as a ranged string, e.g. "1, 3-8, 9-10"
+ * Elements are separated using [separator]; non-singleton ranges are connected with [rangeSeparator].
+ * The given [prefix] and [postfix] are used if supplied.
+ *
+ * If the collection could be huge, you can specify a non-negative value of [rangeLimit], in which case only the first [rangeLimit]
+ * ranges (or singleton elements) will be appended, followed by the [truncated] string (which defaults to "...").
+ * */
 /* TODO: it'd be nice to support this for any integer type but I don't know
     if there's a good way to represent this.  Unfortunately interface [Number]
     doesn't have [operator fun plus], so we can't use it to test
