@@ -100,6 +100,16 @@ internal class RangedStringTest : ShouldSpec() {
                 val string = range.joinToRangedString(rangeLimit = 4)
                 string shouldBe "1-2, 4-5, 7-8, 10-14"
             }
+            should("work for sets without ranges") {
+                val range = 1..9 step 2
+                val string = range.joinToRangedString(rangeLimit = 4)
+                string shouldBe "1, 3, 5, 7, ..."
+            }
+            should("work for combinations with and without ranges") {
+                val range = arrayOf(1, 2, 4, 6, 7, 9, 10, 12)
+                val string = range.joinToRangedString(rangeLimit = 4)
+                string shouldBe "1-2, 4, 6-7, 9-10, ..."
+            }
         }
         "setting a range limit of zero" {
             should("work") {
@@ -111,6 +121,11 @@ internal class RangedStringTest : ShouldSpec() {
                 val range = arrayOf<Int>()
                 val string = range.joinToRangedString(rangeLimit = 0)
                 string shouldBe ""
+            }
+            should("work with a prefix and postfix") {
+                val range = arrayOf(1, 2, 4, 5, 7, 8, 10, 11, 13, 14)
+                val string = range.joinToRangedString(rangeLimit = 0, prefix = "[", postfix = "]")
+                string shouldBe "[...]"
             }
         }
         "formatting with a custom truncated value" {
