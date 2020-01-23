@@ -35,48 +35,56 @@ fun Iterator<Int>.joinToRangedString(
     postfix: CharSequence = "",
     rangeLimit: Int = -1,
     truncated: CharSequence = "..."
-): String {
-    val buffer = StringBuilder()
+): String = with(StringBuilder()) {
+    append(prefix)
+    if (!hasNext()) {
+        return append(postfix).toString()
+    }
+    if (rangeLimit == 0) {
+        return append(truncated).append(postfix).toString()
+    }
 
-    buffer.append(prefix)
     var rangeCount = 0
-    if (hasNext()) {
-        rangeCount++
-        if (rangeLimit != 0) {
-            var element = next()
-            buffer.append(element.toString())
-
-            var previous = element
-            var inRange = false
-
-            while (hasNext()) {
-                element = next()
-                if (element == previous + 1) {
-                    inRange = true
-                } else {
-                    if (inRange) {
-                        buffer.append(rangeSeparator).append(previous.toString())
-                    }
-                    inRange = false
-                    buffer.append(separator)
-                    rangeCount++
-                    if (rangeLimit < 0 || rangeCount <= rangeLimit) {
-                        buffer.append(element.toString())
-                    } else break
-                }
-                previous = element
-            }
-
-            if (inRange) {
-                buffer.append(rangeSeparator).append(previous.toString())
-            }
+    fun canAddElement(): Boolean {
+        return when {
+            rangeLimit < 0 -> true
+            rangeCount < rangeLimit -> true
+            else -> false
         }
     }
-    if (rangeLimit >= 0 && rangeCount > rangeLimit) {
-        buffer.append(truncated)
+
+    var inRange = false
+    var previous = next()
+    append(previous)
+
+    loop@ while (hasNext()) {
+        val element = next()
+        when (element) {
+            previous + 1 -> inRange = true
+            else -> {
+                if (inRange) {
+                    append(rangeSeparator).append(previous)
+                    inRange = false
+                }
+                append(separator)
+                rangeCount++
+                if (canAddElement()) {
+                    append(element)
+                } else {
+                    append(truncated)
+                    break@loop
+                }
+            }
+        }
+        previous = element
     }
-    buffer.append(postfix)
-    return buffer.toString()
+
+    if (inRange) {
+        append(rangeSeparator).append(previous)
+    }
+    append(postfix)
+
+    toString()
 }
 
 fun Iterable<Int>.joinToRangedString(
