@@ -55,3 +55,30 @@ inline fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> {
         it.kotlin.companionObject?.java == javaClass
     } ?: javaClass
 }
+
+/**
+ * Note that, although the logger now supports taking a message supplier
+ * argument, these methods are still more efficient as they're inline (and
+ * therefore don't require constructing a lambda object)
+ */
+inline fun Logger.cinfo(msg: () -> String) {
+    if (isInfoEnabled) {
+        this.info(msg())
+    }
+}
+
+inline fun Logger.cdebug(msg: () -> String) {
+    if (isDebugEnabled) {
+        this.debug(msg())
+    }
+}
+
+inline fun Logger.cwarn(msg: () -> String) {
+    if (isWarnEnabled) {
+        this.warn(msg())
+    }
+}
+
+inline fun Logger.cerror(msg: () -> String) {
+    this.error(msg())
+}
