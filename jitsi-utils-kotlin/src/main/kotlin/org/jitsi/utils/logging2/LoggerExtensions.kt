@@ -26,34 +26,35 @@ import kotlin.reflect.full.companionObject
 
 /**
  * Create a logger with an optional [minLogLevel] and [logContext] using the
- * fully-qualified name of the calling class
+ * fully-qualified name of the *actual* class (i.e. the instance's class, not
+ * the class that happens to be calling this method).
  *
  */
-inline fun <reified T : Any> T.createLogger(
+fun <T : Any> T.createLogger(
     minLogLevel: Level = Level.INFO,
     logContext: LogContext = LogContext.EMPTY
 ): Logger =
-    LoggerImpl(getClassForLogging(T::class.java).name, minLogLevel, logContext)
+    LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
 
 /**
  * Create a child logger from [parentLogger] with any optional [childContext]
- * using the fully-qualified name of the calling class.
+ * using the fully-qualified name of the *actual* class (i.e. the instance's
+ * class, not the class that happens to be calling this method).
  */
-inline fun <reified T : Any> T.createChildLogger(
+fun <T : Any> T.createChildLogger(
     parentLogger: Logger,
     childContext: Map<String, String> = emptyMap()
 ): Logger =
-    parentLogger.createChildLogger(getClassForLogging(T::class.java).name, childContext)
+    parentLogger.createChildLogger(getClassForLogging(this.javaClass).name, childContext)
 
 /**
  * Given a [Class], get the proper class to be used for the name of a logger
  * by stripping any companion object class identifier, if present.
  */
-@Suppress("NOTHING_TO_INLINE")
-inline fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> {
-    return javaClass.enclosingClass?.takeIf {
+fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> {
+    return (javaClass.enclosingClass?.takeIf {
         it.kotlin.companionObject?.java == javaClass
-    } ?: javaClass
+    } ?: javaClass)
 }
 
 /**
