@@ -118,10 +118,12 @@ public class QueueStatistics
 
     /**
      * Registers the removal of a packet.
+     * @param pushTime the time (in milliseconds since the epoch) at which the
+     * packet was added to the queue.
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was removed.
      */
-    public void remove(long now)
+    public void remove(long pushTime, long now)
     {
         removeRate.update(1, now);
         totalPacketsRemoved.incrementAndGet();
@@ -129,13 +131,14 @@ public class QueueStatistics
 
     /**
      * Registers that a packet was dropped.
+     * @param pushTime the time (in milliseconds since the epoch) at which the
+     * packet was added to the queue.
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was dropped.
      */
-    public void drop(long now)
+    public void drop(long pushTime, long now)
     {
         dropRate.update(1, now);
         totalPacketsDropped.incrementAndGet();
     }
-
 }

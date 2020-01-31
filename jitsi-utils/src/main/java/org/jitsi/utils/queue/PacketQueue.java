@@ -62,7 +62,7 @@ public abstract class PacketQueue<T>
      * Used as synchronization object between {@link #close()}, {@link #get()}
      * and {@link #doAdd(Object)}.
      */
-    private final BlockingQueue<T> queue;
+    private final BlockingQueue<QueueElement<T>> queue;
 
     /**
      * Whether this {@link PacketQueue} should store the {@code byte[]} or
@@ -82,7 +82,7 @@ public abstract class PacketQueue<T>
      * from {@link #queue} on separate thread and handle them with provided
      * packet handler.
      */
-    private final AsyncQueueHandler asyncQueueHandler;
+    private final AsyncQueueHandler<QueueElement<T>> asyncQueueHandler;
 
     /**
      * A string used to identify this {@link PacketQueue} for logging purposes.
@@ -197,7 +197,7 @@ public abstract class PacketQueue<T>
 
         if (packetHandler != null)
         {
-            asyncQueueHandler = new AsyncQueueHandler<>(
+            asyncQueueHandler = new AsyncQueueHandler<QueueElement<T>>(
                 queue,
                 new HandlerAdapter(packetHandler),
                 id,
@@ -283,27 +283,29 @@ public abstract class PacketQueue<T>
         if (closed)
             return;
 
-        while (!queue.offer(pkt))
+        QueueElement<T> element = new QueueElement<>(pkt);
+
+        while (!queue.offer(element))
         {
             // Drop from the head of the queue.
-            T p = queue.poll();
-            if (p != null)
+            QueueElement<T> e = queue.poll();
+            if (e != null)
             {
                 if (queueStatistics != null)
                 {
-                    queueStatistics.drop(System.currentTimeMillis());
+                    queueStatistics.drop(e.pushTime, System.currentTimeMillis());
                 }
                 errorHandler.packetDropped();
 
                 // Call release on dropped packet to allow proper implementation
                 // of object pooling by PacketQueue users
-                releasePacket(p);
+                releasePacket(e.packet);
             }
         }
 
         if (queueStatistics != null)
         {
-            queueStatistics.add(System.currentTimeMillis());
+            queueStatistics.add(element.pushTime);
         }
 
         synchronized (queue)
@@ -341,14 +343,14 @@ public abstract class PacketQueue<T>
                 return null;
             synchronized (queue)
             {
-                T pkt = queue.poll();
+                QueueElement<T> pkt = queue.poll();
                 if (pkt != null)
                 {
                     if (queueStatistics != null)
                     {
-                        queueStatistics.remove(System.currentTimeMillis());
+                        queueStatistics.remove(pkt.pushTime, System.currentTimeMillis());
                     }
-                    return pkt;
+                    return pkt.packet;
                 }
 
                 try
@@ -384,13 +386,13 @@ public abstract class PacketQueue<T>
 
         synchronized (queue)
         {
-            T pkt = queue.poll();
-            if (pkt != null && queueStatistics != null)
+            QueueElement<T> element = queue.poll();
+            if (element != null && queueStatistics != null)
             {
-                queueStatistics.remove(System.currentTimeMillis());
+                queueStatistics.remove(element.pushTime, System.currentTimeMillis());
             }
 
-            return pkt;
+            return element != null ? element.packet : null;
         }
     }
 
@@ -534,7 +536,7 @@ public abstract class PacketQueue<T>
      * An adapter class implementing {@link AsyncQueueHandler.Handler<T>}
      * to wrap {@link PacketHandler<T>}.
      */
-    private final class HandlerAdapter implements AsyncQueueHandler.Handler<T>
+    private final class HandlerAdapter implements AsyncQueueHandler.Handler<QueueElement<T>>
     {
         /**
          * An actual handler of packets.
@@ -555,16 +557,16 @@ public abstract class PacketQueue<T>
          * {@inheritDoc}
          */
         @Override
-        public void handleItem(T item)
+        public void handleItem(QueueElement<T> item)
         {
             if (queueStatistics != null)
             {
-                queueStatistics.remove(System.currentTimeMillis());
+                queueStatistics.remove(item.pushTime, System.currentTimeMillis());
             }
 
             try
             {
-                handler.handlePacket(item);
+                handler.handlePacket(item.packet);
             }
             catch (Throwable t)
             {
@@ -572,7 +574,25 @@ public abstract class PacketQueue<T>
             }
             finally
             {
-                releasePacket(item);
+                releasePacket(item.packet);
+            }
+        }
+    }
+
+    private final class QueueElement<T>
+    {
+        final T packet;
+        final long pushTime;
+
+        QueueElement(T p)
+        {
+            packet = p;
+            if (queueStatistics != null)
+            {
+                pushTime = System.currentTimeMillis();
+            }
+            else {
+                pushTime = -1;
             }
         }
     }
