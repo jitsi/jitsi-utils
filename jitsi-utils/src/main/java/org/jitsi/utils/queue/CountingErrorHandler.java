@@ -28,11 +28,11 @@ import java.util.concurrent.atomic.*;
 public class CountingErrorHandler implements ErrorHandler
 {
     /**
-     * The {@link Logger} used by the {@link PacketQueue} class and its
+     * The {@link Logger} used by the {@link PacketQueueImpl} class and its
      * instances for logging output.
      */
     private static final Logger logger
-            = Logger.getLogger(PacketQueue.class.getName());
+            = Logger.getLogger(PacketQueueImpl.class.getName());
 
     /**
      * The number of dropped packets.

@@ -154,10 +154,11 @@ public class PacketQueueBenchmarkTests
         final CountDownLatch completionGuard
             = new CountDownLatch(numberOfItemsInQueue * numberOfQueues);
 
-        final ArrayList<DummyQueue> queues = new ArrayList<>();
+        final ArrayList<PacketQueue<DummyQueue.Dummy>> queues = new ArrayList<>();
         for (int i = 0; i < numberOfQueues; i++) {
-            queues.add(new DummyQueue(
+            queues.add(PacketQueueFactory.getPacketQueue(
                 numberOfItemsInQueue,
+                false, false, "DummyQueue",
                 new PacketQueue.PacketHandler<DummyQueue.Dummy>()
                 {
                     @Override
@@ -187,7 +188,7 @@ public class PacketQueueBenchmarkTests
 
         long startTime = System.nanoTime();
 
-        for (DummyQueue queue : queues)
+        for (PacketQueue<DummyQueue.Dummy> queue : queues)
         {
             for (int i = 0; i < numberOfItemsInQueue; i++)
             {
@@ -198,7 +199,7 @@ public class PacketQueueBenchmarkTests
         completionGuard.await();
         long endTime = System.nanoTime();
 
-        for (DummyQueue queue : queues) {
+        for (PacketQueue<DummyQueue.Dummy> queue : queues) {
             queue.close();
         }
 
