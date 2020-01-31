@@ -125,4 +125,3 @@ class Outcome {
 
     private inner class Subscriber(val handler: () -> Unit, val outcomeType: OutcomeType)
 }
-
