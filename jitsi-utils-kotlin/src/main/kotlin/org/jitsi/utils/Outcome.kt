@@ -16,64 +16,40 @@
 
 package org.jitsi.utils
 
+import java.lang.IllegalStateException
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * [Outcome] models the outcome of some process which is not yet known.  Once
+ * [MutableOutcome] models the outcome of some process which is not yet known.  Once
  * known, it will not change.  It allows subscribing to both the success and
  * failure of the outcome.  Subscribers are notified once the outcome has
  * been reached, or instantly if the outcome has already been reached.
  *
  * Until an outcome is reached, the state is 'unknown' (it has neither succeeded
- * nor failed).  This can be tested explicitly with [isKnown].
+ * nor failed).  This can be tested explicitly with [isKnown]).
  */
-@Suppress("MemberVisibilityCanBePrivate", "unused")
-class Outcome {
+abstract class Outcome {
     private val lock = Any()
     private val subscribers = mutableListOf<Subscriber>()
     private val succeeded = AtomicReference<Boolean>()
 
     /**
-     * Mark this [Outcome] as having succeeded.
-     */
-    fun succeeded() {
-        if (succeeded.compareAndSet(null, true)) {
-            synchronized(lock) {
-                subscribers.filter {
-                    it.outcomeType == OutcomeType.SUCCESS
-                }
-                        .forEach { it.handler() }
-            }
-        }
-    }
-
-    /**
      * Return true if the outcome was successful, false if it failed or if
      * the outcome is not yet known.
      */
-    val hasSucceeded: Boolean
-        @JvmName("hasSucceeded") get() = succeeded.get() == true
-
-    /**
-     * Mark this [Outcome] has having failed.
-     */
-    fun failed() {
-        if (succeeded.compareAndSet(null, false)) {
-            synchronized(lock) {
-                subscribers.filter {
-                    it.outcomeType == OutcomeType.FAILURE
-                }
-                        .forEach { it.handler() }
-            }
-        }
-    }
+    open fun hasSucceeded() = succeeded.get() == true
 
     /**
      * Return true if the outcome failed, false if it succeeded orr if
      * the outcome is not yet known.
      */
-    val hasFailed: Boolean
-        @JvmName("hasFailed") get() = succeeded.get() == false
+    open fun hasFailed() = succeeded.get() == false
+
+    /**
+     * Returns true if the outcome has been reached (success OR failure), false
+     * if it has not yet been reached.
+     */
+    open fun isKnown() = succeeded.get() != null
 
     /**
      * Ask to be notified when the outcome has been determined as successful.
@@ -112,16 +88,69 @@ class Outcome {
     }
 
     /**
-     * Returns true if the outcome has been reached (success OR failure), false
-     * if it has not yet been reached.
+     * Mark this [MutableOutcome] as having succeeded.
      */
-    val isKnown: Boolean
-        @JvmName("isKnown") get() = succeeded.get() != null
+    protected fun doSucceeded() {
+        if (succeeded.compareAndSet(null, true)) {
+            synchronized(lock) {
+                subscribers.filter {
+                    it.outcomeType == OutcomeType.SUCCESS
+                }
+                        .forEach { it.handler() }
+            }
+        }
+    }
 
-    private enum class OutcomeType {
+    /**
+     * Mark this [MutableOutcome] has having failed.
+     */
+    protected fun doFailed() {
+        if (succeeded.compareAndSet(null, false)) {
+            synchronized(lock) {
+                subscribers.filter {
+                    it.outcomeType == OutcomeType.FAILURE
+                }
+                        .forEach { it.handler() }
+            }
+        }
+    }
+
+    open operator fun plus(other: Outcome): MultiOutcome =
+        MultiOutcome(this, other)
+
+    protected enum class OutcomeType {
         SUCCESS,
         FAILURE
     }
-
     private inner class Subscriber(val handler: () -> Unit, val outcomeType: OutcomeType)
+}
+
+@Suppress("MemberVisibilityCanBePrivate", "unused")
+open class MutableOutcome : Outcome() {
+    /**
+     * Mark this [MutableOutcome] as having succeeded.
+     */
+    fun succeeded() = doSucceeded()
+
+    /**
+     * Mark this [MutableOutcome] has having failed.
+     */
+    fun failed() = doFailed()
+}
+
+/**
+ * An aggregate of 2 or more r[Outcome]s.  Once a [MultiOutcome] is
+ * created, no more can be added as that would potentially change the state
+ * of the outcome.
+ */
+class MultiOutcome(outcome1: Outcome, outcome2: Outcome, vararg additionalOutcomes: Outcome) : Outcome() {
+    private val outcomes = mutableListOf(outcome1, outcome2, *additionalOutcomes)
+    override fun hasSucceeded(): Boolean = outcomes.all(Outcome::hasSucceeded)
+
+    override fun hasFailed() = outcomes.any(Outcome::hasFailed)
+
+    override fun isKnown(): Boolean = hasFailed() || outcomes.all(Outcome::isKnown)
+
+    override operator fun plus(other: Outcome): MultiOutcome =
+        throw IllegalStateException("Cannot add another outcome to a MultiOutcome")
 }

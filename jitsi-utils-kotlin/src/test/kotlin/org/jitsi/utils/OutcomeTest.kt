@@ -18,20 +18,20 @@ package org.jitsi.utils
 
 import io.kotlintest.IsolationMode
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldThrow
 import io.kotlintest.specs.BehaviorSpec
+import java.lang.IllegalStateException
 
 class OutcomeTest : BehaviorSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
-//    val outcome = Outcome()
-
     init {
         given("an outcome") {
-            val outcome = Outcome()
+            val outcome = MutableOutcome()
             then("the outcome should not yet be known") {
-                outcome.isKnown shouldBe false
-                outcome.hasFailed shouldBe false
-                outcome.hasSucceeded shouldBe false
+                outcome.isKnown() shouldBe false
+                outcome.hasFailed() shouldBe false
+                outcome.hasSucceeded() shouldBe false
             }
             and("subscribers are added") {
                 var successCalled = false
@@ -68,6 +68,55 @@ class OutcomeTest : BehaviorSpec() {
                         then("it should be called right away") {
                             newFailcalled shouldBe true
                         }
+                    }
+                }
+            }
+        }
+        given("two outcomes") {
+            val oc1 = MutableOutcome()
+            val oc2 = MutableOutcome()
+            and("combining them") {
+                val oc3 = oc1 + oc2
+                then("the state should still be unknown") {
+                    oc3.isKnown() shouldBe false
+                    oc3.hasSucceeded() shouldBe false
+                    oc3.hasFailed() shouldBe false
+                }
+                and("setting the state of one to failed") {
+                    oc1.failed()
+                    then("the aggregate should have failed") {
+                        oc3.isKnown() shouldBe true
+                        oc3.hasFailed() shouldBe true
+                        oc3.hasSucceeded() shouldBe false
+                    }
+                }
+                and("setting the state of one to success") {
+                    oc1.succeeded()
+                    then("the outcome should still be unknown") {
+                        oc3.isKnown() shouldBe false
+                        oc3.hasFailed() shouldBe false
+                        oc3.hasSucceeded() shouldBe false
+                    }
+                    and("then setting the other to success") {
+                        oc2.succeeded()
+                        then("should have the aggregate outcome be success") {
+                            oc3.isKnown() shouldBe true
+                            oc3.hasFailed() shouldBe false
+                            oc3.hasSucceeded() shouldBe true
+                        }
+                    }
+                    and("then setting the other to failed") {
+                        oc2.failed()
+                        then("should have the aggregate outcome be failed") {
+                            oc3.isKnown() shouldBe true
+                            oc3.hasFailed() shouldBe true
+                            oc3.hasSucceeded() shouldBe false
+                        }
+                    }
+                }
+                then("trying to add another should throw") {
+                    shouldThrow<IllegalStateException> {
+                        oc3 + MutableOutcome()
                     }
                 }
             }
