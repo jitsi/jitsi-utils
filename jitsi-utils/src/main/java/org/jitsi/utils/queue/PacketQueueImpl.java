@@ -38,11 +38,6 @@ public class PacketQueueImpl<T>
         = Logger.getLogger(PacketQueue.class.getName());
 
     /**
-     * The default capacity of a {@link PacketQueueImpl}.
-     */
-    private final static int DEFAULT_CAPACITY = 256;
-
-    /**
      * The underlying {@link BlockingQueue} which holds packets.
      * Used as synchronization object between {@link #close()}, {@link #get()}
      * and {@link #doAdd(Object)}.
@@ -133,7 +128,6 @@ public class PacketQueueImpl<T>
      * Hook for derived class to know a packet was dropped.
      */
     protected void packetDropped(T pkt) {};
-
 
     /**
      * Adds a specific packet ({@code T}) instance to the queue.

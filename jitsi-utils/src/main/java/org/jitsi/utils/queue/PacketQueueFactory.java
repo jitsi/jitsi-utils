@@ -1,6 +1,5 @@
 package org.jitsi.utils.queue;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.*;
 import sun.reflect.generics.reflectiveObjects.*;
 
 import java.util.concurrent.*;
@@ -118,7 +117,7 @@ public class PacketQueueFactory
 
         if (enableStatistics)
         {
-            return new PacketQueueingStatisticsImpl<>(capacity, id, packetHandler, executor);
+            return new PacketQueueWithStatistics<>(capacity, id, packetHandler, executor);
         }
         else
         {

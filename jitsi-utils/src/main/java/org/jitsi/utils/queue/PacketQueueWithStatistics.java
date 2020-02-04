@@ -5,13 +5,13 @@ import org.json.simple.*;
 
 import java.util.concurrent.*;
 
-public class PacketQueueingStatisticsImpl<T>
+public class PacketQueueWithStatistics<T>
     implements PacketQueue<T>
 {
     private PacketQueue<QueueElement<T>> innerQueue;
     private QueueStatistics queueStatistics = new QueueStatistics();
 
-    public PacketQueueingStatisticsImpl(
+    public PacketQueueWithStatistics(
         int capacity,
         String id,
         PacketHandler<T> packetHandler,

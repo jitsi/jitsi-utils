@@ -15,8 +15,6 @@
  */
 package org.jitsi.utils.queue;
 
-import java.util.concurrent.*;
-
 /**
  * Concrete dummy implementation of PacketQueue. Intended for launching tests
  * against base implementation of PacketQueue.
@@ -24,17 +22,7 @@ import java.util.concurrent.*;
  * @author Yura Yaroshevich
  */
 class DummyQueue
-    extends PacketQueueImpl<DummyQueue.Dummy>
 {
-    DummyQueue(
-        int capacity,
-        PacketHandler<Dummy> packetHandler,
-        ExecutorService executor)
-    {
-        super(capacity, "DummyQueue", packetHandler,
-            executor);
-    }
-
     static class Dummy {
         int id;
     }
