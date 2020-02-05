@@ -16,6 +16,7 @@
 
 package org.jitsi.utils.logging2;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.junit.*;
 
 import java.util.*;
@@ -24,6 +25,7 @@ import java.util.logging.*;
 
 import static junit.framework.TestCase.*;
 
+@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class LoggerImplTest
 {
     private static Function<String, java.util.logging.Logger> oldLoggerFactoryFunction;

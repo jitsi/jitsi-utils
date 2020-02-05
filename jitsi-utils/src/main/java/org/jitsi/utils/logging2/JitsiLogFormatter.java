@@ -113,7 +113,7 @@ public class JitsiLogFormatter extends Formatter
         sb.append(": ");
 
         // Thread ID
-        sb.append("[" + record.getThreadID() + "] ");
+        sb.append("[").append(record.getThreadID()).append("] ");
 
         if (record instanceof ContextLogRecord)
         {
@@ -153,7 +153,7 @@ public class JitsiLogFormatter extends Formatter
                 pw.close();
                 sb.append(sw.toString());
             }
-            catch (Exception ex)
+            catch (RuntimeException ex)
             {
             }
         }
@@ -171,7 +171,7 @@ public class JitsiLogFormatter extends Formatter
     private int inferCaller(LogRecord record)
     {
         // Get the stack trace.
-        StackTraceElement stack[] = (new Throwable()).getStackTrace();
+        StackTraceElement[] stack = (new Throwable()).getStackTrace();
 
         //the line number that the caller made the call from
         int lineNumber = -1;

@@ -15,6 +15,7 @@
  */
 package org.jitsi.utils;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.jitsi.service.configuration.*;
 
 import java.io.*;
@@ -263,6 +264,7 @@ public class ConfigUtils
      * values will be masked when 'sun.java.command' is printed to the logs.
      * Separate each name with a comma.
      */
+    @SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD","MS_SHOULD_BE_FINAL"})
     public static String PASSWORD_CMD_LINE_ARGS;
 
     /**
@@ -270,6 +272,7 @@ public class ConfigUtils
      * system properties keys whose values should be masked when printed out to
      * the logs.
      */
+    @SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD","MS_SHOULD_BE_FINAL"})
     public static String PASSWORD_SYS_PROPS;
 
     /**

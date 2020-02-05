@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.stats;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 /**
  * This originally comes from webrtc.org but has been moved here so that it can
  * be reused more easily.
@@ -102,45 +104,42 @@ public class RateStatistics
         oldestTime = newOldestTime;
     }
 
-    public long getRate()
+    public synchronized long getRate()
     {
         return getRate(System.currentTimeMillis());
     }
 
-    public long getRate(long nowMs)
+    public synchronized long getRate(long nowMs)
     {
         eraseOld(nowMs);
         return (long) (accumulatedCount * scale + 0.5F);
     }
 
-    public long getAccumulatedCount()
+    public synchronized long getAccumulatedCount()
     {
         return getAccumulatedCount(System.currentTimeMillis());
     }
 
-    public long getAccumulatedCount(long nowMs)
+    public synchronized long getAccumulatedCount(long nowMs)
     {
         eraseOld(nowMs);
         return accumulatedCount;
     }
 
 
-    public void update(int count, long nowMs)
+    public synchronized void update(int count, long nowMs)
     {
         if (nowMs < oldestTime) // Too old data is ignored.
             return;
 
-        synchronized (this)
-        {
-            eraseOld(nowMs);
+        eraseOld(nowMs);
 
-            int nowOffset = (int) (nowMs - oldestTime);
-            int index = oldestIndex + nowOffset;
+        int nowOffset = (int) (nowMs - oldestTime);
+        int index = oldestIndex + nowOffset;
 
-            if (index >= buckets.length)
-                index -= buckets.length;
-            buckets[index] += count;
-            accumulatedCount += count;
-        }
+        if (index >= buckets.length)
+            index -= buckets.length;
+        buckets[index] += count;
+        accumulatedCount += count;
     }
 }

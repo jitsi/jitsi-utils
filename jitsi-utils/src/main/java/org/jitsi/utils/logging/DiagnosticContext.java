@@ -15,6 +15,7 @@
  */
 package org.jitsi.utils.logging;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.jitsi.utils.*;
 
 import java.time.*;
@@ -22,14 +23,16 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * A {@link DiagnosticContext} implementation backed by a
- * {@link ConcurrentHashMap}.
- *
  * @author George Politis
  */
+@SuppressFBWarnings(
+    value = "EQ_DOESNT_OVERRIDE_EQUALS",
+    justification = "We only add methods, we don't override anything.")
 public class DiagnosticContext
     extends ConcurrentHashMap<String, Object>
 {
+    Clock clock;
+
     /**
      * {@inheritDoc}
      */
@@ -38,7 +41,6 @@ public class DiagnosticContext
         super();
         this.clock = Clock.systemUTC();
     }
-
 
     /**
      * Creates a diagnostic context using the specified clock for timestamp values.
@@ -49,8 +51,6 @@ public class DiagnosticContext
         super();
         this.clock = clock;
     }
-
-    Clock clock;
 
     /**
      * Makes a new time series point without a timestamp. This is recommended

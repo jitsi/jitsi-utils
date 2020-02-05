@@ -42,8 +42,7 @@ public class PacketQueueTests
             // This block surrounded with try/catch necessary to ensure that
             // thread calling PacketQueue::get blocked before items is added
             // to queue. Giving 50ms for CompletableFuture to stuck on get.
-            final DummyQueue.Dummy nullDummy
-                = dummyItem.get(50, TimeUnit.MILLISECONDS);
+            dummyItem.get(50, TimeUnit.MILLISECONDS);
             Assert.fail("There is no items in queue, must not be here");
         }
         catch (TimeoutException e)
@@ -60,8 +59,8 @@ public class PacketQueueTests
             // checks that thread stuck in PacketQueue::get notified
             // "immediately" when item added to queue. Giving a few ms for
             // CompletableFuture to transit to completed state.
-            final DummyQueue.Dummy poppedItem = dummyItem.get(
-                50, TimeUnit.MILLISECONDS);
+            final DummyQueue.Dummy poppedItem
+                    = dummyItem.get(50, TimeUnit.MILLISECONDS);
             Assert.assertEquals(pushedItem, poppedItem);
         }
         catch (TimeoutException e)
@@ -90,8 +89,7 @@ public class PacketQueueTests
                 // This block surrounded with try/catch necessary to ensure that
                 // thread calling PacketQueue::get blocked before items is added
                 // to queue. Giving 50ms for CompletableFuture to stuck on get.
-                final DummyQueue.Dummy nullDummy
-                    = dummyItem.get(50, TimeUnit.MILLISECONDS);
+                dummyItem.get(50, TimeUnit.MILLISECONDS);
                 Assert.fail("There is no items in queue, must not be here");
             }
             catch (TimeoutException e)

@@ -15,6 +15,7 @@
  */
 package org.jitsi.utils.queue;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.jitsi.utils.logging.*;
 import org.json.simple.*;
 import org.jetbrains.annotations.*;
@@ -62,6 +63,9 @@ public abstract class PacketQueue<T>
      * Used as synchronization object between {@link #close()}, {@link #get()}
      * and {@link #doAdd(Object)}.
      */
+    @SuppressFBWarnings(
+        value = "JLM_JSR166_UTILCONCURRENT_MONITORENTER",
+        justification = "We synchronize on the queue intentionally.")
     private final BlockingQueue<T> queue;
 
     /**
