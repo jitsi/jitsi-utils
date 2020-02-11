@@ -35,9 +35,9 @@ import java.util.stream.*;
 @SuppressWarnings("WeakerAccess")
 public class LogContext
 {
-    public static LogContext EMPTY = new LogContext(Collections.emptyMap());
-    public static String CONTEXT_START_TOKEN = "[";
-    public static String CONTEXT_END_TOKEN = "]";
+    public static final LogContext EMPTY = new LogContext(Collections.emptyMap());
+    public static final String CONTEXT_START_TOKEN = "[";
+    public static final String CONTEXT_END_TOKEN = "]";
 
     /**
      * All context inherited from the 'ancestors' of this

@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.concurrent;
 
+import org.jetbrains.annotations.*;
+
 import java.util.concurrent.*;
 
 /**
@@ -54,7 +56,7 @@ public class ExecutorUtils
                             = Executors.defaultThreadFactory();
 
                         @Override
-                        public Thread newThread(Runnable r)
+                        public Thread newThread(@NotNull Runnable r)
                         {
                             Thread t = defaultThreadFactory.newThread(r);
 
@@ -71,11 +73,7 @@ public class ExecutorUtils
                                 if ((baseName != null)
                                         && (baseName.length() != 0))
                                 {
-                                    String name = t.getName();
-
-                                    if (name == null)
-                                        name = "";
-                                    t.setName(baseName + "-" + name);
+                                    t.setName(baseName + "-" + t.getName());
                                 }
                             }
                             return t;

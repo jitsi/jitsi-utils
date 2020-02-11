@@ -24,7 +24,7 @@ import org.jitsi.utils.config.strategy.getReadStrategy
  * to find the value
  */
 abstract class FallbackProperty <T : Any>(
-    vararg val attrs: ConfigPropertyAttributes<T>
+    vararg attrs: ConfigPropertyAttributes<T>
 ) : ConfigProperty<T> {
     protected val getters =
         attrs.map { getReadStrategy(it.readOnce, it.supplier) }

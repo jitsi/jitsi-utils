@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.logging;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 import java.util.logging.*;
 
 /**
@@ -22,6 +24,7 @@ import java.util.logging.*;
  *
  * @author Boris Grozev
  */
+@SuppressFBWarnings(justification = "Deprecated class")
 public class LoggerImpl
     extends org.jitsi.utils.logging.Logger
 {

@@ -57,6 +57,12 @@
       <artifactId>reflections</artifactId>
       <version>0.9.11</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/com.github.spotbugs/spotbugs-annotations -->
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <version>${spotbugs.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
