@@ -19,8 +19,6 @@ import java.lang.Long.max
 import java.lang.Long.min
 import java.util.concurrent.atomic.AtomicLong
 
-fun AtomicLong.increaseAndGet(newValue: Long): Long
-    = updateAndGet { prev -> max(prev, newValue) }
+fun AtomicLong.maxAssign(newValue: Long): Long = updateAndGet { prev -> max(prev, newValue) }
 
-fun AtomicLong.decreaseAndGet(newValue: Long): Long
-    = updateAndGet { prev -> min(prev, newValue) }
+fun AtomicLong.minAssign(newValue: Long): Long = updateAndGet { prev -> min(prev, newValue) }
