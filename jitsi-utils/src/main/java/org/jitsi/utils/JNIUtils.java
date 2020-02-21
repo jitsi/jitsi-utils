@@ -56,27 +56,7 @@ public final class JNIUtils
                 return;
             }
 
-            // Hack so that the native library is loaded into the ClassLoader
-            // that called this method, and not into the ClassLoader where
-            // this code resides. This is necessary for true OSGi environments.
-            try
-            {
-                Method loadLibrary0 = Runtime
-                    .getRuntime()
-                    .getClass()
-                    .getDeclaredMethod("loadLibrary0",
-                        Class.class, String.class);
-                loadLibrary0.setAccessible(true);
-                loadLibrary0.invoke(Runtime.getRuntime(), clazz, libname);
-            }
-            catch (NoSuchMethodException
-                | SecurityException
-                | IllegalAccessException
-                | IllegalArgumentException
-                | InvocationTargetException e)
-            {
-                System.loadLibrary(libname);
-            }
+            loadNativeInClassloader(libname, clazz, false);
         }
         catch (UnsatisfiedLinkError ulerr)
         {
@@ -101,7 +81,15 @@ public final class JNIUtils
             }
             try
             {
-                System.load(embedded.getAbsolutePath());
+                if (clazz != null)
+                {
+                    loadNativeInClassloader(
+                        embedded.getAbsolutePath(), clazz, true);
+                }
+                else
+                {
+                    System.load(embedded.getAbsolutePath());
+                }
             }
             finally
             {
@@ -113,6 +101,40 @@ public final class JNIUtils
                         embedded.deleteOnExit();
                 }
             }
+        }
+    }
+
+    /**
+     * Hack so that the native library is loaded into the ClassLoader
+     * that called this method, and not into the ClassLoader where
+     * this code resides. This is necessary for true OSGi environments.
+     *
+     * @param lib The library to load, name or path.
+     * @param clazz The class where to load it.
+     * @param isAbsolute Whether the library is name or path.
+     */
+    private static void loadNativeInClassloader(
+        String lib, Class clazz, boolean isAbsolute)
+    {
+        try
+        {
+            Method loadLibrary0 = Runtime
+                .getRuntime()
+                .getClass()
+                .getDeclaredMethod(
+                    isAbsolute ? "load0" : "loadLibrary0",
+                    Class.class,
+                    String.class);
+            loadLibrary0.setAccessible(true);
+            loadLibrary0.invoke(Runtime.getRuntime(), clazz, lib);
+        }
+        catch (NoSuchMethodException
+            | SecurityException
+            | IllegalAccessException
+            | IllegalArgumentException
+            | InvocationTargetException e)
+        {
+            System.loadLibrary(lib);
         }
     }
 
