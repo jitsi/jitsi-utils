@@ -54,17 +54,17 @@ public class QueueStatistics
     /**
      * Total packets added to the queue.
      */
-    private AtomicInteger totalPacketsAdded = new AtomicInteger();
+    private LongAdder totalPacketsAdded = new LongAdder();
 
     /**
      * Total packets removed to the queue.
      */
-    private AtomicInteger totalPacketsRemoved = new AtomicInteger();
+    private LongAdder totalPacketsRemoved = new LongAdder();
 
     /**
      * Total packets dropped from the queue.
      */
-    private AtomicInteger totalPacketsDropped = new AtomicInteger();
+    private LongAdder totalPacketsDropped = new LongAdder();
 
     /**
      * The time the first packet was added.
@@ -88,15 +88,15 @@ public class QueueStatistics
     {
         JSONObject stats = new JSONObject();
         long now = System.currentTimeMillis();
-        stats.put("added", totalPacketsAdded.get());
-        stats.put("removed", totalPacketsRemoved.get());
-        stats.put("dropped", totalPacketsDropped.get());
+        stats.put("added", totalPacketsAdded.sum());
+        stats.put("removed", totalPacketsRemoved.sum());
+        stats.put("dropped", totalPacketsDropped.sum());
         stats.put("add_rate", addRate.getRate(now));
         stats.put("remove_rate", removeRate.getRate(now));
         stats.put("drop_rate", dropRate.getRate(now));
         double duration = (now - firstPacketAddedMs) / 1000d;
         stats.put("duration_s", duration);
-        stats.put("average_remove_rate_pps", totalPacketsRemoved.get() / duration);
+        stats.put("average_remove_rate_pps", totalPacketsRemoved.sum() / duration);
 
         return stats;
     }
@@ -113,7 +113,7 @@ public class QueueStatistics
             firstPacketAddedMs = now;
         }
         addRate.update(1, now);
-        totalPacketsAdded.incrementAndGet();
+        totalPacketsAdded.increment();
     }
 
     /**
@@ -124,7 +124,7 @@ public class QueueStatistics
     public void remove(long now)
     {
         removeRate.update(1, now);
-        totalPacketsRemoved.incrementAndGet();
+        totalPacketsRemoved.increment();
     }
 
     /**
@@ -135,7 +135,7 @@ public class QueueStatistics
     public void drop(long now)
     {
         dropRate.update(1, now);
-        totalPacketsDropped.incrementAndGet();
+        totalPacketsDropped.increment();
     }
 
 }
