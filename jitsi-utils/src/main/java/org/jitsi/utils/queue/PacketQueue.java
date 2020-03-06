@@ -43,19 +43,10 @@ public abstract class PacketQueue<T>
     private final static int DEFAULT_CAPACITY = 256;
 
     /**
-     * The default value for the {@code enableStatistics} constructor argument.
-     */
-    private static boolean enableStatisticsDefault = false;
-
-    /**
-     * Sets the default value for the {@code enableStatistics} constructor
-     * parameter.
-     *
-     * @param enable the value to set.
+     * Deprecated. Does nothing.
      */
     public static void setEnableStatisticsDefault(boolean enable)
     {
-        enableStatisticsDefault = enable;
     }
 
     /**
@@ -76,20 +67,20 @@ public abstract class PacketQueue<T>
     private final boolean copy;
 
     /**
-     * The {@link QueueStatistics} instance optionally used to collect and print
-     * detailed statistics about this queue.
+     * The {@link Observer} instance optionally used to collect statistics about this queue.
      */
-    private final QueueStatistics queueStatistics;
+    private Observer observer = null;
 
     /**
      * The optionally used {@link AsyncQueueHandler} to perpetually read packets
      * from {@link #queue} on separate thread and handle them with provided
      * packet handler.
      */
-    private final AsyncQueueHandler asyncQueueHandler;
+    private final AsyncQueueHandler<T> asyncQueueHandler;
 
     /**
-     * A string used to identify this {@link PacketQueue} for logging purposes.
+     * A string used to identify this {@link PacketQueue} for logging and
+     * statistics purposes.
      */
     private final String id;
 
@@ -116,14 +107,11 @@ public abstract class PacketQueue<T>
      */
     public PacketQueue()
     {
-        this(null, "PacketQueue", null);
+        this("PacketQueue", null);
     }
 
     /**
      * Initializes a new {@link PacketQueue} instance.
-     * @param enableStatistics whether detailed statistics should be gathered.
-     * This might affect performance. A value of {@code null} indicates that
-     * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
      * @param packetHandler An optional handler to be used by the queue for
      * packets read from it. If a non-null value is passed the queue will
@@ -133,9 +121,9 @@ public abstract class PacketQueue<T>
      * {@link #get()} and {@link #poll()}.
      */
     public PacketQueue(
-        Boolean enableStatistics, String id, PacketHandler<T> packetHandler)
+        String id, PacketHandler<T> packetHandler)
     {
-        this(DEFAULT_CAPACITY, true, enableStatistics, id, packetHandler);
+        this(DEFAULT_CAPACITY, true, id, packetHandler);
     }
 
     /**
@@ -143,9 +131,6 @@ public abstract class PacketQueue<T>
      * @param capacity the capacity of the queue.
      * @param copy whether the queue is to store the instances it is given via
      * the various {@code add} methods, or create a copy.
-     * @param enableStatistics whether detailed statistics should be gathered.
-     * This might affect performance. A value of {@code null} indicates that
-     * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
      * @param packetHandler An optional handler to be used by the queue for
      * packets read from it. If a non-null value is passed the queue will
@@ -155,10 +140,10 @@ public abstract class PacketQueue<T>
      * {@link #get()} and {@link #poll()}.
      */
     public PacketQueue(int capacity, boolean copy,
-                       Boolean enableStatistics, String id,
+                       String id,
                        PacketHandler<T> packetHandler)
     {
-        this(capacity, copy, enableStatistics, id, packetHandler, null);
+        this(capacity, copy, id, packetHandler, null);
     }
 
     /**
@@ -166,9 +151,6 @@ public abstract class PacketQueue<T>
      * @param capacity the capacity of the queue.
      * @param copy whether the queue is to store the instances it is given via
      * the various {@code add} methods, or create a copy.
-     * @param enableStatistics whether detailed statistics should be gathered.
-     * This might affect performance. A value of {@code null} indicates that
-     * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
      * @param packetHandler An optional handler to be used by the queue for
      * packets read from it. If a non-null value is passed the queue will
@@ -182,7 +164,6 @@ public abstract class PacketQueue<T>
     public PacketQueue(
         int capacity,
         boolean copy,
-        Boolean enableStatistics,
         String id,
         PacketHandler<T> packetHandler,
         ExecutorService executor)
@@ -191,13 +172,6 @@ public abstract class PacketQueue<T>
         this.id = id;
         this.capacity = capacity;
         queue = new ArrayBlockingQueue<>(capacity);
-
-        if (enableStatistics == null)
-        {
-            enableStatistics = enableStatisticsDefault;
-        }
-        queueStatistics
-            = enableStatistics ? new QueueStatistics() : null;
 
         if (packetHandler != null)
         {
@@ -293,9 +267,9 @@ public abstract class PacketQueue<T>
             T p = queue.poll();
             if (p != null)
             {
-                if (queueStatistics != null)
+                if (observer != null)
                 {
-                    queueStatistics.drop(System.currentTimeMillis());
+                    observer.dropped(p);
                 }
                 errorHandler.packetDropped();
 
@@ -305,9 +279,9 @@ public abstract class PacketQueue<T>
             }
         }
 
-        if (queueStatistics != null)
+        if (observer != null)
         {
-            queueStatistics.add(System.currentTimeMillis());
+            observer.added(pkt);
         }
 
         synchronized (queue)
@@ -348,9 +322,9 @@ public abstract class PacketQueue<T>
                 T pkt = queue.poll();
                 if (pkt != null)
                 {
-                    if (queueStatistics != null)
+                    if (observer != null)
                     {
-                        queueStatistics.remove(System.currentTimeMillis());
+                        observer.removed(pkt);
                     }
                     return pkt;
                 }
@@ -389,9 +363,9 @@ public abstract class PacketQueue<T>
         synchronized (queue)
         {
             T pkt = queue.poll();
-            if (pkt != null && queueStatistics != null)
+            if (pkt != null && observer != null)
             {
-                queueStatistics.remove(System.currentTimeMillis());
+                observer.removed(pkt);
             }
 
             return pkt;
@@ -476,6 +450,12 @@ public abstract class PacketQueue<T>
     {
     }
 
+    /** Get the current number of packets queued in this queue. */
+    public int size()
+    {
+        return queue.size();
+    }
+
     /**
      * Gets a JSON representation of the parts of this object's state that
      * are deemed useful for debugging.
@@ -487,10 +467,6 @@ public abstract class PacketQueue<T>
         debugState.put("capacity", capacity);
         debugState.put("copy", copy);
         debugState.put("closed", closed);
-        debugState.put(
-                "statistics",
-                queueStatistics == null
-                        ? null : queueStatistics.getStats());
 
         return debugState;
     }
@@ -503,6 +479,15 @@ public abstract class PacketQueue<T>
     public void setErrorHandler(@NotNull ErrorHandler errorHandler)
     {
         this.errorHandler = errorHandler;
+    }
+
+    /**
+     * Sets the observer.
+     * @param observer the observer to set.
+     */
+    public void setObserver(@NotNull Observer observer)
+    {
+        this.observer = observer;
     }
 
     /**
@@ -535,6 +520,18 @@ public abstract class PacketQueue<T>
     }
 
     /**
+     * An interface to observe a queue, to collect statistics or similar.
+     */
+    public interface Observer
+    {
+        void added(Object pkt);
+
+        void removed(Object pkt);
+
+        void dropped(Object pkt);
+    }
+
+    /**
      * An adapter class implementing {@link AsyncQueueHandler.Handler<T>}
      * to wrap {@link PacketHandler<T>}.
      */
@@ -561,9 +558,9 @@ public abstract class PacketQueue<T>
         @Override
         public void handleItem(T item)
         {
-            if (queueStatistics != null)
+            if (observer != null)
             {
-                queueStatistics.remove(System.currentTimeMillis());
+                observer.removed(item);
             }
 
             try

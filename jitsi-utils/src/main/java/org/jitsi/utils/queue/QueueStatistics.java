@@ -18,9 +18,10 @@ package org.jitsi.utils.queue;
 import org.jitsi.utils.stats.*;
 import org.json.simple.*;
 
+import java.util.*;
 import java.util.concurrent.atomic.*;
 
-public class QueueStatistics
+public class QueueStatistics implements PacketQueue.Observer
 {
     /**
      * The scale to use for {@link RateStatistics}. 1000 means units
@@ -72,13 +73,32 @@ public class QueueStatistics
     private long firstPacketAddedMs = -1;
 
     /**
-     * Initializes a new {@link QueueStatistics} instance.
-     * 
-     * @param id Identifier to distinguish the log output of multiple
-     *            {@link QueueStatistics} instances.
+     * The total queue length across all times packets were removed.
      */
-    public QueueStatistics()
+    private LongAdder totalSize = new LongAdder();
+
+    /**
+     * The total lengths of time that packets were waiting in the queue.
+     */
+    private LongAdder totalWait = new LongAdder();
+    
+    /**
+     * The queue being monitored
+     */
+    private PacketQueue<?> queue;
+
+    /**
+     * A map of the time when objects were put in the queue
+     */
+    private final Map<Object, Long> insertionTime =
+        Collections.synchronizedMap(new IdentityHashMap<>());
+
+    /**
+     * Initializes a new {@link QueueStatistics} instance.
+     */
+    public QueueStatistics(PacketQueue<?> q)
     {
+        queue = q;
     }
 
     /**
@@ -97,45 +117,56 @@ public class QueueStatistics
         double duration = (now - firstPacketAddedMs) / 1000d;
         stats.put("duration_s", duration);
         stats.put("average_remove_rate_pps", totalPacketsRemoved.sum() / duration);
+        stats.put("average_queue_size_at_remove", totalSize.sum() / totalPacketsRemoved.sum());
+        stats.put("average_queue_wait_time", totalWait.sum() / totalPacketsRemoved.sum());
 
         return stats;
     }
 
     /**
      * Registers the addition of a packet.
-     * @param now the time (in milliseconds since the epoch) at which the
-     * packet was added.
      */
-    public void add(long now)
+    @Override
+    public void added(Object o)
     {
+        long now = System.currentTimeMillis();
         if (firstPacketAddedMs < 0)
         {
             firstPacketAddedMs = now;
         }
         addRate.update(1, now);
         totalPacketsAdded.increment();
+        insertionTime.put(o, now);
     }
 
     /**
      * Registers the removal of a packet.
-     * @param now the time (in milliseconds since the epoch) at which the
-     * packet was removed.
      */
-    public void remove(long now)
+    @Override
+    public void removed(Object o)
     {
+        long now = System.currentTimeMillis();
         removeRate.update(1, now);
         totalPacketsRemoved.increment();
+        totalSize.add(queue.size());
+
+        Long then = insertionTime.remove(o);
+        if (then != null) {
+            long wait = now - then;
+            totalWait.add(wait);
+        }
     }
 
     /**
      * Registers that a packet was dropped.
-     * @param now the time (in milliseconds since the epoch) at which the
-     * packet was dropped.
      */
-    public void drop(long now)
+    @Override
+    public void dropped(Object o)
     {
+        long now = System.currentTimeMillis();
         dropRate.update(1, now);
         totalPacketsDropped.increment();
+        insertionTime.remove(o); /* TODO: track this time in stats? */
     }
 
 }
