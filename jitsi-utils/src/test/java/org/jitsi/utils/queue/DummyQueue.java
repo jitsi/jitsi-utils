@@ -31,13 +31,13 @@ class DummyQueue
         PacketHandler<Dummy> packetHandler,
         ExecutorService executor)
     {
-        super(capacity, false, false, "DummyQueue", packetHandler,
+        super(capacity, false, "DummyQueue", packetHandler,
             executor);
     }
 
     DummyQueue(int capacity)
     {
-        super(capacity, false, false, "DummyQueue", null,     null);
+        super(capacity, false, "DummyQueue", null,     null);
     }
 
     @Override

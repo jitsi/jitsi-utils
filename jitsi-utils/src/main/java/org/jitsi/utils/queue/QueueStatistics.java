@@ -81,7 +81,7 @@ public class QueueStatistics implements PacketQueue.Observer
      * The total lengths of time that packets were waiting in the queue.
      */
     private LongAdder totalWait = new LongAdder();
-    
+
     /**
      * The queue being monitored
      */
