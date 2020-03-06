@@ -118,7 +118,7 @@ public class QueueStatistics implements PacketQueue.Observer
         stats.put("duration_s", duration);
         stats.put("average_remove_rate_pps", totalPacketsRemoved.sum() / duration);
         stats.put("average_queue_size_at_remove", totalSize.sum() / (double)totalPacketsRemoved.sum());
-        stats.put("average_queue_wait_time", totalWait.sum() / (double)totalPacketsRemoved.sum());
+        stats.put("average_queue_wait_time_ms", totalWait.sum() / (double)totalPacketsRemoved.sum());
 
         return stats;
     }
