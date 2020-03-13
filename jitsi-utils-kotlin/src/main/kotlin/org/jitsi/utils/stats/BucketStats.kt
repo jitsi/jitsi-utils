@@ -47,8 +47,8 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, 
 
     fun toJson() = JSONObject().apply {
         val snapshot = snapshot
-        put("average${averageMaxLabel}", snapshot.average)
-        put("max${averageMaxLabel}", snapshot.maxValue)
+        put("average$averageMaxLabel", snapshot.average)
+        put("max$averageMaxLabel", snapshot.maxValue)
         put("total_count", snapshot.totalCount)
 
         put("buckets", getBucketsJson(snapshot.buckets))
@@ -71,11 +71,11 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, 
 
     fun getBucketsJson(b: Buckets.Snapshot) = OrderedJsonObject().apply {
         for (i in 0..b.buckets.size - 2) {
-            put("<= ${b.buckets[i].first}${bucketLabel}", b.buckets[i].second)
+            put("<= ${b.buckets[i].first}$bucketLabel", b.buckets[i].second)
         }
 
         val indexOfSecondToLast = b.buckets.size - 2
-        put("> ${b.buckets[indexOfSecondToLast].first}${bucketLabel}", b.buckets.last().second)
+        put("> ${b.buckets[indexOfSecondToLast].first}$bucketLabel", b.buckets.last().second)
 
         put("p99<=", b.p99bound)
         put("p999<=", b.p999bound)
