@@ -456,6 +456,18 @@ public abstract class PacketQueue<T>
         return queue.size();
     }
 
+    /** Get the current number of packets queued in this queue. */
+    public int capacity()
+    {
+        return capacity;
+    }
+
+    /** Get the ID of this queue. */
+    public String id()
+    {
+        return id;
+    }
+
     /**
      * Gets a JSON representation of the parts of this object's state that
      * are deemed useful for debugging.
