@@ -136,8 +136,8 @@ class QueueStatisticsBenchmarkTest {
                         var result = 0.0
                         // some dummy computationally exp
                         val end = pkt.id + singleQueueItemProcessingWeight
-                        for (i in pkt.id until end) {
-                            result += Math.log(Math.sqrt(i.toDouble()))
+                        for (id in pkt.id until end) {
+                            result += Math.log(Math.sqrt(id.toDouble()))
                         }
                         completionGuard.countDown()
                         return result > 0

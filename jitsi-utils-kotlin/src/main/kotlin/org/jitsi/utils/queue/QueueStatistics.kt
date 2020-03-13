@@ -218,10 +218,8 @@ class QueueStatistics(
         fun getStatistics(): OrderedJsonObject {
             val stats = OrderedJsonObject()
             with(stats) {
-                synchronized(queueStatsById) {
-                    for (entry in queueStatsById.entries) {
-                        put(entry.key, entry.value.stats)
-                    }
+                for (entry in queueStatsById.entries) {
+                    put(entry.key, entry.value.stats)
                 }
             }
             return stats
