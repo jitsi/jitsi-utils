@@ -87,7 +87,7 @@ class Buckets(thresholdsNoMax: LongArray) {
     private val thresholdCounts = Array(thresholds.size + 1) { LongAdder() }
     val snapshot: Snapshot
         get() {
-            val bucketCounts = Array(thresholds.size) { i -> Pair(thresholds[i], thresholdCounts[i].sum()) }
+            val bucketCounts = List(thresholds.size) { i -> Pair(thresholds[i], thresholdCounts[i].sum()) }
 
             var p99 = Long.MAX_VALUE
             var p999 = Long.MAX_VALUE
@@ -116,7 +116,7 @@ class Buckets(thresholdsNoMax: LongArray) {
     fun addValue(value: Long) = findBucket(value).increment()
 
     data class Snapshot(
-        val buckets: Array<Pair<Long, Long>>,
+        val buckets: List<Pair<Long, Long>>,
         val p99bound: Long,
         val p999bound: Long
     ) {
@@ -126,13 +126,13 @@ class Buckets(thresholdsNoMax: LongArray) {
 
             other as Snapshot
 
-            if (!buckets.contentEquals(other.buckets)) return false
+            if (!buckets.equals(other.buckets)) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            return buckets.contentHashCode()
+            return buckets.hashCode()
         }
     }
 }
