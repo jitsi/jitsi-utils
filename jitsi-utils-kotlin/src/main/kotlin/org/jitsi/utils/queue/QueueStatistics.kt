@@ -16,6 +16,8 @@
 
 package org.jitsi.utils.queue
 
+import org.jitsi.utils.OrderedJsonObject
+import org.jitsi.utils.stats.BucketStats
 import org.jitsi.utils.stats.RateStatistics
 import org.json.simple.JSONObject
 import java.util.Collections
@@ -67,14 +69,14 @@ class QueueStatistics
     private var firstPacketAddedMs: Long = -1
 
     /**
-     * The total queue length across all times packets were removed.
+     * Statistics about queue lengths
      */
-    private val totalSize = LongAdder()
+    private val queueLengthStats = BucketStats(lengthBucketSizes(queue.size()), "_queue_size_at_remove", "")
 
     /**
-     * The total lengths of time that packets were waiting in the queue.
+     * Statistics about the time that packets were waiting in the queue.
      */
-    private val totalWait = LongAdder()
+    private val queueWaitStats = BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms")
 
     /**
      * A map of the time when objects were put in the queue
@@ -84,9 +86,9 @@ class QueueStatistics
     /**
      * Gets a snapshot of the stats in JSON format.
      */
-    val stats: JSONObject
+    val stats: OrderedJsonObject
         get() {
-            val stats = JSONObject()
+            val stats = OrderedJsonObject()
             val now = System.currentTimeMillis()
             stats["added"] = totalPacketsAdded.sum()
             stats["removed"] = totalPacketsRemoved.sum()
@@ -98,8 +100,8 @@ class QueueStatistics
             stats["duration_s"] = duration
             val packetsRemoved = totalPacketsRemoved.sum().toDouble()
             stats["average_remove_rate_pps"] = packetsRemoved / duration
-            stats["average_queue_size_at_remove"] = totalSize.sum() / packetsRemoved
-            stats["average_queue_wait_time_ms"] = totalWait.sum() / packetsRemoved
+            stats["queue_size_at_remove"] = queueLengthStats.toJson()
+            stats["queue_wait_time"] = queueWaitStats.toJson()
             return stats
         }
 
@@ -123,11 +125,11 @@ class QueueStatistics
         val now = System.currentTimeMillis()
         removeRate.update(1, now)
         totalPacketsRemoved.increment()
-        totalSize.add(queue.size().toLong())
+        queueLengthStats.addValue(queue.size().toLong())
         val then = insertionTime.remove(o)
         if (then != null) {
             val wait = now - then
-            totalWait.add(wait)
+            queueWaitStats.addValue(wait)
         }
     }
 
@@ -152,5 +154,36 @@ class QueueStatistics
          * The interval for which to calculate rates in milliseconds.
          */
         private const val INTERVAL_MS = 5000
+
+        /**
+         * Calculate the statistics buckets for a given queue length
+         */
+        private fun lengthBucketSizes(size: Int): LongArray
+        {
+            val list = ArrayList<Long>();
+            list.add(0L)
+            var i = 1L;
+
+            while (i < size) {
+                list.add(i)
+                i *= size
+            }
+            val half = (size/2).toLong()
+            if (half > list.last()) {
+                list.add(half)
+            }
+
+            val threeQuarters = (size * 3 / 4).toLong()
+            if (threeQuarters > list.last()) {
+                list.add(threeQuarters)
+            }
+
+            return list.toLongArray()
+        }
+
+        /**
+         * The queue waiting time bucket sizes.
+         */
+        private val waitBucketSizes = longArrayOf(2, 5, 20, 50, 200, 500, 1000)
     }
 }
