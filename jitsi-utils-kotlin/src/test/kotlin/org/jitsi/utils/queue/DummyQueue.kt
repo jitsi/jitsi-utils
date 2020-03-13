@@ -27,9 +27,8 @@ internal open class DummyQueue : PacketQueue<DummyQueue.Dummy> {
     constructor(
         capacity: Int,
         packetHandler: PacketHandler<Dummy>?,
-        executor: ExecutorService?) : super(capacity, false, "DummyQueue", packetHandler,
-        executor) {
-    }
+        executor: ExecutorService?
+    ) : super(capacity, false, "DummyQueue", packetHandler, executor)
 
     constructor(capacity: Int) : super(capacity, false, "DummyQueue", null, null) {}
 
@@ -49,8 +48,12 @@ internal open class DummyQueue : PacketQueue<DummyQueue.Dummy> {
         return null
     }
 
-    override fun createPacket(buf: ByteArray, off: Int, len: Int,
-                              context: Any): Dummy {
+    override fun createPacket(
+        buf: ByteArray,
+        off: Int,
+        len: Int,
+        context: Any
+    ): Dummy {
         return Dummy()
     }
 
