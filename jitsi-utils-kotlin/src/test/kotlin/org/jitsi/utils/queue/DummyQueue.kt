@@ -23,14 +23,12 @@ import java.util.concurrent.ExecutorService
  *
  * @author Yura Yaroshevich
  */
-internal open class DummyQueue : PacketQueue<DummyQueue.Dummy> {
-    constructor(
+internal open class DummyQueue(
         capacity: Int,
         packetHandler: PacketHandler<Dummy>?,
-        executor: ExecutorService?
-    ) : super(capacity, false, "DummyQueue", packetHandler, executor)
-
-    constructor(capacity: Int) : super(capacity, false, "DummyQueue", null, null) {}
+        executor: ExecutorService?,
+        idSuffix: String = "DummyQueue")
+    : PacketQueue<DummyQueue.Dummy>(capacity, false, "DummyQueue$idSuffix", packetHandler, executor) {
 
     override fun getBuffer(pkt: Dummy): ByteArray? {
         return null

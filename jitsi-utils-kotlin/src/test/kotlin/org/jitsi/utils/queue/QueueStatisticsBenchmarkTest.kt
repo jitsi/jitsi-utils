@@ -43,7 +43,8 @@ class QueueStatisticsBenchmarkTest {
                 executorService,
                 -1 /* Disable cooperative multi-tasking mode,
                      which is not relevant when each queue has it's own processing
-                     thread*/)
+                     thread*/,
+                "ThreadPerQueuePool")
             executorService.shutdownNow()
             duration
         }
@@ -61,7 +62,8 @@ class QueueStatisticsBenchmarkTest {
                 executorService,
                 -1 /* Disable cooperative multi-tasking mode,
                      which is not relevant when each queue has it's own processing
-                     thread*/)
+                     thread*/,
+                "CachedThreadPerQueuePool")
             executorService.shutdownNow()
             duration
         }
@@ -80,7 +82,8 @@ class QueueStatisticsBenchmarkTest {
                 executorService,
                 50 /* Because queues will share executor
                     with limited number of threads, so configure cooperative
-                    multi-tasking mode*/)
+                    multi-tasking mode*/,
+                "FixedSizeCPUBoundPool")
             executorService.shutdownNow()
             duration
         }
@@ -105,7 +108,8 @@ class QueueStatisticsBenchmarkTest {
                 executorService,
                 50 /* Because queues will share executor
                     with limited number of threads, so configure cooperative
-                    multi-tasking mode*/)
+                    multi-tasking mode*/,
+                "ForkJoinCPUBoundPool")
             executorService.shutdownNow()
             duration
         }
@@ -114,7 +118,8 @@ class QueueStatisticsBenchmarkTest {
     @Throws(InterruptedException::class)
     private fun runBenchmark(
         executor: ExecutorService,
-        maxSequentiallyPackets: Long
+        maxSequentiallyPackets: Long,
+        id: String
     ): Duration {
         val completionGuard = CountDownLatch(numberOfItemsInQueue * numberOfQueues)
         val queues = ArrayList<DummyQueue>()
@@ -137,7 +142,8 @@ class QueueStatisticsBenchmarkTest {
                         return maxSequentiallyPackets
                     }
                 },
-                executor)
+                executor,
+                id)
             val s = QueueStatistics(q)
             q.setObserver(s)
             queues.add(q)
