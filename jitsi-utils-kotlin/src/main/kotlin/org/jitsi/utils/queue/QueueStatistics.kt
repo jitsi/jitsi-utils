@@ -108,6 +108,7 @@ open class QueueStatisticsBase(queueSize: Int) {
      */
     fun removed(now: Long, queueSize: Int, waitTime: Long?) {
         totalPacketsRemoved.increment()
+        removeRate.update(1, now)
         queueLengthStats.addValue(queueSize.toLong())
         if (waitTime != null) {
             queueWaitStats.addValue(waitTime)
