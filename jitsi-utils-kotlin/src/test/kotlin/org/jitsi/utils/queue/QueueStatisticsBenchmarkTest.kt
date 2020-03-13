@@ -16,9 +16,13 @@
 
 package org.jitsi.utils.queue
 
+import io.kotlintest.shouldBe
+import io.kotlintest.shouldNotBe
 import org.jitsi.utils.queue.PacketQueue.PacketHandler
+import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.Ignore
+import org.junit.runners.MethodSorters
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit
  * PacketQueue configurations, with statistics
  */
 @Ignore("Check only performance aspect of PacketQueue")
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class QueueStatisticsBenchmarkTest {
     @Test
     fun testMultiplePacketQueueThroughputWithThreadPerQueueWithStatistics() {
@@ -160,6 +165,20 @@ class QueueStatisticsBenchmarkTest {
             queue.close()
         }
         return Duration.ofNanos(endTime - startTime)
+    }
+
+    @Test
+    /* N.B. the fact that this comes lexicographically after the other tests is important! */
+    fun testQueueStatistics() {
+        val stats = QueueStatistics.getStatistics()
+        stats["DummyQueueThreadPerQueuePool"] shouldNotBe null
+        stats["DummyQueueCachedThreadPerQueuePool"] shouldNotBe null
+        stats["DummyQueueForkJoinCPUBoundPool"] shouldNotBe null
+        stats["DummyQueueForkJoinCPUBoundPool"] shouldNotBe null
+
+        stats.size shouldBe 4
+
+        println(stats.toJSONString())
     }
 
     @Throws(Exception::class)

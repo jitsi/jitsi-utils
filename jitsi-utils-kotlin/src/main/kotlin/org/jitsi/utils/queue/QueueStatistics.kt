@@ -19,20 +19,12 @@ package org.jitsi.utils.queue
 import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.stats.BucketStats
 import org.jitsi.utils.stats.RateStatistics
-import org.json.simple.JSONObject
 import java.util.Collections
 import java.util.concurrent.atomic.LongAdder
 import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 
-class QueueStatistics
-/**
- * Initializes a new [QueueStatistics] instance.
- */(
-     /**
-      * The queue being monitored
-      */
-     private val queue: PacketQueue<*>
- ) : PacketQueue.Observer {
+open class QueueStatisticsBase(queueSize: Int) {
     /**
      * Rate of addition of packets in pps.
      */
@@ -71,17 +63,12 @@ class QueueStatistics
     /**
      * Statistics about queue lengths
      */
-    private val queueLengthStats = BucketStats(lengthBucketSizes(queue.size()), "_queue_size_at_remove", "")
+    private val queueLengthStats = BucketStats(lengthBucketSizes(queueSize), "_queue_size_at_remove", "")
 
     /**
      * Statistics about the time that packets were waiting in the queue.
      */
     private val queueWaitStats = BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms")
-
-    /**
-     * A map of the time when objects were put in the queue
-     */
-    private val insertionTime = Collections.synchronizedMap(IdentityHashMap<Any, Long>())
 
     /**
      * Gets a snapshot of the stats in JSON format.
@@ -108,39 +95,31 @@ class QueueStatistics
     /**
      * Registers the addition of a packet.
      */
-    override fun added(o: Any) {
-        val now = System.currentTimeMillis()
+    fun added(now: Long) {
         if (firstPacketAddedMs < 0) {
             firstPacketAddedMs = now
         }
         addRate.update(1, now)
         totalPacketsAdded.increment()
-        insertionTime[o] = now
     }
 
     /**
      * Registers the removal of a packet.
      */
-    override fun removed(o: Any) {
-        val now = System.currentTimeMillis()
-        removeRate.update(1, now)
+    fun removed(now: Long, queueSize: Int, waitTime: Long?) {
         totalPacketsRemoved.increment()
-        queueLengthStats.addValue(queue.size().toLong())
-        val then = insertionTime.remove(o)
-        if (then != null) {
-            val wait = now - then
-            queueWaitStats.addValue(wait)
+        queueLengthStats.addValue(queueSize.toLong())
+        if (waitTime != null) {
+            queueWaitStats.addValue(waitTime)
         }
     }
 
     /**
      * Registers that a packet was dropped.
      */
-    override fun dropped(o: Any) {
-        val now = System.currentTimeMillis()
+    fun dropped(now: Long) {
         dropRate.update(1, now)
         totalPacketsDropped.increment()
-        insertionTime.remove(o) /* TODO: track this time in stats? */
     }
 
     companion object {
@@ -158,17 +137,16 @@ class QueueStatistics
         /**
          * Calculate the statistics buckets for a given queue length
          */
-        private fun lengthBucketSizes(size: Int): LongArray
-        {
-            val list = ArrayList<Long>();
+        private fun lengthBucketSizes(size: Int): LongArray {
+            val list = ArrayList<Long>()
             list.add(0L)
-            var i = 1L;
+            var i = 1L
 
             while (i < size) {
                 list.add(i)
-                i *= size
+                i *= 4
             }
-            val half = (size/2).toLong()
+            val half = (size / 2).toLong()
             if (half > list.last()) {
                 list.add(half)
             }
@@ -185,5 +163,67 @@ class QueueStatistics
          * The queue waiting time bucket sizes.
          */
         private val waitBucketSizes = longArrayOf(2, 5, 20, 50, 200, 500, 1000)
+    }
+}
+
+class QueueStatistics(
+    /**
+     * The queue being monitored
+     */
+    private val queue: PacketQueue<*>
+) : QueueStatisticsBase(queue.capacity()), PacketQueue.Observer {
+    /**
+     * A map of the time when objects were put in the queue
+     */
+    private val insertionTime = Collections.synchronizedMap(IdentityHashMap<Any, Long>())
+
+    override fun added(o: Any) {
+        val now = System.currentTimeMillis()
+        insertionTime[o] = now
+        super.added(now)
+        globalStatsFor(queue).added(now)
+    }
+
+    /**
+     * Registers the removal of a packet.
+     */
+    override fun removed(o: Any) {
+        val now = System.currentTimeMillis()
+        val queueLength = queue.size()
+        val then = insertionTime.remove(o)
+        val wait = if (then != null) { now - then } else null
+        super.removed(now, queueLength, wait)
+        globalStatsFor(queue).removed(now, queueLength, wait)
+    }
+
+    /**
+     * Registers that a packet was dropped.
+     */
+    override fun dropped(o: Any) {
+        val now = System.currentTimeMillis()
+        insertionTime.remove(o) /* TODO: track this time in stats? */
+        super.dropped(now)
+        globalStatsFor(queue).dropped(now)
+    }
+
+    companion object {
+        val queueStatsById = ConcurrentHashMap<String, QueueStatisticsBase>()
+
+        fun globalStatsFor(queue: PacketQueue<*>) = queueStatsById.computeIfAbsent(queue.id()) {
+            /* Assume all queues with the same ID have the same capacity and can use the same size buckets. */
+            QueueStatisticsBase(queue.capacity())
+        }
+
+        fun getStatistics(): OrderedJsonObject {
+            val stats = OrderedJsonObject()
+            with(stats) {
+                synchronized(queueStatsById) {
+                    for (entry in queueStatsById.entries) {
+                        put(entry.key, entry.value.stats)
+                    }
+                }
+            }
+            return stats
+        }
     }
 }
