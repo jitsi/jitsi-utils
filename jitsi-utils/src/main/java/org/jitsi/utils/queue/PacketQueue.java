@@ -43,13 +43,6 @@ public abstract class PacketQueue<T>
     private final static int DEFAULT_CAPACITY = 256;
 
     /**
-     * Deprecated. Does nothing.
-     */
-    public static void setEnableStatisticsDefault(boolean enable)
-    {
-    }
-
-    /**
      * The underlying {@link BlockingQueue} which holds packets.
      * Used as synchronization object between {@link #close()}, {@link #get()}
      * and {@link #doAdd(Object)}.
