@@ -41,7 +41,7 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, 
             totalValue.add(value)
             maxValue.maxAssign(value)
             totalCount.increment()
-            buckets.addDelay(value)
+            buckets.addValue(value)
         }
     }
 
@@ -113,7 +113,7 @@ class Buckets(thresholdsNoMax: LongArray) {
         return thresholdCounts.last()
     }
 
-    fun addDelay(value: Long) = findBucket(value).increment()
+    fun addValue(value: Long) = findBucket(value).increment()
 
     data class Snapshot(
         val buckets: Array<Pair<Long, Long>>,
