@@ -220,7 +220,7 @@ class QueueStatistics(
     val queueDebugState: JSONObject
         get() {
             val d = queue.debugState
-            stats?.let { d["statistics"] = it}
+            stats?.let { d["statistics"] = it }
             return d
         }
 
