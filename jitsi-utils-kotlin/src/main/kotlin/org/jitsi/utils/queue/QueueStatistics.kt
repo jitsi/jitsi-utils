@@ -27,21 +27,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 class QueueStatisticsInternal(queueSize: Int) {
     /**
-     * Rate of addition of packets in pps.
-     */
-    private val addRate = RateStatistics(INTERVAL_MS, SCALE.toFloat())
-
-    /**
-     * Rate of removal of packets in pps.
-     */
-    private val removeRate = RateStatistics(INTERVAL_MS, SCALE.toFloat())
-
-    /**
-     * Rate of packets being dropped in pps.
-     */
-    private val dropRate = RateStatistics(INTERVAL_MS, SCALE.toFloat())
-
-    /**
      * Total packets added to the queue.
      */
     private val totalPacketsAdded = LongAdder()
@@ -81,9 +66,6 @@ class QueueStatisticsInternal(queueSize: Int) {
             stats["added"] = totalPacketsAdded.sum()
             stats["removed"] = totalPacketsRemoved.sum()
             stats["dropped"] = totalPacketsDropped.sum()
-            stats["add_rate"] = addRate.getRate(now)
-            stats["remove_rate"] = removeRate.getRate(now)
-            stats["drop_rate"] = dropRate.getRate(now)
             val duration = (now - firstPacketAddedMs) / 1000.0
             stats["duration_s"] = duration
             val packetsRemoved = totalPacketsRemoved.sum().toDouble()
@@ -100,7 +82,6 @@ class QueueStatisticsInternal(queueSize: Int) {
         if (firstPacketAddedMs < 0) {
             firstPacketAddedMs = now
         }
-        addRate.update(1, now)
         totalPacketsAdded.increment()
     }
 
@@ -109,7 +90,6 @@ class QueueStatisticsInternal(queueSize: Int) {
      */
     fun removed(now: Long, queueSize: Int, waitTime: Long?) {
         totalPacketsRemoved.increment()
-        removeRate.update(1, now)
         queueLengthStats.addValue(queueSize.toLong())
         if (waitTime != null) {
             queueWaitStats?.addValue(waitTime)
@@ -120,7 +100,6 @@ class QueueStatisticsInternal(queueSize: Int) {
      * Registers that a packet was dropped.
      */
     fun dropped(now: Long) {
-        dropRate.update(1, now)
         totalPacketsDropped.increment()
     }
 
