@@ -16,6 +16,7 @@
 package org.jitsi.utils.queue;
 
 import org.junit.*;
+import org.junit.runners.*;
 
 import java.time.*;
 import java.util.*;
@@ -28,6 +29,7 @@ import java.util.concurrent.*;
  * @author Yura Yaroshevich
  */
 @Ignore("Check only performance aspect of PacketQueue")
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PacketQueueBenchmarkTests
 {
     /**
