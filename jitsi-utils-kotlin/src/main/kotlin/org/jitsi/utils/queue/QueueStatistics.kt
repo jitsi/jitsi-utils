@@ -204,8 +204,8 @@ class QueueStatistics(
         }
 
     companion object {
-        val debug = false
-        val trackTimes = false
+        var debug = false
+        var trackTimes = false
 
         private val queueStatsById = ConcurrentHashMap<String, QueueStatisticsInternal>()
 
