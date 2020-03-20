@@ -19,12 +19,13 @@ package org.jitsi.utils.queue
 import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.stats.BucketStats
 import org.jitsi.utils.stats.RateStatistics
+import org.json.simple.JSONObject
 import java.util.Collections
 import java.util.concurrent.atomic.LongAdder
 import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 
-open class QueueStatisticsBase(queueSize: Int) {
+class QueueStatisticsInternal(queueSize: Int) {
     /**
      * Rate of addition of packets in pps.
      */
@@ -68,7 +69,7 @@ open class QueueStatisticsBase(queueSize: Int) {
     /**
      * Statistics about the time that packets were waiting in the queue.
      */
-    private val queueWaitStats = BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms")
+    private val queueWaitStats = if (QueueStatistics.trackTimes) BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms") else null
 
     /**
      * Gets a snapshot of the stats in JSON format.
@@ -88,7 +89,7 @@ open class QueueStatisticsBase(queueSize: Int) {
             val packetsRemoved = totalPacketsRemoved.sum().toDouble()
             stats["average_remove_rate_pps"] = packetsRemoved / duration
             stats["queue_size_at_remove"] = queueLengthStats.toJson()
-            stats["queue_wait_time"] = queueWaitStats.toJson()
+            queueWaitStats?.let { stats["queue_wait_time"] = it.toJson() }
             return stats
         }
 
@@ -111,7 +112,7 @@ open class QueueStatisticsBase(queueSize: Int) {
         removeRate.update(1, now)
         queueLengthStats.addValue(queueSize.toLong())
         if (waitTime != null) {
-            queueWaitStats.addValue(waitTime)
+            queueWaitStats?.addValue(waitTime)
         }
     }
 
@@ -172,17 +173,21 @@ class QueueStatistics(
      * The queue being monitored
      */
     private val queue: PacketQueue<*>
-) : QueueStatisticsBase(queue.capacity()), PacketQueue.Observer {
+) : PacketQueue.Observer {
     /**
      * A map of the time when objects were put in the queue
      */
-    private val insertionTime = Collections.synchronizedMap(IdentityHashMap<Any, Long>())
+    private val insertionTime = if (trackTimes) Collections.synchronizedMap(IdentityHashMap<Any, Long>()) else null
+
+    private val specific = if (debug) QueueStatisticsInternal(queue.capacity()) else null
+    private val global = globalStatsFor(queue)
 
     override fun added(o: Any) {
         val now = System.currentTimeMillis()
-        insertionTime[o] = now
-        super.added(now)
-        globalStatsFor(queue).added(now)
+        insertionTime?.put(o, now)
+
+        specific?.added(now)
+        global.added(now)
     }
 
     /**
@@ -191,10 +196,11 @@ class QueueStatistics(
     override fun removed(o: Any) {
         val now = System.currentTimeMillis()
         val queueLength = queue.size()
-        val then = insertionTime.remove(o)
+        val then = insertionTime?.remove(o)
         val wait = if (then != null) { now - then } else null
-        super.removed(now, queueLength, wait)
-        globalStatsFor(queue).removed(now, queueLength, wait)
+
+        specific?.removed(now, queueLength, wait)
+        global.removed(now, queueLength, wait)
     }
 
     /**
@@ -202,17 +208,31 @@ class QueueStatistics(
      */
     override fun dropped(o: Any) {
         val now = System.currentTimeMillis()
-        insertionTime.remove(o) /* TODO: track this time in stats? */
-        super.dropped(now)
-        globalStatsFor(queue).dropped(now)
+        insertionTime?.remove(o) /* TODO: track this time in stats? */
+
+        specific?.dropped(now)
+        global.dropped(now)
     }
 
-    companion object {
-        val queueStatsById = ConcurrentHashMap<String, QueueStatisticsBase>()
+    val stats: OrderedJsonObject?
+        get() = specific?.stats
 
-        fun globalStatsFor(queue: PacketQueue<*>) = queueStatsById.computeIfAbsent(queue.id()) {
+    val queueDebugState: JSONObject
+        get() {
+            val d = queue.debugState
+            stats?.let { d["statistics"] = it}
+            return d
+        }
+
+    companion object {
+        val debug = false
+        val trackTimes = false
+
+        private val queueStatsById = ConcurrentHashMap<String, QueueStatisticsInternal>()
+
+        private fun globalStatsFor(queue: PacketQueue<*>) = queueStatsById.computeIfAbsent(queue.id()) {
             /* Assume all queues with the same ID have the same capacity and can use the same size buckets. */
-            QueueStatisticsBase(queue.capacity())
+            QueueStatisticsInternal(queue.capacity())
         }
 
         fun getStatistics(): OrderedJsonObject {
