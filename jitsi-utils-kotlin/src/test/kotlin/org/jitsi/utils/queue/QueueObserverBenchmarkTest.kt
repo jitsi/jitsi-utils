@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
  */
 @Ignore("Check only performance aspect of PacketQueue")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class QueueStatisticsBenchmarkTest {
+class QueueObserverBenchmarkTest {
     @Test
     fun testMultiplePacketQueueThroughputWithThreadPerQueueWithStatistics() {
         /*
@@ -149,7 +149,7 @@ class QueueStatisticsBenchmarkTest {
                 },
                 executor,
                 id)
-            val s = QueueStatistics(q)
+            val s = QueueObserver(q)
             q.setObserver(s)
             queues.add(q)
         }
@@ -170,7 +170,7 @@ class QueueStatisticsBenchmarkTest {
     @Test
     /* N.B. the fact that this comes lexicographically after the other tests is important! */
     fun testQueueStatistics() {
-        val stats = QueueStatistics.getStatistics()
+        val stats = QueueObserver.getStatistics()
         stats["DummyQueueThreadPerQueuePool"] shouldNotBe null
         stats["DummyQueueCachedThreadPerQueuePool"] shouldNotBe null
         stats["DummyQueueForkJoinCPUBoundPool"] shouldNotBe null
