@@ -496,6 +496,14 @@ public abstract class PacketQueue<T>
     }
 
     /**
+     * Gets the current observer.
+     */
+    public Observer getObserver()
+    {
+        return observer;
+    }
+
+    /**
      * A simple interface to handle packets.
      * @param <T> the type of the packets.
      */
