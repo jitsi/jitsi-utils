@@ -60,10 +60,7 @@ public final class JNIUtils
         }
         catch (UnsatisfiedLinkError e)
         {
-            if (clazz == null)
-            {
-                throw e;
-            }
+            // ignore and try loading from other sources
         }
 
         try
