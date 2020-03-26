@@ -50,12 +50,24 @@ public final class JNIUtils
     {
         try
         {
+            // Always prefer library from java.library.path over unpacked from jar.
+            // It allows end user to manually unpack native libraries and store them
+            // in java.library.path to later load via System.loadLibrary.
+            // This allow end-user to preserve native library on disk,
+            // which is necessary for debuggers like gdb to load symbols.
+            System.loadLibrary(libname);
+            return;
+        }
+        catch (UnsatisfiedLinkError e)
+        {
             if (clazz == null)
             {
-                System.loadLibrary(libname);
-                return;
+                throw e;
             }
+        }
 
+        try
+        {
             loadNativeInClassloader(libname, clazz, false);
         }
         catch (UnsatisfiedLinkError ulerr)
