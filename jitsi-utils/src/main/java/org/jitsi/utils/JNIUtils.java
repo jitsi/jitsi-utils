@@ -58,6 +58,7 @@ public final class JNIUtils
                 // This allows end-users to preserve native libraries on disk,
                 // which is necessary for debuggers like gdb to load symbols.
                 System.loadLibrary(libname);
+                return;
             }
             catch (UnsatisfiedLinkError e)
             {
@@ -65,8 +66,8 @@ public final class JNIUtils
                 {
                     throw e;
                 }
-                loadNativeInClassloader(libname, clazz, false);
             }
+            loadNativeInClassloader(libname, clazz, false);
         }
         catch (UnsatisfiedLinkError ulerr)
         {
