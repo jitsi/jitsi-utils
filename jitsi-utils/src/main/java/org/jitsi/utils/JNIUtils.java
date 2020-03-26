@@ -16,6 +16,8 @@
 package org.jitsi.utils;
 
 import com.sun.jna.*;
+import org.jitsi.utils.logging.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
@@ -35,6 +37,8 @@ public final class JNIUtils
      */
     private static final Pattern DYLIB_PATTERN = Pattern.compile("\\.dylib$");
 
+    private static final Logger logger = Logger.getLogger(JNIUtils.class);
+
     public static void loadLibrary(String libname, ClassLoader classLoader)
     {
         loadLibrary(libname, null, classLoader);
@@ -53,11 +57,12 @@ public final class JNIUtils
             try
             {
                 // Always prefer libraries from java.library.path over those unpacked from the jar.
-                // This allows end user to manually unpack native libraries and store them
+                // This allows the end user to manually unpack native libraries and store them
                 // in java.library.path to later load via System.loadLibrary.
                 // This allows end-users to preserve native libraries on disk,
                 // which is necessary for debuggers like gdb to load symbols.
                 System.loadLibrary(libname);
+                logger.info("Loading library " + libname + " from java.library.path rather than bundled version");
                 return;
             }
             catch (UnsatisfiedLinkError e)
