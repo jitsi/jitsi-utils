@@ -61,11 +61,11 @@ public final class JNIUtils
             }
             catch (UnsatisfiedLinkError e)
             {
-                if (clazz != null)
+                if (clazz == null)
                 {
-                    loadNativeInClassloader(libname, clazz, false);
+                    throw e;
                 }
-                throw e;
+                loadNativeInClassloader(libname, clazz, false);
             }
         }
         catch (UnsatisfiedLinkError ulerr)
