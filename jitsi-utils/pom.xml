@@ -41,6 +41,7 @@
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
       <version>15.0</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>net.java.dev.jna</groupId>
