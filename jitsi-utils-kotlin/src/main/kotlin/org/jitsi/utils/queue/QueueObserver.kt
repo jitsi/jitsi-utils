@@ -16,6 +16,7 @@
 
 package org.jitsi.utils.queue
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.stats.BucketStats
 import org.jitsi.utils.stats.RateStatistics
@@ -57,7 +58,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
     /**
      * Statistics about the time that packets were waiting in the queue.
      */
-    private val queueWaitStats = if (QueueObserver.trackTimes) BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms") else null
+    private val queueWaitStats = if (QueueObserver.TRACK_TIMES) BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms") else null
 
     /**
      * Gets a snapshot of the stats in JSON format.
@@ -163,9 +164,9 @@ constructor(
     /**
      * A map of the time when objects were put in the queue
      */
-    private val insertionTime = if (trackTimes) Collections.synchronizedMap(IdentityHashMap<Any, Instant>()) else null
+    private val insertionTime = if (TRACK_TIMES) Collections.synchronizedMap(IdentityHashMap<Any, Instant>()) else null
 
-    private val localStats = if (debug) QueueStatistics(queue.capacity(), clock) else null
+    private val localStats = if (DEBUG) QueueStatistics(queue.capacity(), clock) else null
     private val globalStats = globalStatsFor(queue, clock)
 
     override fun added(o: Any) {
@@ -210,8 +211,13 @@ constructor(
         }
 
     companion object {
-        var debug = false
-        var trackTimes = false
+        @JvmField
+        @field:SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+        var DEBUG = false
+
+        @JvmField
+        @field:SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+        var TRACK_TIMES = false
 
         private val queueStatsById = ConcurrentHashMap<String, QueueStatistics>()
 
