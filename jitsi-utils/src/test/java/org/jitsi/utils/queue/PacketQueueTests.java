@@ -359,4 +359,46 @@ public class PacketQueueTests
 
         singleThreadedExecutor.shutdown();
     }
+
+    @Test
+    public void testReleasePacketCalledForPacketsInQueueWhenClosing()
+        throws Exception
+    {
+
+        final ExecutorService singleThreadedExecutor
+            = Executors.newSingleThreadExecutor();
+
+        final List<DummyQueue.Dummy> releasedPackets = new ArrayList<>();
+
+        final int queueCapacity = 10;
+
+        final DummyQueue queue = new DummyQueue(queueCapacity)
+        {
+            @Override
+            protected void releasePacket(Dummy pkt)
+            {
+                releasedPackets.add(pkt);
+            }
+        };
+
+        // Fill the queue
+        for (int i = 0; i < queueCapacity; i++)
+        {
+            final DummyQueue.Dummy dummy = new DummyQueue.Dummy();
+            dummy.id = i + 1;
+            queue.add(dummy);
+        }
+
+        queue.close();
+        Assert.assertEquals(queueCapacity, releasedPackets.size());
+
+        int seed = 1;
+        for (DummyQueue.Dummy releasedPacket : releasedPackets)
+        {
+            Assert.assertEquals(seed, releasedPacket.id);
+            seed++;
+        }
+
+        singleThreadedExecutor.shutdown();
+    }
 }
