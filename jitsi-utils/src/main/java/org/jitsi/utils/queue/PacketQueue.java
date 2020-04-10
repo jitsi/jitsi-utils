@@ -578,10 +578,6 @@ public abstract class PacketQueue<T>
             {
                 errorHandler.packetHandlingFailed(t);
             }
-            finally
-            {
-                releasePacket(item);
-            }
         }
     }
 }
