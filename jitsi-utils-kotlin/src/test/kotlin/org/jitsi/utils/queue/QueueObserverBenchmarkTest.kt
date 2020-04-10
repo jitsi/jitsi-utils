@@ -199,7 +199,7 @@ class QueueObserverBenchmarkTest {
         var sumSquares: Long = 0
         for (duration in experimentDuration) {
             val diff = Math.abs(duration.toNanos() - averageNanos)
-            sumSquares = diff * diff
+            sumSquares += diff * diff
         }
         val stdDev = Math.sqrt(1.0 / (experimentDuration.size - 1) * sumSquares)
         println(name +
