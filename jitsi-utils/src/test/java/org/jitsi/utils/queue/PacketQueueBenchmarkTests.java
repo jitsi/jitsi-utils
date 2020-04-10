@@ -230,7 +230,7 @@ public class PacketQueueBenchmarkTests
         for (Duration duration : experimentDuration)
         {
             long diff = Math.abs(duration.toNanos() - averageNanos);
-            sumSquares = diff * diff;
+            sumSquares += diff * diff;
         }
 
         double stdDev

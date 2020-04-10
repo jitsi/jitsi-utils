@@ -421,6 +421,10 @@ public abstract class PacketQueue<T>
                 // threads waiting on queue must stop reading it.
                 queue.notifyAll();
             }
+            T item;
+            while ((item = queue.poll()) != null) {
+                releasePacket(item);
+            }
         }
     }
 
@@ -573,10 +577,6 @@ public abstract class PacketQueue<T>
             catch (Throwable t)
             {
                 errorHandler.packetHandlingFailed(t);
-            }
-            finally
-            {
-                releasePacket(item);
             }
         }
     }
