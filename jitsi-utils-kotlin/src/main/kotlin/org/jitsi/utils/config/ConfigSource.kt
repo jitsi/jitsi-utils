@@ -28,7 +28,7 @@ interface ConfigSource {
      * configuration property key (aka a key 'name') and returns the value
      * of the property at the given name as type [T]
      */
-    fun <T : Any>getterFor(valueType: KClass<T>): (String) -> T
+    fun <T : Any> getterFor(valueType: KClass<T>): (String) -> T
 
     /**
      * A name for this [ConfigSource] to give extra context in the

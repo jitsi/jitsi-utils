@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.logging;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 import java.io.*;
 import java.util.logging.*;
 
@@ -28,7 +30,8 @@ import java.util.logging.*;
  *
  * @author Damian Minkov
  */
-public class FileHandler
+@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_SUPERCLASS")
+class FileHandler
     extends java.util.logging.FileHandler
 {
     /**
@@ -56,7 +59,7 @@ public class FileHandler
      * The field is public so that our <tt>Logger</tt> could reset it if
      * necessary.
      */
-    public static String pattern = null;
+    static String pattern = null;
 
     /**
      * Initialize a <tt>FileHandler</tt> to write to a set of files.  When
@@ -137,7 +140,7 @@ public class FileHandler
      */
     private static String getPattern()
     {
-        if(pattern == null)
+        if (pattern == null)
         {
             pattern =
                 LogManager.getLogManager().getProperty(
@@ -148,23 +151,29 @@ public class FileHandler
             String dirName = System.getProperty(
                             "net.java.sip.communicator.SC_HOME_DIR_NAME");
 
-            if(homeLocation != null && dirName != null)
+            if (homeLocation != null && dirName != null)
             {
-                if(pattern == null)
+                if (pattern == null)
+                {
                     pattern = homeLocation + "/" + dirName +
                             "/log/jitsi%u.log";
+                }
                 else
+                {
                     pattern = pattern.replaceAll("\\%s",
-                        homeLocation + "/" + dirName);
+                            homeLocation + "/" + dirName);
+                }
             }
 
             // if pattern is missing and both dir name and home lcation
             // properties are also not defined its most probably running from
             // source or testing - lets create log directory in working dir.
-            if(pattern == null)
+            if (pattern == null)
+            {
                 pattern = "./log/jitsi%u.log";
+            }
 
-            checkDestinationDirectory(pattern);
+            createDestinationDirectory(pattern);
         }
 
         return pattern;
@@ -176,7 +185,7 @@ public class FileHandler
      */
     private static int getCount()
     {
-        if(count == -1)
+        if (count == -1)
         {
             String countStr = LogManager.getLogManager().getProperty(
                             FileHandler.class.getName() + ".count");
@@ -199,7 +208,8 @@ public class FileHandler
      *
      * @param pattern the directory we'd like to check.
      */
-    private static void checkDestinationDirectory(String pattern)
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
+    private static void createDestinationDirectory(String pattern)
     {
         try
         {

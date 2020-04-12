@@ -41,6 +41,7 @@
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
       <version>15.0</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>net.java.dev.jna</groupId>
@@ -56,6 +57,13 @@
       <groupId>org.reflections</groupId>
       <artifactId>reflections</artifactId>
       <version>0.9.11</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.github.spotbugs/spotbugs-annotations -->
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <version>${spotbugs.version}</version>
+      <optional>true</optional>
     </dependency>
 
     <dependency>

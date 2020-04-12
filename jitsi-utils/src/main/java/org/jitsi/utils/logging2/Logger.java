@@ -232,4 +232,18 @@ public interface Logger
      * @return the {@link Level} configured for this {@link java.util.logging.Logger}.
      */
     Level getLevel();
+
+    /**
+     * Add additional log context to this logger
+     * @param addedContext a map of key, value pairs of the key names
+     *                     and values to add
+     */
+    void addContext(Map<String, String> addedContext);
+
+    /**
+     * Add additional log context to this logger
+     * @param key the context key
+     * @param value the context value
+     */
+    void addContext(String key, String value);
 }

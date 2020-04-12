@@ -34,25 +34,25 @@ public class PacketQueueBenchmarkTests
      * Number of iteration to run benchmark and compute
      * average execution time.
      */
-    private final int numberOfBenchmarkIterations = 100;
+    private static final int numberOfBenchmarkIterations = 100;
 
     /**
      * Simulates number of concurrent existing PacketQueue instances inside
      * application. In case of JVB it is linear to number of connected peers
      * to JVB instance.
      */
-    private final int numberOfQueues = 800;
+    private static final int numberOfQueues = 800;
 
     /**
      * Simulates number of messages processed via single PacketQueue
      */
-    private final int numberOfItemsInQueue = 1000;
+    private static final int numberOfItemsInQueue = 1000;
 
     /**
      * Simulates the computation "weight" of single item processed by
      * PacketQueue
      */
-    private final int singleQueueItemProcessingWeight = 300;
+    private static final int singleQueueItemProcessingWeight = 300;
 
     @Test
     public void testMultiplePacketQueueThroughputWithThreadPerQueue()
@@ -230,7 +230,7 @@ public class PacketQueueBenchmarkTests
         for (Duration duration : experimentDuration)
         {
             long diff = Math.abs(duration.toNanos() - averageNanos);
-            sumSquares = diff * diff;
+            sumSquares += diff * diff;
         }
 
         double stdDev

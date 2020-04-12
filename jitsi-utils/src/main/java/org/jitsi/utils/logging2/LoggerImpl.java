@@ -77,7 +77,10 @@ public class LoggerImpl implements Logger
     @Override
     public Logger createChildLogger(String name)
     {
-        return new LoggerImpl(name, minLogLevel, this.logContext);
+        // Note that we still need to create a subcontext here for the log
+        // context, otherwise if other values are added later they'll affect
+        // the parent's log context as well.
+        return new LoggerImpl(name, minLogLevel, this.logContext.createSubContext(Collections.emptyMap()));
     }
 
     private boolean isLoggable(Level level)
@@ -274,6 +277,18 @@ public class LoggerImpl implements Logger
     public void error(Object msg, Throwable t)
     {
         log(Level.SEVERE, msg, t);
+    }
+
+    @Override
+    public void addContext(Map<String, String> addedContext)
+    {
+        logContext.addContext(addedContext);
+    }
+
+    @Override
+    public void addContext(String key, String value)
+    {
+        logContext.addContext(key, value);
     }
 
     static Function<String, java.util.logging.Logger> loggerFactory = java.util.logging.Logger::getLogger;

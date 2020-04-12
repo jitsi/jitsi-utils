@@ -34,7 +34,7 @@ internal class ExampleConfigSource(
 ) : ConfigSource {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> getterFor(valueType: KClass<T>): (String) -> T {
-        return when(valueType) {
+        return when (valueType) {
             Int::class -> getterHelper(::getInt)
             Long::class -> getterHelper(::getLong)
             Duration::class -> getterHelper(::getDuration)
@@ -73,9 +73,8 @@ internal class ExampleConfigSource(
     @Suppress("UNCHECKED_CAST")
     private fun <U, T : Any> getterHelper(getter: (String) -> U): (String) -> T {
         return { path ->
-            getter(path) as? T ?:
-                throw ConfigPropertyNotFoundException("Could not find value for property at '$path'")
+            getter(path) as? T
+                ?: throw ConfigPropertyNotFoundException("Could not find value for property at '$path'")
         }
     }
 }
-

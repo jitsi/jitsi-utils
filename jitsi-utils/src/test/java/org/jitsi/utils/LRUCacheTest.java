@@ -17,6 +17,8 @@ package org.jitsi.utils;
 
 import org.junit.*;
 
+import java.util.*;
+
 import static org.junit.Assert.*;
 
 public class LRUCacheTest
@@ -51,6 +53,40 @@ public class LRUCacheTest
         assertEquals(2, cache.size());
         assertTrue(cache.containsKey(2));
         assertTrue(cache.containsKey(4));
+
+    }
+
+    @Test
+    public void testSetAccessOrder()
+    {
+        Set<String> cache = LRUCache.lruSet(2, true);
+
+        cache.add("a");
+        cache.add("b");
+        cache.add("c");
+        cache.add("b");
+        cache.add("d");
+
+        assertEquals(2, cache.size());
+        assertTrue(cache.contains("b"));
+        assertTrue(cache.contains("d"));
+
+    }
+
+    @Test
+    public void testSetInsertionOrder()
+    {
+        Set<String> cache = LRUCache.lruSet(2, false);
+
+        cache.add("a");
+        cache.add("b");
+        cache.add("c");
+        cache.add("b");
+        cache.add("d");
+
+        assertEquals(2, cache.size());
+        assertTrue(cache.contains("c"));
+        assertTrue(cache.contains("d"));
 
     }
 }

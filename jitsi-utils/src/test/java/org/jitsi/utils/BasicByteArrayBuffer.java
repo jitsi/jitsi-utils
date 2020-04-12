@@ -1,5 +1,10 @@
 package org.jitsi.utils;
 
+import edu.umd.cs.findbugs.annotations.*;
+
+@SuppressFBWarnings(
+    value = "EI_EXPOSE_REP",
+    justification = "It is the nature of this class to expose 'buffer.'")
 public class BasicByteArrayBuffer implements ByteArrayBuffer
 {
     /**

@@ -42,8 +42,7 @@ public class PacketQueueTests
             // This block surrounded with try/catch necessary to ensure that
             // thread calling PacketQueue::get blocked before items is added
             // to queue. Giving 50ms for CompletableFuture to stuck on get.
-            final DummyQueue.Dummy nullDummy
-                = dummyItem.get(50, TimeUnit.MILLISECONDS);
+            dummyItem.get(50, TimeUnit.MILLISECONDS);
             Assert.fail("There is no items in queue, must not be here");
         }
         catch (TimeoutException e)
@@ -60,8 +59,8 @@ public class PacketQueueTests
             // checks that thread stuck in PacketQueue::get notified
             // "immediately" when item added to queue. Giving a few ms for
             // CompletableFuture to transit to completed state.
-            final DummyQueue.Dummy poppedItem = dummyItem.get(
-                50, TimeUnit.MILLISECONDS);
+            final DummyQueue.Dummy poppedItem
+                    = dummyItem.get(50, TimeUnit.MILLISECONDS);
             Assert.assertEquals(pushedItem, poppedItem);
         }
         catch (TimeoutException e)
@@ -90,8 +89,7 @@ public class PacketQueueTests
                 // This block surrounded with try/catch necessary to ensure that
                 // thread calling PacketQueue::get blocked before items is added
                 // to queue. Giving 50ms for CompletableFuture to stuck on get.
-                final DummyQueue.Dummy nullDummy
-                    = dummyItem.get(50, TimeUnit.MILLISECONDS);
+                dummyItem.get(50, TimeUnit.MILLISECONDS);
                 Assert.fail("There is no items in queue, must not be here");
             }
             catch (TimeoutException e)
@@ -351,6 +349,48 @@ public class PacketQueueTests
 
         Assert.assertEquals(
             itemsToEnqueue - queueCapacity, releasedPackets.size());
+
+        int seed = 1;
+        for (DummyQueue.Dummy releasedPacket : releasedPackets)
+        {
+            Assert.assertEquals(seed, releasedPacket.id);
+            seed++;
+        }
+
+        singleThreadedExecutor.shutdown();
+    }
+
+    @Test
+    public void testReleasePacketCalledForPacketsInQueueWhenClosing()
+        throws Exception
+    {
+
+        final ExecutorService singleThreadedExecutor
+            = Executors.newSingleThreadExecutor();
+
+        final List<DummyQueue.Dummy> releasedPackets = new ArrayList<>();
+
+        final int queueCapacity = 10;
+
+        final DummyQueue queue = new DummyQueue(queueCapacity)
+        {
+            @Override
+            protected void releasePacket(Dummy pkt)
+            {
+                releasedPackets.add(pkt);
+            }
+        };
+
+        // Fill the queue
+        for (int i = 0; i < queueCapacity; i++)
+        {
+            final DummyQueue.Dummy dummy = new DummyQueue.Dummy();
+            dummy.id = i + 1;
+            queue.add(dummy);
+        }
+
+        queue.close();
+        Assert.assertEquals(queueCapacity, releasedPackets.size());
 
         int seed = 1;
         for (DummyQueue.Dummy releasedPacket : releasedPackets)

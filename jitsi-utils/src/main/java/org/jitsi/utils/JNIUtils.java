@@ -16,6 +16,8 @@
 package org.jitsi.utils;
 
 import com.sun.jna.*;
+import org.jitsi.utils.logging.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
@@ -35,6 +37,8 @@ public final class JNIUtils
      */
     private static final Pattern DYLIB_PATTERN = Pattern.compile("\\.dylib$");
 
+    private static final Logger logger = Logger.getLogger(JNIUtils.class);
+
     public static void loadLibrary(String libname, ClassLoader classLoader)
     {
         loadLibrary(libname, null, classLoader);
@@ -50,33 +54,25 @@ public final class JNIUtils
     {
         try
         {
-            if (clazz == null)
-            {
-                System.loadLibrary(libname);
-                return;
-            }
-
-            // Hack so that the native library is loaded into the ClassLoader
-            // that called this method, and not into the ClassLoader where
-            // this code resides. This is necessary for true OSGi environments.
             try
             {
-                Method loadLibrary0 = Runtime
-                    .getRuntime()
-                    .getClass()
-                    .getDeclaredMethod("loadLibrary0",
-                        Class.class, String.class);
-                loadLibrary0.setAccessible(true);
-                loadLibrary0.invoke(Runtime.getRuntime(), clazz, libname);
-            }
-            catch (NoSuchMethodException
-                | SecurityException
-                | IllegalAccessException
-                | IllegalArgumentException
-                | InvocationTargetException e)
-            {
+                // Always prefer libraries from java.library.path over those unpacked from the jar.
+                // This allows the end user to manually unpack native libraries and store them
+                // in java.library.path to later load via System.loadLibrary.
+                // This allows end-users to preserve native libraries on disk,
+                // which is necessary for debuggers like gdb to load symbols.
                 System.loadLibrary(libname);
+                logger.info("Loading library " + libname + " from java.library.path rather than bundled version");
+                return;
             }
+            catch (UnsatisfiedLinkError e)
+            {
+                if (clazz == null)
+                {
+                    throw e;
+                }
+            }
+            loadNativeInClassloader(libname, clazz, false);
         }
         catch (UnsatisfiedLinkError ulerr)
         {
@@ -101,7 +97,15 @@ public final class JNIUtils
             }
             try
             {
-                System.load(embedded.getAbsolutePath());
+                if (clazz != null)
+                {
+                    loadNativeInClassloader(
+                        embedded.getAbsolutePath(), clazz, true);
+                }
+                else
+                {
+                    System.load(embedded.getAbsolutePath());
+                }
             }
             finally
             {
@@ -113,6 +117,40 @@ public final class JNIUtils
                         embedded.deleteOnExit();
                 }
             }
+        }
+    }
+
+    /**
+     * Hack so that the native library is loaded into the ClassLoader
+     * that called this method, and not into the ClassLoader where
+     * this code resides. This is necessary for true OSGi environments.
+     *
+     * @param lib The library to load, name or path.
+     * @param clazz The class where to load it.
+     * @param isAbsolute Whether the library is name or path.
+     */
+    private static void loadNativeInClassloader(
+        String lib, Class clazz, boolean isAbsolute)
+    {
+        try
+        {
+            Method loadLibrary0 = Runtime
+                .getRuntime()
+                .getClass()
+                .getDeclaredMethod(
+                    isAbsolute ? "load0" : "loadLibrary0",
+                    Class.class,
+                    String.class);
+            loadLibrary0.setAccessible(true);
+            loadLibrary0.invoke(Runtime.getRuntime(), clazz, lib);
+        }
+        catch (NoSuchMethodException
+            | SecurityException
+            | IllegalAccessException
+            | IllegalArgumentException
+            | InvocationTargetException e)
+        {
+            System.loadLibrary(lib);
         }
     }
 

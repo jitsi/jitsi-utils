@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+<Match>
+  <Bug pattern="DM_DEFAULT_ENCODING"/>
+</Match>
+
+<Match>
+  <!-- Serialization -->
+  <Bug pattern="SE_BAD_FIELD"/>
+</Match>
+
+<Match>
+  <!-- Serialization -->
+  <Bug pattern="SE_BAD_FIELD_STORE"/>
+</Match>
+
+<Match>
+  <!-- This seems to get triggered by certain kotlin constructs though they look safe -->
+  <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+  <Source name="~.*\.kt" />
+</Match>
+
+<Match>
+  <!-- Tests have a valid reason to ignore return values (expecting exceptions, etc). -->
+  <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+  <Or>
+    <Source name="~.*\.*Test.kt" />
+    <Source name="~.*\.*Test.java" />
+  </Or>
+</Match>
+</FindBugsFilter>
