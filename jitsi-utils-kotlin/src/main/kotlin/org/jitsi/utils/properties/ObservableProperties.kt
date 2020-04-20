@@ -23,7 +23,7 @@ public abstract class ObservableIntProperty(initialValue: Int) : ReadWriteIntPro
 
     protected open fun beforeChange(property: KProperty<*>, oldValue: Int, newValue: Int): Boolean = true
 
-    protected open fun afterChange(property: KProperty<*>, oldValue: Int, newValue: Int): Unit {}
+    protected open fun afterChange(property: KProperty<*>, oldValue: Int, newValue: Int) {}
 
     public override fun getValue(thisRef: Any?, property: KProperty<*>): Int {
         return value
@@ -44,7 +44,7 @@ public abstract class ObservableLongProperty(initialValue: Long) : ReadWriteLong
 
     protected open fun beforeChange(property: KProperty<*>, oldValue: Long, newValue: Long): Boolean = true
 
-    protected open fun afterChange(property: KProperty<*>, oldValue: Long, newValue: Long): Unit {}
+    protected open fun afterChange(property: KProperty<*>, oldValue: Long, newValue: Long) {}
 
     public override fun getValue(thisRef: Any?, property: KProperty<*>): Long {
         return value

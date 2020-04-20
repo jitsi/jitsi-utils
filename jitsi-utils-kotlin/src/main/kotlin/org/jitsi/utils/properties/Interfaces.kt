@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jitsi.utils.properties;
+package org.jitsi.utils.properties
 
 import kotlin.reflect.KProperty
 
@@ -35,4 +35,3 @@ public interface ReadWriteLongProperty<in T> : ReadOnlyLongProperty<T> {
     public override operator fun getValue(thisRef: T, property: KProperty<*>): Long
     public operator fun setValue(thisRef: T, property: KProperty<*>, value: Long)
 }
-
