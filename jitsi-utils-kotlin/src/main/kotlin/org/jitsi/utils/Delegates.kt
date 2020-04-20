@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils
 
+import org.jitsi.utils.properties.ReadWriteIntProperty
+import org.jitsi.utils.properties.ReadWriteLongProperty
 import kotlin.properties.Delegates
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -26,4 +28,16 @@ inline fun <T> observableWhenChanged(initialValue: T, crossinline onChange: (pro
         ReadWriteProperty<Any?, T> =
     Delegates.observable(initialValue) {
         property, oldValue, newValue -> if (oldValue != newValue) onChange(property, oldValue, newValue)
+    }
+
+inline fun observableIntWhenChanged(initialValue: Int, crossinline onChange: (property: KProperty<*>, oldValue: Int, newValue: Int) -> Unit):
+    ReadWriteIntProperty<Any?> =
+    org.jitsi.utils.properties.Delegates.observableInt(initialValue) { property, oldValue, newValue ->
+        if (oldValue != newValue) onChange(property, oldValue, newValue)
+    }
+
+inline fun observableLongWhenChanged(initialValue: Long, crossinline onChange: (property: KProperty<*>, oldValue: Long, newValue: Long) -> Unit):
+    ReadWriteLongProperty<Any?> =
+    org.jitsi.utils.properties.Delegates.observableLong(initialValue) { property, oldValue, newValue ->
+        if (oldValue != newValue) onChange(property, oldValue, newValue)
     }
