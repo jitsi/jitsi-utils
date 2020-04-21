@@ -23,7 +23,7 @@ import kotlin.reflect.KProperty
  */
 public object Delegates {
     /**
-     * Returns a property delegate for a read/write property that calls a specified callback function when changed.
+     * Returns a property delegate for a read/write property of type int that calls a specified callback function when changed.
      * @param initialValue the initial value of the property.
      * @param onChange the callback which is called after the change of the property is made. The value of the property
      *  has already been changed when this callback is invoked.
@@ -36,7 +36,7 @@ public object Delegates {
         }
 
     /**
-     * Returns a property delegate for a read/write property that calls a specified callback function when changed.
+     * Returns a property delegate for a read/write property of type long that calls a specified callback function when changed.
      * @param initialValue the initial value of the property.
      * @param onChange the callback which is called after the change of the property is made. The value of the property
      *  has already been changed when this callback is invoked.
