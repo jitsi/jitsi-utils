@@ -18,13 +18,30 @@ package org.jitsi.utils.properties
 
 import kotlin.reflect.KProperty
 
+/**
+ * Property delegates specialized for primitive-types properties.
+ */
 public object Delegates {
+    /**
+     * Returns a property delegate for a read/write property that calls a specified callback function when changed.
+     * @param initialValue the initial value of the property.
+     * @param onChange the callback which is called after the change of the property is made. The value of the property
+     *  has already been changed when this callback is invoked.
+     *
+     */
     public inline fun observableInt(initialValue: Int, crossinline onChange: (property: KProperty<*>, oldValue: Int, newValue: Int) -> Unit):
         ReadWriteIntProperty<Any?> =
         object : ObservableIntProperty(initialValue) {
             override fun afterChange(property: KProperty<*>, oldValue: Int, newValue: Int) = onChange(property, oldValue, newValue)
         }
 
+    /**
+     * Returns a property delegate for a read/write property that calls a specified callback function when changed.
+     * @param initialValue the initial value of the property.
+     * @param onChange the callback which is called after the change of the property is made. The value of the property
+     *  has already been changed when this callback is invoked.
+     *
+     */
     public inline fun observableLong(initialValue: Long, crossinline onChange: (property: KProperty<*>, oldValue: Long, newValue: Long) -> Unit):
         ReadWriteLongProperty<Any?> =
         object : ObservableLongProperty(initialValue) {

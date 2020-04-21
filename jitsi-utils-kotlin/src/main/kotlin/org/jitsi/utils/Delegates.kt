@@ -30,12 +30,18 @@ inline fun <T> observableWhenChanged(initialValue: T, crossinline onChange: (pro
         property, oldValue, newValue -> if (oldValue != newValue) onChange(property, oldValue, newValue)
     }
 
+/**
+ * A delegate which runs a callback whenever the setter is called and it results in the int value changing.
+ */
 inline fun observableIntWhenChanged(initialValue: Int, crossinline onChange: (property: KProperty<*>, oldValue: Int, newValue: Int) -> Unit):
     ReadWriteIntProperty<Any?> =
     org.jitsi.utils.properties.Delegates.observableInt(initialValue) { property, oldValue, newValue ->
         if (oldValue != newValue) onChange(property, oldValue, newValue)
     }
 
+/**
+ * A delegate which runs a callback whenever the setter is called and it results in the long value changing.
+ */
 inline fun observableLongWhenChanged(initialValue: Long, crossinline onChange: (property: KProperty<*>, oldValue: Long, newValue: Long) -> Unit):
     ReadWriteLongProperty<Any?> =
     org.jitsi.utils.properties.Delegates.observableLong(initialValue) { property, oldValue, newValue ->
