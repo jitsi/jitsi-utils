@@ -20,7 +20,7 @@ import kotlin.reflect.KProperty
 
 /**
  * Base interface that can be used for implementing property delegates of read-only properties
- * of int primitive type.
+ * of int primitive type. This is the int primitive specialization for kotlin.properties.ReadOnlyProperty<T, U>.
  *
  * This is provided only for convenience; you don't have to extend this interface
  * as long as your property delegate has methods with the same signatures.
@@ -39,7 +39,7 @@ public interface ReadOnlyIntProperty<in T> {
 
 /**
  * Base interface that can be used for implementing property delegates of read-write properties
- * of long primitive type.
+ * of long primitive type. This is the int primitive specialization for kotlin.properties.ReadWriteProperty<T, U>.
  *
  * This is provided only for convenience; you don't have to extend this interface
  * as long as your property delegate has methods with the same signatures.
@@ -66,7 +66,7 @@ public interface ReadWriteIntProperty<in T> : ReadOnlyIntProperty<T> {
 
 /**
  * Base interface that can be used for implementing property delegates of read-only properties
- * of long primitive type.
+ * of long primitive type. This is the long primitive specialization for kotlin.properties.ReadOnlyProperty<T, U>.
  *
  * This is provided only for convenience; you don't have to extend this interface
  * as long as your property delegate has methods with the same signatures.
@@ -85,7 +85,7 @@ public interface ReadOnlyLongProperty<in T> {
 
 /**
  * Base interface that can be used for implementing property delegates of read-write properties
- * of long primitive type.
+ * of long primitive type. This is the long primitive specialization for kotlin.properties.ReadWriteLongProperty<T, U>.
  *
  * This is provided only for convenience; you don't have to extend this interface
  * as long as your property delegate has methods with the same signatures.

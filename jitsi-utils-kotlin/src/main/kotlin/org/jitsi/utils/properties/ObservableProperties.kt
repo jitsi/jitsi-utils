@@ -20,7 +20,7 @@ import kotlin.reflect.KProperty
 
 /**
  * Implements the core logic of a int property delegate for a read/write property that calls callback functions
- * when changed.
+ * when changed. This is the int primitive specialization for kotlin.properties.ObservableProperty<T>.
  * @param initialValue the initial value of the property.
  */
 public abstract class ObservableIntProperty(initialValue: Int) : ReadWriteIntProperty<Any?> {
@@ -56,7 +56,7 @@ public abstract class ObservableIntProperty(initialValue: Int) : ReadWriteIntPro
 
 /**
  * Implements the core logic of a long property delegate for a read/write property that calls callback functions
- * when changed.
+ * when changed. This is the long primitive specialization for kotlin.properties.ObservableProperty<T>.
  * @param initialValue the initial value of the property.
  */
 public abstract class ObservableLongProperty(initialValue: Long) : ReadWriteLongProperty<Any?> {
