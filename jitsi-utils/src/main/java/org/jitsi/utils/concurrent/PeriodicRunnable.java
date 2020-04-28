@@ -107,6 +107,12 @@ public abstract class PeriodicRunnable
     @Override
     public long getTimeUntilNextRun()
     {
+        if (_lastProcessTime < 0)
+        {
+            // We haven't run yet.
+            return 0;
+        }
+
         long timeSinceLastProcess
             = Math.max(System.currentTimeMillis() - _lastProcessTime, 0);
 
