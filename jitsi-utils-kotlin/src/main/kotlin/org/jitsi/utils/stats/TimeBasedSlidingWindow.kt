@@ -63,14 +63,14 @@ class SlidingWindowAverage(
      * Get the average of the values currently contained within the sliding
      * window.
      */
-    fun get(): Double {
+    @Synchronized fun get(): Double {
         if (numElements == 0) {
             return 0.0
         }
         return currSum / numElements.toDouble()
     }
 
-    fun add(value: Long) {
+    @Synchronized fun add(value: Long) {
         slidingWindow.add(value)
         currSum += value
         numElements++
@@ -78,7 +78,7 @@ class SlidingWindowAverage(
 
     override fun toString(): String = slidingWindow.joinToString(",")
 
-    private fun onEviction(entry: TimeBasedSlidingWindow.TimeEntry<Long>) {
+    @Synchronized private fun onEviction(entry: TimeBasedSlidingWindow.TimeEntry<Long>) {
         currSum -= entry.value
         numElements--
     }
