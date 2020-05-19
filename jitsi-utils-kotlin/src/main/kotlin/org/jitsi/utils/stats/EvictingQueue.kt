@@ -29,13 +29,11 @@ package org.jitsi.utils.stats
  * [U] must implement [EvictingQueue.Entry] to provide a means of extracting
  * the raw type [T] from an instance of [U].
  */
-@ExperimentalStdlibApi
 open class EvictingQueue<T : Any, U : EvictingQueue.Entry<T>>(
     private val entryCreator: (T) -> U,
     private val evictionPredicate: (U) -> Boolean
 ) : MutableCollection<T> {
-    private val queue = ArrayDeque<U>()
-    private val x = ArrayList<U>()
+    private val queue = java.util.ArrayDeque<U>()
 
     override val size: Int
         get() = queue.size

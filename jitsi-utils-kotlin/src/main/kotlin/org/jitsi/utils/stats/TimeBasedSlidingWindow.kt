@@ -20,7 +20,6 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-@ExperimentalStdlibApi
 open class TimeBasedSlidingWindow<T : Any>(
     private val windowSize: Duration,
     private val clock: Clock = Clock.systemUTC(),
@@ -50,7 +49,6 @@ open class TimeBasedSlidingWindow<T : Any>(
     }
 }
 
-@ExperimentalStdlibApi
 class SlidingWindowAverage(
     windowSize: Duration,
     clock: Clock = Clock.systemUTC()
@@ -84,7 +82,6 @@ class SlidingWindowAverage(
     }
 }
 
-@ExperimentalStdlibApi
 fun main() {
     val clock = FakeClock()
     val windowedAverage = SlidingWindowAverage(
