@@ -26,7 +26,7 @@ import java.time.Instant
  * Eviction is done after adding an element in [add], and can be forced
  * via [forceEviction].  Any time an element is evicted, the [evictionHandler]
  * method is called with the evicted value.  Forcing eviction before any access
- * is done, as it's possible there are stale values in the collection.
+ * is done is required, as it's possible there are stale values in the collection.
  */
 open class TimeBasedSlidingWindow<T : Any>(
     private val windowSize: Duration,
