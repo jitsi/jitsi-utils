@@ -22,30 +22,34 @@ import java.time.Instant
 
 open class TimeBasedSlidingWindow<T : Any>(
     private val windowSize: Duration,
-    private val clock: Clock = Clock.systemUTC(),
-    private val evicted: (TimeEntry<T>) -> Unit = {}
-) : EvictingQueue<T, TimeBasedSlidingWindow.TimeEntry<T>>(
-    { value -> TimeEntry(clock.instant(), value) },
-    { entry -> Duration.between(entry.insertionTime, clock.instant()) > windowSize }
+    private val evictionHandler: (T) -> Unit = {},
+    private val clock: Clock = Clock.systemUTC()
 ) {
-    class TimeEntry<T : Any>(
-        val insertionTime: Instant,
-        override val value: T
-    ) : EvictingQueue.Entry<T> {
-        override fun equals(other: Any?): Boolean {
-            if (this.value === other) {
-                return true
-            }
-            if (other?.javaClass != value.javaClass) {
-                return false
-            }
-            other as T
-            return other == value
+    private val queue = java.util.ArrayDeque<TimeEntry>()
+
+    private val evictionPredicate: (TimeEntry) -> Boolean = { entry ->
+        Duration.between(entry.insertionTime, clock.instant()) > windowSize
+    }
+
+    fun add(value: T) {
+        queue.addFirst(TimeEntry(value))
+        evict()
+    }
+
+    fun values(): Collection<T> = queue.reversed().map { it.value }
+
+    private fun evict() {
+        while (evictionPredicate(queue.last)) {
+            evictionHandler(queue.last.value)
+            queue.removeLast()
         }
     }
 
-    override fun onEviction(entry: TimeEntry<T>) {
-        evicted(entry)
+    inner class TimeEntry(
+        val value: T,
+        val insertionTime: Instant
+    ) {
+        constructor(value: T) : this(value, clock.instant())
     }
 }
 
@@ -53,7 +57,7 @@ class SlidingWindowAverage(
     windowSize: Duration,
     clock: Clock = Clock.systemUTC()
 ) {
-    private val slidingWindow = TimeBasedSlidingWindow(windowSize, clock, this::onEviction)
+    private val slidingWindow = TimeBasedSlidingWindow(windowSize, this::onEviction, clock)
     private var currSum: Long = 0
     private var numElements = 0
 
@@ -74,10 +78,8 @@ class SlidingWindowAverage(
         numElements++
     }
 
-    override fun toString(): String = slidingWindow.joinToString(",")
-
-    @Synchronized private fun onEviction(entry: TimeBasedSlidingWindow.TimeEntry<Long>) {
-        currSum -= entry.value
+    @Synchronized private fun onEviction(value: Long) {
+        currSum -= value
         numElements--
     }
 }
