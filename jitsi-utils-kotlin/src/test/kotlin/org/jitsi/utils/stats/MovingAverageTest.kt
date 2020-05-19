@@ -17,44 +17,41 @@
 package org.jitsi.utils.stats
 
 import io.kotlintest.IsolationMode
-import io.kotlintest.matchers.collections.shouldContainExactly
-import io.kotlintest.matchers.collections.shouldHaveSize
+import io.kotlintest.matchers.doubles.plusOrMinus
+import io.kotlintest.minutes
 import io.kotlintest.seconds
+import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
 import org.jitsi.utils.FakeClock
-import java.time.Duration
 import java.time.Instant
 
-class TimeBasedSlidingWindowTest : ShouldSpec() {
+class MovingAverageTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
     private val fakeClock = FakeClock()
 
-    private val evictedValues = mutableListOf<Int>()
-
-    private val window = TimeBasedSlidingWindow<Int>(
-        Duration.ofSeconds(5),
-        { evictedValues.add(it) },
-        fakeClock
-    )
+    private val average = MovingAverage<Int>(5.seconds, fakeClock)
 
     init {
-        "the window" {
-            should("evict values that are outside the window") {
+        "the average" {
+            should("only take into account values in the window") {
                 // Add 4 elements at time 0
                 (0..3).forEach {
-                    window.add(it)
+                    average.add(it)
                 }
-                evictedValues shouldHaveSize 0
                 // Add 4 elements at time 6
-                fakeClock.setTime(Instant.ofEpochSecond(6))
+                fakeClock.elapse(6.seconds)
                 (4..7).forEach {
-                    window.add(it)
-                    fakeClock.elapse(1.seconds)
+                    average.add(it)
                 }
-                evictedValues shouldHaveSize 4
-                evictedValues shouldContainExactly mutableListOf(0, 1, 2, 3)
-                window.values() shouldContainExactly listOf(4, 5, 6, 7)
+                average.get() shouldBe(5.5 plusOrMinus(.1))
+            }
+            should("not include values outside the window even if no adds have been done") {
+                (0..3).forEach {
+                    average.add(it)
+                }
+                fakeClock.elapse(1.minutes)
+                average.get() shouldBe(0.0)
             }
         }
     }

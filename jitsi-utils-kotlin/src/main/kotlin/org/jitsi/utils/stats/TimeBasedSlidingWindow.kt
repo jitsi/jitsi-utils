@@ -20,6 +20,11 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
+/**
+ * Maintain a queue of values which fall inside the given window size.
+ *
+ * Eviction is
+ */
 open class TimeBasedSlidingWindow<T : Any>(
     private val windowSize: Duration,
     private val evictionHandler: (T) -> Unit = {},
@@ -36,10 +41,17 @@ open class TimeBasedSlidingWindow<T : Any>(
         evict()
     }
 
+    /**
+     * Force the eviction process to run.  It's important this be invoked
+     * if there's a chance values have gone out of the window since the last
+     * call to [add].
+     */
+    fun forceEviction() = evict()
+
     fun values(): Collection<T> = queue.reversed().map { it.value }
 
     private fun evict() {
-        while (evictionPredicate(queue.last)) {
+        while (queue.isNotEmpty() && evictionPredicate(queue.last)) {
             evictionHandler(queue.last.value)
             queue.removeLast()
         }
@@ -51,51 +63,4 @@ open class TimeBasedSlidingWindow<T : Any>(
     ) {
         constructor(value: T) : this(value, clock.instant())
     }
-}
-
-class SlidingWindowAverage(
-    windowSize: Duration,
-    clock: Clock = Clock.systemUTC()
-) {
-    private val slidingWindow = TimeBasedSlidingWindow(windowSize, this::onEviction, clock)
-    private var currSum: Long = 0
-    private var numElements = 0
-
-    /**
-     * Get the average of the values currently contained within the sliding
-     * window.
-     */
-    @Synchronized fun get(): Double {
-        if (numElements == 0) {
-            return 0.0
-        }
-        return currSum / numElements.toDouble()
-    }
-
-    @Synchronized fun add(value: Long) {
-        slidingWindow.add(value)
-        currSum += value
-        numElements++
-    }
-
-    @Synchronized private fun onEviction(value: Long) {
-        currSum -= value
-        numElements--
-    }
-}
-
-fun main() {
-    val clock = FakeClock()
-    val windowedAverage = SlidingWindowAverage(
-        Duration.ofSeconds(5),
-        clock
-    )
-    clock.elapse(Duration.ofSeconds(1))
-    repeat (10) {
-        windowedAverage.add(it.toLong())
-        clock.elapse(Duration.ofSeconds(1))
-    }
-    println(windowedAverage)
-
-    println(windowedAverage.get())
 }
