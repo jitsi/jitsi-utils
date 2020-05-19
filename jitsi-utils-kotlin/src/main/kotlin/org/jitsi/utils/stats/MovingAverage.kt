@@ -23,7 +23,7 @@ import java.time.Duration
  * Keeps track of a moving average of the values added which fall within the
  * given window size.
  */
-class MovingAverage<T : Number>(
+class MovingAverage<T : Number> @JvmOverloads constructor(
     windowSize: Duration,
     clock: Clock = Clock.systemUTC()
 ) {

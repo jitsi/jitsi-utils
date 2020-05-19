@@ -23,7 +23,6 @@ import io.kotlintest.seconds
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
 import org.jitsi.utils.FakeClock
-import java.time.Instant
 
 class MovingAverageTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
