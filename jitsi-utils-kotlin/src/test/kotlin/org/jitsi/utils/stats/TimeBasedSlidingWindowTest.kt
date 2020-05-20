@@ -17,6 +17,7 @@
 package org.jitsi.utils.stats
 
 import io.kotlintest.IsolationMode
+import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.seconds
@@ -55,6 +56,21 @@ class TimeBasedSlidingWindowTest : ShouldSpec() {
                 evictedValues shouldHaveSize 4
                 evictedValues shouldContainExactly mutableListOf(0, 1, 2, 3)
                 window.values() shouldContainExactly listOf(4, 5, 6, 7)
+            }
+        }
+        "a window with a value of 0" {
+            val window = TimeBasedSlidingWindow<Int>(
+                Duration.ofSeconds(0),
+                { evictedValues.add(it) },
+                fakeClock
+            )
+            should("never have any values") {
+                window.add(1)
+                window.add(2)
+                window.add(3)
+                fakeClock.elapse(Duration.ofMillis(1))
+                window.values().shouldBeEmpty()
+                evictedValues shouldContainExactly mutableListOf(1, 2, 3)
             }
         }
     }

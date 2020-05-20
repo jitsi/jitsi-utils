@@ -51,7 +51,10 @@ open class TimeBasedSlidingWindow<T : Any>(
      */
     fun forceEviction() = evict()
 
-    fun values(): Collection<T> = queue.reversed().map { it.value }
+    fun values(): Collection<T> {
+        evict()
+        return queue.reversed().map { it.value }
+    }
 
     private fun evict() {
         while (queue.isNotEmpty() && evictionPredicate(queue.last)) {
