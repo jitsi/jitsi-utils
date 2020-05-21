@@ -7,10 +7,15 @@
   <parent>
     <groupId>org.jitsi</groupId>
     <artifactId>jitsi-utils-parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>jitsi-utils-kotlin</artifactId>
+  <!--
+  bundle instead of jar for OSGi capabilities. Note that this merges the
+  classes of jitsi-utils (the java-only package) into this bundle, thus the
+  compile-only scope below.
+  -->
   <packaging>bundle</packaging>
 
   <properties>
@@ -22,6 +27,7 @@
       <groupId>org.jitsi</groupId>
       <artifactId>jitsi-utils</artifactId>
       <version>${project.version}</version>
+      <!-- See note above about the packaging type -->
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -79,7 +85,7 @@
           </execution>
         </executions>
         <configuration>
-          <jvmTarget>1.8</jvmTarget>
+          <jvmTarget>${java.version}</jvmTarget>
         </configuration>
       </plugin>
       <plugin>
