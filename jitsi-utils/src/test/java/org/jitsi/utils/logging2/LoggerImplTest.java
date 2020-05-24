@@ -16,14 +16,15 @@
 
 package org.jitsi.utils.logging2;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import edu.umd.cs.findbugs.annotations.*;
-import org.junit.*;
 
 import java.util.*;
 import java.util.function.*;
 import java.util.logging.*;
-
-import static junit.framework.TestCase.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class LoggerImplTest
@@ -31,25 +32,25 @@ public class LoggerImplTest
     private static Function<String, java.util.logging.Logger> oldLoggerFactoryFunction;
     private FakeLogger fakeLogger = new FakeLogger("fake");
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass()
     {
         oldLoggerFactoryFunction = LoggerImpl.loggerFactory;
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass()
     {
         LoggerImpl.loggerFactory = oldLoggerFactoryFunction;
     }
 
-    @Before
+    @BeforeEach
     public void beforeTest()
     {
         LoggerImpl.loggerFactory = (name) -> fakeLogger;
     }
 
-    @After
+    @AfterEach
     public void afterTest()
     {
         fakeLogger.reset();

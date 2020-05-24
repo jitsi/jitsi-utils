@@ -15,10 +15,11 @@
  */
 package org.jitsi.utils;
 
-import org.junit.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
 import static org.jitsi.utils.ByteArrayUtils.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ByteArrayUtilsTest
 {
@@ -29,10 +30,12 @@ public class ByteArrayUtilsTest
         int offset = 3;
 
         writeShort(bab, offset, (short) 123);
-        assertEquals("Write/read a positive short", 123, readShort(bab, offset));
+        assertEquals(123, readShort(bab, offset),
+            "Write/read a positive short");
 
         writeShort(bab, offset, (short) -123);
-        assertEquals("Write/read a negative short", -123, readShort(bab, offset));
+        assertEquals(-123, readShort(bab, offset),
+            "Write/read a negative short");
     }
 
     @Test
@@ -42,10 +45,12 @@ public class ByteArrayUtilsTest
         int offset = 3;
 
         writeInt(bab, offset, 1234);
-        assertEquals("Write/read a positive int", 1234, readInt(bab, offset));
+        assertEquals(1234, readInt(bab, offset),
+            "Write/read a positive int");
 
         writeInt(bab, offset, -1234);
-        assertEquals("Write/read a negative int", -1234, readInt(bab, offset));
+        assertEquals(-1234, readInt(bab, offset),
+            "Write/read a negative int");
     }
 
     @Test
@@ -56,7 +61,7 @@ public class ByteArrayUtilsTest
 
         writeUint16(bab, offset, 1234);
         assertEquals(
-                "Write/read a 16-bit int", 1234, readUint16(bab, offset));
+            1234, readUint16(bab, offset), "Write/read a 16-bit int");
     }
 
     @Test
@@ -67,7 +72,7 @@ public class ByteArrayUtilsTest
 
         writeUint24(bab, offset, 1234);
         assertEquals(
-                "Write/read a 24-bit int", 1234, readUint24(bab, offset));
+            1234, readUint24(bab, offset), "Write/read a 24-bit int");
     }
 
     @Test
@@ -79,11 +84,11 @@ public class ByteArrayUtilsTest
         long l = 0xff11_1111L;
         writeInt(bab, offset, (int) l);
         assertEquals(
-            "Read a 32-bit unsigned int (msb=1)", l, readUint32(bab, offset));
+            l, readUint32(bab, offset), "Read a 32-bit unsigned int (msb=1)");
 
         l = 0x0f11_1111L;
         writeInt(bab, offset, (int) l);
         assertEquals(
-            "Read a 32-bit unsigned int (msb=0)", l, readUint32(bab, offset));
+            l, readUint32(bab, offset), "Read a 32-bit unsigned int (msb=0)");
     }
 }

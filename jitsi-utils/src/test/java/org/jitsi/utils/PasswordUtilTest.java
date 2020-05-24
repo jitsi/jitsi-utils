@@ -16,18 +16,15 @@
 
 package org.jitsi.utils;
 
-import org.junit.*;
-import org.junit.runner.*;
-import org.junit.runners.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.*;
 
 /**
  * Basic test for {@link PasswordUtil} class.
  *
  * @author Pawel Domas
  */
-@RunWith(JUnit4.class)
 public class PasswordUtilTest
 {
     @Test
@@ -40,7 +37,7 @@ public class PasswordUtilTest
 
         cmdLine = PasswordUtil.replacePasswords(
             cmdLine,
-            new String[]{"", "secret3", "secret", "secret2"});
+            "", "secret3", "secret", "secret2");
 
         assertEquals("AppMain org.jitsi.videobridge.Main" +
                 " --host=example.com --secret3=X --port=5347" +
