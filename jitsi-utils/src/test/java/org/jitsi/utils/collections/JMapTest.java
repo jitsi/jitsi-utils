@@ -42,14 +42,14 @@ public class JMapTest
     @Test
     public void test1ArgMapOf()
     {
-        java.util.Map data = JMap.of("one", "1");
+        java.util.Map<String, String> data = JMap.of("one", "1");
         assertEquals(1, data.size());
         assertEquals("1", data.get("one"));
     }
     @Test
     public void test2ArgsMapOf()
     {
-        java.util.Map data = JMap.of("one", "1", "two", "2");
+        java.util.Map<String, String> data = JMap.of("one", "1", "two", "2");
         assertEquals(2, data.size());
         assertEquals("1", data.get("one"));
         assertEquals("2", data.get("two"));
@@ -58,7 +58,7 @@ public class JMapTest
     @Test
     public void test3ArgsMapOf()
     {
-        java.util.Map data = JMap.of("one", "1", "two", "2", "three", "3");
+        java.util.Map<String, String> data = JMap.of("one", "1", "two", "2", "three", "3");
         assertEquals(3, data.size());
         assertEquals("1", data.get("one"));
         assertEquals("2", data.get("two"));
