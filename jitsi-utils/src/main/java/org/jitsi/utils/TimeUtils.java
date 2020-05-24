@@ -16,6 +16,7 @@
 package org.jitsi.utils;
 
 import java.text.*;
+import java.util.*;
 
 /**
  * Provides utility methods for converting between different time formats.
@@ -179,9 +180,23 @@ public class TimeUtils
     }
 
     /** Format string for formatTimeAsFullMillis to print milliseconds-per-second */
-    private static DecimalFormat trailingMilliFormat = new DecimalFormat("000");
+    private static final ThreadLocal<DecimalFormat> trailingMilliFormat;
+
     /** Format string for formatTimeAsFullMillis to print nanoseconds-per-millisecond */
-    private static DecimalFormat nanosPerMilliFormat = new DecimalFormat(".######");
+    private static final ThreadLocal<DecimalFormat> nanosPerMilliFormat;
+
+    static
+    {
+        // DecimalFormat is NOT thread safe!
+        trailingMilliFormat =
+            ThreadLocal.withInitial(() -> new DecimalFormat("000"));
+
+        nanosPerMilliFormat = ThreadLocal.withInitial(() -> {
+            DecimalFormatSymbols dfs = new DecimalFormatSymbols();
+            dfs.setDecimalSeparator('.');
+            return new DecimalFormat(".######", dfs);
+        });
+    }
 
     /**
      * Formats a time -- represented by (long seconds, int nanos) -- as
@@ -211,7 +226,7 @@ public class TimeUtils
         if (secs != 0)
         {
             builder.append(secs);
-            builder.append(trailingMilliFormat.format(millis));
+            builder.append(trailingMilliFormat.get().format(millis));
         }
         else
         {
@@ -219,7 +234,7 @@ public class TimeUtils
         }
         if (nanosPerMilli != 0)
         {
-            builder.append(nanosPerMilliFormat.format(nanosPerMilli / 1e6));
+            builder.append(nanosPerMilliFormat.get().format(nanosPerMilli / 1e6));
         }
 
         return builder.toString();
