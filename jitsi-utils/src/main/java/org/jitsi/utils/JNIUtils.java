@@ -44,12 +44,12 @@ public final class JNIUtils
         loadLibrary(libname, null, classLoader);
     }
 
-    public static void loadLibrary(String libname, Class clazz)
+    public static <T> void loadLibrary(String libname, Class<T> clazz)
     {
         loadLibrary(libname, clazz, clazz.getClassLoader());
     }
 
-    private static void loadLibrary(String libname, Class clazz,
+    private static <T> void loadLibrary(String libname, Class<T> clazz,
         ClassLoader classLoader)
     {
         try
@@ -129,8 +129,8 @@ public final class JNIUtils
      * @param clazz The class where to load it.
      * @param isAbsolute Whether the library is name or path.
      */
-    private static void loadNativeInClassloader(
-        String lib, Class clazz, boolean isAbsolute)
+    private static <T> void loadNativeInClassloader(
+        String lib, Class<T> clazz, boolean isAbsolute)
     {
         try
         {

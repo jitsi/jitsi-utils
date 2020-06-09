@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -72,76 +72,31 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>${java.version}</jvmTarget>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>com.github.gantsign.maven</groupId>
+                <artifactId>ktlint-maven-plugin</artifactId>
+                <version>1.4.2</version>
                 <executions>
                     <execution>
-                        <id>attach-sources</id>
+                        <id>check</id>
+                        <phase>verify</phase>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.pinterest</groupId>
+                        <artifactId>ktlint</artifactId>
+                        <version>0.36.0</version>
+                    </dependency>
+                    <!-- additional 3rd party ruleset(s) can be specified here -->
+                </dependencies>
             </plugin>
-	    <plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-antrun-plugin</artifactId>
-		<version>1.8</version>
-		<executions>
-		    <execution>
-			<id>ktlint</id>
-			<phase>verify</phase>
-			<configuration>
-			    <target name="ktlint">
-				<java taskname="ktlint" dir="${basedir}" fork="true" failonerror="true"
-				      classpathref="maven.plugin.classpath" classname="com.pinterest.ktlint.Main">
-				    <arg value="src/**/*.kt"/>
-				    <!-- to generate report in checkstyle format prepend following args: -->
-				    <!--
-					<arg value="[dash][dash]reporter=plain"/>
-					<arg value="[dash][dash]reporter=checkstyle,output=${project.build.directory}/ktlint.xml"/>
-					-->
-				    <!-- see https://github.com/shyiko/ktlint#usage for more -->
-				</java>
-			    </target>
-			</configuration>
-			<goals><goal>run</goal></goals>
-		    </execution>
-		    <execution>
-			<id>ktlint-format</id>
-			<configuration>
-			    <target name="ktlint">
-				<java taskname="ktlint" dir="${basedir}" fork="true" failonerror="true"
-				      classpathref="maven.plugin.classpath" classname="com.pinterest.ktlint.Main">
-				    <arg value="-F"/>
-				    <arg value="src/**/*.kt"/>
-				</java>
-			    </target>
-			</configuration>
-			<goals><goal>run</goal></goals>
-		    </execution>
-		</executions>
-		<dependencies>
-		    <dependency>
-			<groupId>com.pinterest</groupId>
-			<artifactId>ktlint</artifactId>
-			<version>0.36.0</version>
-		    </dependency>
-		    <!-- additional 3rd party ruleset(s) can be specified here -->
-		</dependencies>
-	    </plugin>
         </plugins>
     </build>
 

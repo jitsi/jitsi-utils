@@ -71,7 +71,7 @@ public class PasswordUtil
     {
         for (String passArg : passwordArgs)
         {
-            if (StringUtils.isNullOrEmpty(passArg))
+            if (passArg == null || passArg.trim().isEmpty())
                 continue;
 
             string = replacePassword(string, passArg);
