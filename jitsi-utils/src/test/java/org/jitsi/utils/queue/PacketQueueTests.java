@@ -15,12 +15,12 @@
  */
 package org.jitsi.utils.queue;
 
-import org.junit.*;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test various aspects of {@link PacketQueue} implementation.
@@ -43,7 +43,7 @@ public class PacketQueueTests
             // thread calling PacketQueue::get blocked before items is added
             // to queue. Giving 50ms for CompletableFuture to stuck on get.
             dummyItem.get(50, TimeUnit.MILLISECONDS);
-            Assert.fail("There is no items in queue, must not be here");
+            Assertions.fail("There is no items in queue, must not be here");
         }
         catch (TimeoutException e)
         {
@@ -61,11 +61,11 @@ public class PacketQueueTests
             // CompletableFuture to transit to completed state.
             final DummyQueue.Dummy poppedItem
                     = dummyItem.get(50, TimeUnit.MILLISECONDS);
-            Assert.assertEquals(pushedItem, poppedItem);
+            Assertions.assertEquals(pushedItem, poppedItem);
         }
         catch (TimeoutException e)
         {
-            Assert.fail("Expected that blocked thread notified immediately "
+            Assertions.fail("Expected that blocked thread notified immediately "
                 + "about item added to queue");
         }
     }
@@ -90,7 +90,7 @@ public class PacketQueueTests
                 // thread calling PacketQueue::get blocked before items is added
                 // to queue. Giving 50ms for CompletableFuture to stuck on get.
                 dummyItem.get(50, TimeUnit.MILLISECONDS);
-                Assert.fail("There is no items in queue, must not be here");
+                Assertions.fail("There is no items in queue, must not be here");
             }
             catch (TimeoutException e)
             {
@@ -109,13 +109,14 @@ public class PacketQueueTests
                 // CompletableFuture to transit to completed state.
                 final DummyQueue.Dummy poppedItem = dummyItem.get(
                     1, TimeUnit.MILLISECONDS);
-                Assert.assertNull("When PacketQueue is closed "
-                    + "null must be returned", poppedItem);
+                Assertions.assertNull(poppedItem, "When PacketQueue is closed "
+                    + "null must be returned");
             }
             catch (TimeoutException e)
             {
-                Assert.fail("Expected that blocked thread notified immediately "
-                    + "when queue is stopped");
+                Assertions
+                    .fail("Expected that blocked thread notified immediately "
+                        + "when queue is stopped");
             }
         }
     }
@@ -139,12 +140,13 @@ public class PacketQueueTests
             final DummyQueue.Dummy item = dummyQueue.poll();
             if (i == capacity)
             {
-                Assert.assertNull(item);
+                Assertions.assertNull(item);
             }
             else
             {
-                Assert.assertNotEquals("Oldest item must be removed when "
-                    + "item exceeding capacity added", 0, item.id);
+                Assertions.assertNotEquals(0, item.id,
+                    "Oldest item must be removed when "
+                        + "item exceeding capacity added");
             }
         }
     }
@@ -170,8 +172,9 @@ public class PacketQueueTests
 
         final boolean completed
             = queueCompletion.await(50, TimeUnit.MILLISECONDS);
-        Assert.assertTrue("Expected all queued items are handled "
-            + "at this time point", completed);
+        Assertions
+            .assertTrue(completed, "Expected all queued items are handled "
+                + "at this time point");
 
         Future<?> executorCompletion = singleThreadExecutor.submit(() -> {
             // do nothing, just pump Runnable via executor's thread to
@@ -184,7 +187,7 @@ public class PacketQueueTests
         }
         catch (TimeoutException e)
         {
-            Assert.fail("Executors thread must be released by PacketQueue "
+            Assertions.fail("Executors thread must be released by PacketQueue "
                 + "when queue is empty");
         }
 
@@ -257,13 +260,14 @@ public class PacketQueueTests
 
         final boolean completed
             = completionGuard.await(1, TimeUnit.SECONDS);
-        Assert.assertTrue("Expected all queued items are handled "
-            + "at this time point", completed);
+        Assertions
+            .assertTrue(completed, "Expected all queued items are handled "
+                + "at this time point");
 
-        Assert.assertTrue(
+        Assertions.assertTrue(
+            queuesEvenlyProcessed.get(),
             "Queues sharing same thread with configured cooperative"
-                + " multi-tasking must yield execution to be processed evenly",
-            queuesEvenlyProcessed.get());
+                + " multi-tasking must yield execution to be processed evenly");
 
         singleThreadExecutor.shutdownNow();
     }
@@ -302,14 +306,16 @@ public class PacketQueueTests
 
         final boolean completed
             = completionGuard.await(1, TimeUnit.SECONDS);
-        Assert.assertTrue("Expected all queued items are handled "
-            + "at this time point", completed);
+        Assertions
+            .assertTrue(completed, "Expected all queued items are handled "
+                + "at this time point");
 
         final List<Runnable> packetReaders
             = singleThreadedExecutor.shutdownNow();
 
-        Assert.assertEquals("Queues must not utilize thread when"
-            + "there is no work.", 0, packetReaders.size());
+        Assertions.assertEquals(0, packetReaders.size(),
+            "Queues must not utilize thread when"
+                + "there is no work.");
 
         for (DummyQueue queue : queues)
         {
@@ -347,13 +353,13 @@ public class PacketQueueTests
             queue.add(dummy);
         }
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
             itemsToEnqueue - queueCapacity, releasedPackets.size());
 
         int seed = 1;
         for (DummyQueue.Dummy releasedPacket : releasedPackets)
         {
-            Assert.assertEquals(seed, releasedPacket.id);
+            Assertions.assertEquals(seed, releasedPacket.id);
             seed++;
         }
 
@@ -390,12 +396,12 @@ public class PacketQueueTests
         }
 
         queue.close();
-        Assert.assertEquals(queueCapacity, releasedPackets.size());
+        Assertions.assertEquals(queueCapacity, releasedPackets.size());
 
         int seed = 1;
         for (DummyQueue.Dummy releasedPacket : releasedPackets)
         {
-            Assert.assertEquals(seed, releasedPacket.id);
+            Assertions.assertEquals(seed, releasedPacket.id);
             seed++;
         }
 

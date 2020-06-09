@@ -16,49 +16,42 @@
 
 package org.jitsi.utils.collections;
 
-import org.junit.*;
-import org.junit.rules.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.*;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.*;
 
 public class JListTest
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     @Test
     public void addElements()
     {
         List<Integer> nums = JList.of(1, 2, 3, 4);
         assertEquals(4, nums.size());
-        assertEquals((int)nums.get(0), 1);
-        assertEquals((int)nums.get(1), 2);
-        assertEquals((int)nums.get(2), 3);
-        assertEquals((int)nums.get(3), 4);
+        assertEquals((int) nums.get(0), 1);
+        assertEquals((int) nums.get(1), 2);
+        assertEquals((int) nums.get(2), 3);
+        assertEquals((int) nums.get(3), 4);
     }
 
     @Test
     public void noAddAllowed()
     {
-        exception.expect(UnsupportedOperationException.class);
         List<Integer> nums = JList.of(1, 2, 3, 4);
-        nums.add(5);
+        assertThrows(UnsupportedOperationException.class, () -> nums.add(5));
     }
 
     @Test
     public void noRemoveAllowed()
     {
-        exception.expect(UnsupportedOperationException.class);
         List<Integer> nums = JList.of(1, 2, 3, 4);
-        nums.remove(0);
+        assertThrows(UnsupportedOperationException.class, () -> nums.remove(0));
     }
 
     @Test
     public void noNullsAllowed()
     {
-        exception.expect(NullPointerException.class);
-        JList.of(1, 2, 3, null);
+        assertThrows(NullPointerException.class, () -> JList.of(1, 2, 3, null));
     }
 }

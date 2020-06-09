@@ -67,15 +67,19 @@ public class PasswordUtil
      * @return <tt>cmdLine</tt> string with password arguments values shadowed
      *         by 'X'
      */
-    public static String replacePasswords(String string, String[] passwordArgs)
+    public static String replacePasswords(String string, String... passwordArgs)
     {
-        for (String passArg : passwordArgs)
+        if (passwordArgs != null)
         {
-            if (passArg == null || passArg.trim().isEmpty())
-                continue;
+            for (String passArg : passwordArgs)
+            {
+                if (passArg == null || passArg.trim().isEmpty())
+                    continue;
 
-            string = replacePassword(string, passArg);
+                string = replacePassword(string, passArg);
+            }
         }
+
         return string;
     }
 }

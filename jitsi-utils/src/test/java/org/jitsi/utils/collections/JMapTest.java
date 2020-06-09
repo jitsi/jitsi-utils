@@ -16,10 +16,11 @@
 
 package org.jitsi.utils.collections;
 
-import org.junit.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 import static org.jitsi.utils.collections.JMap.entry;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JMapTest
 {
