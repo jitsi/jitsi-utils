@@ -16,8 +16,7 @@
 package org.jitsi.utils;
 
 /**
- * The <tt>MediaType</tt> enumeration contains a list of media types
- * currently known to and handled by the <tt>MediaService</tt>.
+ * The <tt>MediaType</tt> enumeration contains a list of media types.
  *
  * @see <a href="http://www.iana.org/assignments/sdp-parameters/sdp-parameters.xhtml#sdp-parameters-1">
  *     Session Description Protocol (SDP) Parameters, media</a>
@@ -66,9 +65,7 @@ public enum MediaType
 
     /**
      * Represents a DATA media type.
-     * @deprecated In RFC4566. Still defined to avoid parsing errors.
      */
-    @Deprecated
     DATA("data");
 
     /**
