@@ -34,15 +34,13 @@ public abstract class AbstractActiveSpeakerDetector
      * unnecessary allocations and the undesired effects of the garbage
      * collector.
      */
-    private static final ActiveSpeakerChangedListener[] NO_LISTENERS
-        = new ActiveSpeakerChangedListener[0];
+    private static final ActiveSpeakerChangedListener[] NO_LISTENERS = new ActiveSpeakerChangedListener[0];
 
     /**
      * The list of listeners to be notified by this detector when the active
      * speaker changes.
      */
-    private final List<ActiveSpeakerChangedListener> listeners
-        = new LinkedList<ActiveSpeakerChangedListener>();
+    private final List<ActiveSpeakerChangedListener> listeners = new LinkedList<>();
 
     /**
      * {@inheritDoc}
@@ -55,31 +53,34 @@ public abstract class AbstractActiveSpeakerDetector
             ActiveSpeakerChangedListener listener)
     {
         if (listener == null)
+        {
             throw new NullPointerException("listener");
+        }
 
         synchronized (listeners)
         {
             if (!listeners.contains(listener))
+            {
                 listeners.add(listener);
+            }
         }
     }
 
     /**
      * Notifies the <tt>ActiveSpeakerChangedListener</tt>s registered with this
      * instance that the active speaker in multipoint conference associated with
-     * this instance has changed and is identified by a specific synchronization
-     * source identifier/SSRC.
+     * this instance has changed and is identified by a specific ID.
      *
-     * @param ssrc the synchronization source identifier/SSRC of the active
-     * speaker in the multipoint conference
+     * @param id the identifier of the new dominant speaker.
      */
-    protected void fireActiveSpeakerChanged(long ssrc)
+    protected void fireActiveSpeakerChanged(Object id)
     {
-        ActiveSpeakerChangedListener[] listeners
-            = getActiveSpeakerChangedListeners();
+        ActiveSpeakerChangedListener[] listeners = getActiveSpeakerChangedListeners();
 
         for (ActiveSpeakerChangedListener listener : listeners)
-            listener.activeSpeakerChanged(ssrc);
+        {
+            listener.activeSpeakerChanged(id);
+        }
     }
 
     /**

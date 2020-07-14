@@ -54,7 +54,7 @@ public interface ActiveSpeakerDetector
      * @param level the latest/current audio level of the stream/speaker with
      * the specified <tt>ssrc</tt>
      */
-    public void levelChanged(long ssrc, int level);
+    public void levelChanged(Object id, int level);
 
     /**
      * Removes a listener to no longer be notified by this active speaker
