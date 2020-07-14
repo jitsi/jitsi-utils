@@ -33,7 +33,7 @@ package org.jitsi.utils.dsi;
  * @author Boris Grozev
  * @author Lyubomir Marinov
  */
-public interface ActiveSpeakerDetector
+public interface ActiveSpeakerDetector<T>
 {
     /**
      * Adds a listener to be notified by this active speaker detector when the
@@ -43,7 +43,7 @@ public interface ActiveSpeakerDetector
      * notifications about changes of the active speaker
      */
     public void addActiveSpeakerChangedListener(
-            ActiveSpeakerChangedListener listener);
+            ActiveSpeakerChangedListener<T> listener);
 
     /**
      * Notifies this <tt>ActiveSpeakerDetector</tt> about the latest/current
@@ -54,7 +54,7 @@ public interface ActiveSpeakerDetector
      * @param level the latest/current audio level of the stream/speaker with
      * the specified <tt>ssrc</tt>
      */
-    public void levelChanged(long ssrc, int level);
+    public void levelChanged(T id, int level);
 
     /**
      * Removes a listener to no longer be notified by this active speaker
@@ -64,5 +64,5 @@ public interface ActiveSpeakerDetector
      * notifications about changes of the active speaker
      */
     public void removeActiveSpeakerChangedListener(
-            ActiveSpeakerChangedListener listener);
+            ActiveSpeakerChangedListener<T> listener);
 }

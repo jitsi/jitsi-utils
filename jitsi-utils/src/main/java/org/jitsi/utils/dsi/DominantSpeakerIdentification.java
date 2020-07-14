@@ -29,10 +29,12 @@ import org.json.simple.*;
  * &quot;Dominant Speaker Identification for Multipoint Videoconferencing&quot;
  * by Ilana Volfin and Israel Cohen.
  *
+ * @param <T> The type used for speaker identifiers.
+ *
  * @author Lyubomir Marinov
  */
-public class DominantSpeakerIdentification
-    extends AbstractActiveSpeakerDetector
+public class DominantSpeakerIdentification<T>
+    extends AbstractActiveSpeakerDetector<T>
 {
     /**
      * The threshold of the relevant speech activities in the immediate
@@ -78,8 +80,7 @@ public class DominantSpeakerIdentification
 
     /**
      * The name of the <tt>DominantSpeakerIdentification</tt> property
-     * <tt>dominantSpeaker</tt> which specifies the dominant speaker identified
-     * by synchronization source identifier (SSRC).
+     * <tt>dominantSpeaker</tt> which specifies the dominant speaker.
      */
     public static final String DOMINANT_SPEAKER_PROPERTY_NAME
         = DominantSpeakerIdentification.class.getName() + ".dominantSpeaker";
@@ -167,8 +168,7 @@ public class DominantSpeakerIdentification
      * class <tt>DominantSpeakerIdentification</tt>, it specifies the
      * length/size of a sub-unit of the audio level range defined by RFC 6465.
      */
-    private static final int N1_SUBUNIT_LENGTH
-        = (MAX_LEVEL - MIN_LEVEL + N1 - 1) / N1;
+    private static final int N1_SUBUNIT_LENGTH = (MAX_LEVEL - MIN_LEVEL + N1 - 1) / N1;
 
     /**
      * The number of frames (i.e. {@link Speaker#immediates} evaluated for
@@ -219,12 +219,16 @@ public class DominantSpeakerIdentification
         int m = n - r; // r = Math.max(r, n - r);
 
         if (r < m)
+        {
             r = m;
+        }
 
         long t = 1;
 
         for (int i = n, j = 1; i > r; i--, j++)
+        {
             t = t * i / j;
+        }
 
         return t;
     }
@@ -245,7 +249,9 @@ public class DominantSpeakerIdentification
             for (int lEnd = l + littleLengthPerBig; l < lEnd; l++)
             {
                 if (littles[l] > threshold)
+                {
                     sum++;
+                }
             }
             if (bigs[b] != sum)
             {
@@ -267,7 +273,9 @@ public class DominantSpeakerIdentification
                 + (nR - vL) * Math.log(1 - p) - Math.log(lambda) + lambda * vL;
 
         if (speechActivityScore < MIN_SPEECH_ACTIVITY_SCORE)
+        {
             speechActivityScore = MIN_SPEECH_ACTIVITY_SCORE;
+        }
         return speechActivityScore;
     }
 
@@ -278,10 +286,9 @@ public class DominantSpeakerIdentification
     private DecisionMaker decisionMaker;
 
     /**
-     * The synchronization source identifier/SSRC of the dominant speaker in
-     * this multipoint conference.
+     * The identifier of the dominant speaker.
      */
-    private Long dominantSSRC;
+    private T dominantId;
 
     /**
      * The last/latest time at which this <tt>DominantSpeakerIdentification</tt>
@@ -327,10 +334,10 @@ public class DominantSpeakerIdentification
      * The <tt>Speaker</tt>s in the multipoint conference associated with this
      * <tt>ActiveSpeakerDetector</tt>.
      */
-    private final Map<Long,Speaker> speakers = new HashMap<Long,Speaker>();
+    private final Map<T,Speaker> speakers = new HashMap<>();
 
     /**
-     * Initializes a new <tt>DominantSpeakerIdentification</tT> instance.
+     * Initializes a new <tt>DominantSpeakerIdentification</tt> instance.
      */
     public DominantSpeakerIdentification()
     {
@@ -363,7 +370,9 @@ public class DominantSpeakerIdentification
     synchronized void decisionMakerExited(DecisionMaker decisionMaker)
     {
         if (this.decisionMaker == decisionMaker)
+        {
             this.decisionMaker = null;
+        }
     }
 
     /**
@@ -389,13 +398,9 @@ public class DominantSpeakerIdentification
                 jsonObject = new JSONObject();
 
                 // dominantSpeaker
-                long dominantSpeaker = getDominantSpeaker();
+                T dominantSpeaker = getDominantSpeaker();
 
-                jsonObject.put(
-                        "dominantSpeaker",
-                        (dominantSpeaker == -1)
-                            ? null
-                            : Long.valueOf(dominantSpeaker));
+                jsonObject.put("dominantSpeaker", Objects.toString(dominantSpeaker));
 
                 // speakers
                 Collection<Speaker> speakersCollection = this.speakers.values();
@@ -405,8 +410,8 @@ public class DominantSpeakerIdentification
                 {
                     JSONObject speakerJSONObject = new JSONObject();
 
-                    // ssrc
-                    speakerJSONObject.put("ssrc", Long.valueOf(speaker.ssrc));
+                    // id
+                    speakerJSONObject.put("id", speaker.id.toString());
                     // levels
                     speakerJSONObject.put("levels", speaker.getLevels());
                     speakersArray.add(speakerJSONObject);
@@ -440,72 +445,40 @@ public class DominantSpeakerIdentification
      */
     protected void firePropertyChange(
             String property,
-            Long oldValue, Long newValue)
+            T oldValue, T newValue)
     {
-        firePropertyChange(property, (Object) oldValue, (Object) newValue);
+        propertyChangeNotifier.firePropertyChange(property, oldValue, newValue);
 
         if (DOMINANT_SPEAKER_PROPERTY_NAME.equals(property))
         {
-            long ssrc = (newValue == null) ? -1 : newValue.longValue();
-
-            fireActiveSpeakerChanged(ssrc);
+            fireActiveSpeakerChanged(newValue);
         }
     }
 
     /**
-     * Fires a new <tt>PropertyChangeEvent</tt> to the
-     * <tt>PropertyChangeListener</tt>s registered with this
-     * <tt>DominantSpeakerIdentification</tt> in order to notify about a change
-     * in the value of a specific property which had its old value modified to a
-     * specific new value.
-     *
-     * @param property the name of the property of this
-     * <tt>DominantSpeakerIdentification</tt> which had its value changed
-     * @param oldValue the value of the property with the specified name before
-     * the change
-     * @param newValue the value of the property with the specified name after
-     * the change
+     * Gets the identifier of the dominant speaker.
      */
-    protected void firePropertyChange(
-            String property,
-            Object oldValue, Object newValue)
+    public T getDominantSpeaker()
     {
-        propertyChangeNotifier.firePropertyChange(property, oldValue, newValue);
-    }
-
-    /**
-     * Gets the synchronization source identifier (SSRC) of the dominant speaker
-     * in this multipoint conference.
-     *
-     * @return the synchronization source identifier (SSRC) of the dominant
-     * speaker in this multipoint conference
-     */
-    public long getDominantSpeaker()
-    {
-        Long dominantSSRC = this.dominantSSRC;
-
-        return (dominantSSRC == null) ? -1 : dominantSSRC.longValue();
+        return dominantId;
     }
 
     /**
      * Gets the <tt>Speaker</tt> in this multipoint conference identified by a
-     * specific SSRC. If no such <tt>Speaker</tt> exists, a new <tt>Speaker</tt>
-     * is initialized with the specified <tt>ssrc</tt>, added to this multipoint
-     * conference and returned.
+     * specific {@code id}. If no such <tt>Speaker</tt> exists, a new <tt>Speaker</tt>
+     * is initialized and returned.
      *
-     * @param ssrc the SSRC identifying the <tt>Speaker</tt> to return
-     * @return the <tt>Speaker</tt> in this multipoint conference identified by
-     * the specified <tt>ssrc</tt>
+     * @param id the identifier of the <tt>Speaker</tt> to return.
+     * @return the <tt>Speaker</tt> in this multipoint conference identified by {@code id}.
      */
-    private synchronized Speaker getOrCreateSpeaker(long ssrc)
+    private synchronized Speaker getOrCreateSpeaker(T id)
     {
-        Long key = Long.valueOf(ssrc);
-        Speaker speaker = speakers.get(key);
+        Speaker speaker = speakers.get(id);
 
         if (speaker == null)
         {
-            speaker = new Speaker(ssrc);
-            speakers.put(key, speaker);
+            speaker = new Speaker(id);
+            speakers.put(id, speaker);
 
             // Since we've created a new Speaker in the multipoint conference,
             // we'll very likely need to make a decision whether there have been
@@ -519,14 +492,14 @@ public class DominantSpeakerIdentification
      * {@inheritDoc}
      */
     @Override
-    public void levelChanged(long ssrc, int level)
+    public void levelChanged(T id, int level)
     {
         Speaker speaker;
         long now = System.currentTimeMillis();
 
         synchronized (this)
         {
-            speaker = getOrCreateSpeaker(ssrc);
+            speaker = getOrCreateSpeaker(id);
 
             // Note that this ActiveSpeakerDetector is still in use. When it is
             // not in use long enough, its DecisionMaker i.e. background thread
@@ -544,7 +517,9 @@ public class DominantSpeakerIdentification
             }
         }
         if (speaker != null)
+        {
             speaker.levelChanged(level, now);
+        }
     }
 
     /**
@@ -556,46 +531,45 @@ public class DominantSpeakerIdentification
     {
         // If we have to fire events to any registered listeners eventually, we
         // will want to do it outside the synchronized block.
-        Long oldDominantSpeakerValue = null, newDominantSpeakerValue = null;
+        T oldDominantSpeakerValue = null, newDominantSpeakerValue = null;
 
         synchronized (this)
         {
 
         int speakerCount = speakers.size();
-        Long newDominantSSRC;
+        T newDominantId;
 
         if (speakerCount == 0)
         {
             // If there are no Speakers in a multipoint conference, then there
             // are no speaker switch events to detect.
-            newDominantSSRC = null;
+            newDominantId = null;
         }
         else if (speakerCount == 1)
         {
             // If there is a single Speaker in a multipoint conference, then
             // his/her speech surely dominates.
-            newDominantSSRC = speakers.keySet().iterator().next();
+            newDominantId = speakers.keySet().iterator().next();
         }
         else
         {
             Speaker dominantSpeaker
-                = (dominantSSRC == null)
+                = (dominantId == null)
                     ? null
-                    : speakers.get(dominantSSRC);
+                    : speakers.get(dominantId);
 
             // If there is no dominant speaker, nominate one at random and then
             // let the other speakers compete with the nominated one.
             if (dominantSpeaker == null)
             {
-                Map.Entry<Long,Speaker> s
-                    = speakers.entrySet().iterator().next();
+                Map.Entry<T,Speaker> s = speakers.entrySet().iterator().next();
 
                 dominantSpeaker = s.getValue();
-                newDominantSSRC = s.getKey();
+                newDominantId = s.getKey();
             }
             else
             {
-                newDominantSSRC = null;
+                newDominantId = null;
             }
 
             dominantSpeaker.evaluateSpeechActivityScores();
@@ -606,7 +580,7 @@ public class DominantSpeakerIdentification
             // time-interval.
             double newDominantC2 = C2;
 
-            for (Map.Entry<Long,Speaker> s : speakers.entrySet())
+            for (Map.Entry<T,Speaker> s : speakers.entrySet())
             {
                 Speaker speaker = s.getValue();
 
@@ -616,7 +590,9 @@ public class DominantSpeakerIdentification
                 // relative speech activities are all zeroes for the dominant
                 // speaker.
                 if (speaker == dominantSpeaker)
+                {
                     continue;
+                }
 
                 speaker.evaluateSpeechActivityScores();
 
@@ -643,15 +619,15 @@ public class DominantSpeakerIdentification
                     // among themselves by their relative speech activities in
                     // the middle time-interval.
                     newDominantC2 = c2;
-                    newDominantSSRC = s.getKey();
+                    newDominantId = s.getKey();
                 }
             }
         }
-        if ((newDominantSSRC != null) && !newDominantSSRC.equals(dominantSSRC))
+        if ((newDominantId != null) && !newDominantId.equals(dominantId))
         {
-            oldDominantSpeakerValue = dominantSSRC;
-            dominantSSRC = newDominantSSRC;
-            newDominantSpeakerValue = dominantSSRC;
+            oldDominantSpeakerValue = dominantId;
+            dominantId = newDominantId;
+            newDominantSpeakerValue = dominantId;
         }
 
         } // synchronized (this)
@@ -691,7 +667,9 @@ public class DominantSpeakerIdentification
             finally
             {
                 if (!scheduled && (this.decisionMaker == decisionMaker))
+                {
                     this.decisionMaker = null;
+                }
             }
         }
     }
@@ -727,7 +705,9 @@ public class DominantSpeakerIdentification
         if (levelIdleTimeout <= 0)
         {
             if (lastLevelIdleTime != 0)
+            {
                 timeoutIdleLevels(now);
+            }
             lastLevelIdleTime = now;
         }
         else
@@ -748,12 +728,13 @@ public class DominantSpeakerIdentification
             // time-consuming ordeal so the timeout to the next decision
             // iteration should be computed after the end of the decision
             // iteration.
-            decisionTimeout
-                = DECISION_INTERVAL - (System.currentTimeMillis() - now);
+            decisionTimeout = DECISION_INTERVAL - (System.currentTimeMillis() - now);
 
         }
         if ((decisionTimeout > 0) && (sleep > decisionTimeout))
+        {
             sleep = decisionTimeout;
+        }
 
         return sleep;
     }
@@ -776,7 +757,9 @@ public class DominantSpeakerIdentification
             // DominantSpeakerIdentification should cease to exist as soon as
             // possible.
             if (this.decisionMaker != decisionMaker)
+            {
                 return -1;
+            }
 
             // If the decisionMaker has been unnecessarily executing long
             // enough, kill it in order to have a more deterministic behavior
@@ -786,7 +769,9 @@ public class DominantSpeakerIdentification
                 long idle = lastDecisionTime - lastLevelChangedTime;
 
                 if (idle >= DECISION_MAKER_IDLE_TIMEOUT)
+                {
                     return -1;
+                }
             }
         }
 
@@ -806,7 +791,7 @@ public class DominantSpeakerIdentification
      */
     private synchronized void timeoutIdleLevels(long now)
     {
-        Iterator<Map.Entry<Long,Speaker>> i = speakers.entrySet().iterator();
+        Iterator<Map.Entry<T,Speaker>> i = speakers.entrySet().iterator();
 
         while (i.hasNext())
         {
@@ -815,9 +800,7 @@ public class DominantSpeakerIdentification
 
             // Remove a non-dominant Speaker if he/she has been idle for far too
             // long.
-            if ((SPEAKER_IDLE_TIMEOUT < idle)
-                    && ((dominantSSRC == null)
-                            || (speaker.ssrc != dominantSSRC)))
+            if ((SPEAKER_IDLE_TIMEOUT < idle) && ((dominantId == null) || (speaker.id != dominantId)))
             {
                 i.remove();
             }
@@ -862,8 +845,7 @@ public class DominantSpeakerIdentification
          */
         public DecisionMaker(DominantSpeakerIdentification algorithm)
         {
-            this.algorithm
-                = new WeakReference<DominantSpeakerIdentification>(algorithm);
+            this.algorithm = new WeakReference<>(algorithm);
         }
 
         /**
@@ -877,8 +859,7 @@ public class DominantSpeakerIdentification
             {
                 do
                 {
-                    DominantSpeakerIdentification algorithm
-                        = this.algorithm.get();
+                    DominantSpeakerIdentification algorithm = this.algorithm.get();
 
                     if (algorithm == null)
                     {
@@ -924,7 +905,9 @@ public class DominantSpeakerIdentification
                 DominantSpeakerIdentification algorithm = this.algorithm.get();
 
                 if (algorithm != null)
+                {
                     algorithm.decisionMakerExited(this);
+                }
             }
         }
     }
@@ -968,12 +951,11 @@ public class DominantSpeakerIdentification
     }
 
     /**
-     * Represents a speaker in a multipoint conference identified by
-     * synchronization source identifier/SSRC.
+     * Represents a speaker in a multipoint conference identified by an ID.
      *
      * @author Lyubomir Marinov
      */
-    private static class Speaker
+    private static class Speaker<T>
     {
         private final byte[] immediates = new byte[LONG_COUNT * N3 * N2];
 
@@ -1041,21 +1023,19 @@ public class DominantSpeakerIdentification
         private int nextMinLevelWindowLength;
 
         /**
-         * The synchronization source identifier/SSRC of this <tt>Speaker</tt>
-         * which is unique within a multipoint conference.
+         * The identifier of this <tt>Speaker</tt> which is unique within this {@link DominantSpeakerIdentification}.
          */
-        public final long ssrc;
+        public final T id;
 
         /**
-         * Initializes a new <tt>Speaker</tt> instance identified by a specific
-         * synchronization source identifier/SSRC.
+         * Initializes a new <tt>Speaker</tt> instance with a specific identifier
          *
-         * @param ssrc the synchronization source identifier/SSRC of the new
+         * @param id the object identifying this speaker.
          * instance
          */
-        public Speaker(long ssrc)
+        public Speaker(T id)
         {
-            this.ssrc = ssrc;
+            this.id = id;
 
             levels = new byte[immediates.length];
         }
@@ -1106,8 +1086,7 @@ public class DominantSpeakerIdentification
          */
         private void evaluateImmediateSpeechActivityScore()
         {
-            immediateSpeechActivityScore
-                = computeSpeechActivityScore(immediates[0], N1, 0.5, 0.78);
+            immediateSpeechActivityScore = computeSpeechActivityScore(immediates[0], N1, 0.5, 0.78);
         }
 
         /**
@@ -1116,8 +1095,7 @@ public class DominantSpeakerIdentification
          */
         private void evaluateLongSpeechActivityScore()
         {
-            longSpeechActivityScore
-                = computeSpeechActivityScore(longs[0], N3, 0.5, 47);
+            longSpeechActivityScore = computeSpeechActivityScore(longs[0], N3, 0.5, 47);
         }
 
         /**
@@ -1126,8 +1104,7 @@ public class DominantSpeakerIdentification
          */
         private void evaluateMediumSpeechActivityScore()
         {
-            mediumSpeechActivityScore
-                = computeSpeechActivityScore(mediums[0], N2, 0.5, 24);
+            mediumSpeechActivityScore = computeSpeechActivityScore(mediums[0], N2, 0.5, 24);
         }
 
         /**
@@ -1144,7 +1121,9 @@ public class DominantSpeakerIdentification
                 {
                     evaluateMediumSpeechActivityScore();
                     if (computeLongs())
+                    {
                         evaluateLongSpeechActivityScore();
+                    }
                 }
             }
         }

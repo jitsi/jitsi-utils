@@ -21,15 +21,12 @@ package org.jitsi.utils.dsi;
  *
  * @author Boris Grozev
  */
-public interface ActiveSpeakerChangedListener
+public interface ActiveSpeakerChangedListener<T>
 {
     /**
-     * Notifies this listener that the active/dominant stream/speaker has been
-     * changed to one identified by a specific synchronization source
-     * identifier/SSRC.
+     * Notifies this listener that the active/dominant speaker has been changed to one identified by {@code id}.
      *
-     * @param ssrc the SSRC of the latest/current active/dominant
-     * stream/speaker
+     * @param id the ID of the latest/current active/dominant speaker.
      */
-    public void activeSpeakerChanged(long ssrc);
+    void activeSpeakerChanged(T id);
 }

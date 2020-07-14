@@ -25,24 +25,14 @@ import java.util.*;
  * @author Boris Grozev
  * @author Lyubomir Marinov
  */
-public abstract class AbstractActiveSpeakerDetector
-    implements ActiveSpeakerDetector
+public abstract class AbstractActiveSpeakerDetector<T>
+    implements ActiveSpeakerDetector<T>
 {
-    /**
-     * An empty array with element type <tt>ActiveSpeakerChangedListener</tt>.
-     * Explicitly defined for the purposes of reducing the total number of
-     * unnecessary allocations and the undesired effects of the garbage
-     * collector.
-     */
-    private static final ActiveSpeakerChangedListener[] NO_LISTENERS
-        = new ActiveSpeakerChangedListener[0];
-
     /**
      * The list of listeners to be notified by this detector when the active
      * speaker changes.
      */
-    private final List<ActiveSpeakerChangedListener> listeners
-        = new LinkedList<ActiveSpeakerChangedListener>();
+    private final List<ActiveSpeakerChangedListener<T>> listeners = new LinkedList<>();
 
     /**
      * {@inheritDoc}
@@ -52,52 +42,34 @@ public abstract class AbstractActiveSpeakerDetector
      */
     @Override
     public void addActiveSpeakerChangedListener(
-            ActiveSpeakerChangedListener listener)
+            ActiveSpeakerChangedListener<T> listener)
     {
         if (listener == null)
+        {
             throw new NullPointerException("listener");
+        }
 
         synchronized (listeners)
         {
             if (!listeners.contains(listener))
+            {
                 listeners.add(listener);
+            }
         }
     }
 
     /**
      * Notifies the <tt>ActiveSpeakerChangedListener</tt>s registered with this
      * instance that the active speaker in multipoint conference associated with
-     * this instance has changed and is identified by a specific synchronization
-     * source identifier/SSRC.
+     * this instance has changed and is identified by a specific ID.
      *
-     * @param ssrc the synchronization source identifier/SSRC of the active
-     * speaker in the multipoint conference
+     * @param id the identifier of the new dominant speaker.
      */
-    protected void fireActiveSpeakerChanged(long ssrc)
+    protected void fireActiveSpeakerChanged(T id)
     {
-        ActiveSpeakerChangedListener[] listeners
-            = getActiveSpeakerChangedListeners();
-
-        for (ActiveSpeakerChangedListener listener : listeners)
-            listener.activeSpeakerChanged(ssrc);
-    }
-
-    /**
-     * Gets the list of listeners to be notified by this detector when the
-     * active speaker changes.
-     *
-     * @return an array of the listeners to be notified by this detector when
-     * the active speaker changes. If no such listeners are registered with this
-     * instance, an empty array is returned. 
-     */
-    protected ActiveSpeakerChangedListener[] getActiveSpeakerChangedListeners()
-    {
-        synchronized (listeners)
+        for (ActiveSpeakerChangedListener<T> listener : listeners)
         {
-            return
-                (listeners.size() == 0)
-                    ? NO_LISTENERS
-                    : listeners.toArray(NO_LISTENERS);
+            listener.activeSpeakerChanged(id);
         }
     }
 
@@ -105,8 +77,7 @@ public abstract class AbstractActiveSpeakerDetector
      * {@inheritDoc}
      */
     @Override
-    public void removeActiveSpeakerChangedListener(
-            ActiveSpeakerChangedListener listener)
+    public void removeActiveSpeakerChangedListener(ActiveSpeakerChangedListener<T> listener)
     {
         if (listener != null)
         {
