@@ -25,22 +25,14 @@ import java.util.*;
  * @author Boris Grozev
  * @author Lyubomir Marinov
  */
-public abstract class AbstractActiveSpeakerDetector
-    implements ActiveSpeakerDetector
+public abstract class AbstractActiveSpeakerDetector<T>
+    implements ActiveSpeakerDetector<T>
 {
-    /**
-     * An empty array with element type <tt>ActiveSpeakerChangedListener</tt>.
-     * Explicitly defined for the purposes of reducing the total number of
-     * unnecessary allocations and the undesired effects of the garbage
-     * collector.
-     */
-    private static final ActiveSpeakerChangedListener[] NO_LISTENERS = new ActiveSpeakerChangedListener[0];
-
     /**
      * The list of listeners to be notified by this detector when the active
      * speaker changes.
      */
-    private final List<ActiveSpeakerChangedListener> listeners = new LinkedList<>();
+    private final List<ActiveSpeakerChangedListener<T>> listeners = new LinkedList<>();
 
     /**
      * {@inheritDoc}
@@ -50,7 +42,7 @@ public abstract class AbstractActiveSpeakerDetector
      */
     @Override
     public void addActiveSpeakerChangedListener(
-            ActiveSpeakerChangedListener listener)
+            ActiveSpeakerChangedListener<T> listener)
     {
         if (listener == null)
         {
@@ -73,32 +65,11 @@ public abstract class AbstractActiveSpeakerDetector
      *
      * @param id the identifier of the new dominant speaker.
      */
-    protected void fireActiveSpeakerChanged(Object id)
+    protected void fireActiveSpeakerChanged(T id)
     {
-        ActiveSpeakerChangedListener[] listeners = getActiveSpeakerChangedListeners();
-
-        for (ActiveSpeakerChangedListener listener : listeners)
+        for (ActiveSpeakerChangedListener<T> listener : listeners)
         {
             listener.activeSpeakerChanged(id);
-        }
-    }
-
-    /**
-     * Gets the list of listeners to be notified by this detector when the
-     * active speaker changes.
-     *
-     * @return an array of the listeners to be notified by this detector when
-     * the active speaker changes. If no such listeners are registered with this
-     * instance, an empty array is returned. 
-     */
-    protected ActiveSpeakerChangedListener[] getActiveSpeakerChangedListeners()
-    {
-        synchronized (listeners)
-        {
-            return
-                (listeners.size() == 0)
-                    ? NO_LISTENERS
-                    : listeners.toArray(NO_LISTENERS);
         }
     }
 
@@ -106,8 +77,7 @@ public abstract class AbstractActiveSpeakerDetector
      * {@inheritDoc}
      */
     @Override
-    public void removeActiveSpeakerChangedListener(
-            ActiveSpeakerChangedListener listener)
+    public void removeActiveSpeakerChangedListener(ActiveSpeakerChangedListener<T> listener)
     {
         if (listener != null)
         {

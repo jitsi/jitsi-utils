@@ -21,12 +21,12 @@ package org.jitsi.utils.dsi;
  *
  * @author Boris Grozev
  */
-public interface ActiveSpeakerChangedListener
+public interface ActiveSpeakerChangedListener<T>
 {
     /**
      * Notifies this listener that the active/dominant speaker has been changed to one identified by {@code id}.
      *
      * @param id the ID of the latest/current active/dominant speaker.
      */
-    public void activeSpeakerChanged(Object id);
+    void activeSpeakerChanged(T id);
 }
