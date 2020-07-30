@@ -66,7 +66,7 @@ public class PacketQueueBenchmarkTests
             final ExecutorService executorService
                 = Executors.newFixedThreadPool(numberOfQueues);
             Duration duration = runBenchmark(
-                executorService,
+                executorService::submit,
                 -1 /* Disable cooperative multi-tasking mode,
                  which is not relevant when each queue has it's own processing
                  thread*/);
@@ -87,7 +87,7 @@ public class PacketQueueBenchmarkTests
             final ExecutorService executorService
                 = Executors.newCachedThreadPool();
             Duration duration = runBenchmark(
-                executorService,
+                executorService::submit,
                 -1 /* Disable cooperative multi-tasking mode,
                  which is not relevant when each queue has it's own processing
                  thread*/);
@@ -109,7 +109,7 @@ public class PacketQueueBenchmarkTests
                 = Executors.newFixedThreadPool(
                     Runtime.getRuntime().availableProcessors());
             Duration duration = runBenchmark(
-                executorService,
+                    executorService::submit,
                 50 /* Because queues will share executor
                 with limited number of threads, so configure cooperative
                 multi-tasking mode*/);
@@ -137,7 +137,7 @@ public class PacketQueueBenchmarkTests
                 = Executors.newWorkStealingPool(
                     Runtime.getRuntime().availableProcessors());
             Duration duration = runBenchmark(
-                executorService,
+                executorService::submit,
                 50 /* Because queues will share executor
                 with limited number of threads, so configure cooperative
                 multi-tasking mode*/);
@@ -147,7 +147,7 @@ public class PacketQueueBenchmarkTests
     }
 
     private Duration runBenchmark(
-        final ExecutorService executor,
+        final Executor executor,
         final long maxSequentiallyPackets)
         throws InterruptedException
     {

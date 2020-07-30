@@ -45,16 +45,23 @@ final class AsyncQueueHandler<T>
      * The default <tt>ExecutorService</tt> to run <tt>AsyncQueueHandler</tt>
      * when there is no executor injected in constructor.
      */
-    private final static ExecutorService sharedExecutor
-        = Executors.newCachedThreadPool(
-            new CustomizableThreadFactory(
-                AsyncQueueHandler.class.getName() + "-executor-", true));
+    private final static Executor sharedExecutor = new Executor() {
+        private final ExecutorService sharedExecutorService
+            = Executors.newCachedThreadPool(
+                new CustomizableThreadFactory(AsyncQueueHandler.class.getName() + "-executor-", true));
+
+        @Override
+        public Future<?> submit(Runnable task)
+        {
+            return sharedExecutorService.submit(task);
+        }
+    };
 
     /**
      * Executor service to run {@link #reader}, which asynchronously
      * invokes specified {@link #handler} on queued items.
      */
-    private final ExecutorService executor;
+    private final Executor executor;
 
     /**
      * An {@link BlockingQueue <T>} whose items read on separate thread and
@@ -162,7 +169,7 @@ final class AsyncQueueHandler<T>
         BlockingQueue<T> queue,
         Handler<T> handler,
         String id,
-        ExecutorService executor)
+        Executor executor)
     {
         this(queue, handler, id, executor, -1);
     }
@@ -184,7 +191,7 @@ final class AsyncQueueHandler<T>
         BlockingQueue<T> queue,
         Handler<T> handler,
         String id,
-        ExecutorService executor,
+        Executor executor,
         long maxSequentiallyHandledItems)
     {
         if (queue == null)
@@ -284,4 +291,5 @@ final class AsyncQueueHandler<T>
          */
         void handleItem(T item);
     }
+
 }

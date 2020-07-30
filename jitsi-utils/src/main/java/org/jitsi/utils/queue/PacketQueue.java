@@ -34,8 +34,7 @@ public abstract class PacketQueue<T>
      * The {@link Logger} used by the {@link PacketQueue} class and its
      * instances for logging output.
      */
-    private static final Logger logger
-        = Logger.getLogger(PacketQueue.class.getName());
+    private static final Logger logger = Logger.getLogger(PacketQueue.class.getName());
 
     /**
      * The default capacity of a {@link PacketQueue}.
@@ -132,8 +131,7 @@ public abstract class PacketQueue<T>
      * created, and the queue will provide access to the head element via
      * {@link #get()} and {@link #poll()}.
      */
-    public PacketQueue(
-        Boolean enableStatistics, String id, PacketHandler<T> packetHandler)
+    public PacketQueue(Boolean enableStatistics, String id, PacketHandler<T> packetHandler)
     {
         this(DEFAULT_CAPACITY, true, enableStatistics, id, packetHandler);
     }
@@ -176,8 +174,7 @@ public abstract class PacketQueue<T>
      * {@code handler.handlePacket} on them. If set to null, no thread will be
      * created, and the queue will provide access to the head element via
      * {@link #get()} and {@link #poll()}.
-     * @param executor An optional executor service to use to execute
-     * packetHandler for items added to queue.
+     * @param executor An optional executor to use to execute packetHandler for items added to queue.
      */
     public PacketQueue(
         int capacity,
@@ -185,7 +182,7 @@ public abstract class PacketQueue<T>
         Boolean enableStatistics,
         String id,
         PacketHandler<T> packetHandler,
-        ExecutorService executor)
+        Executor executor)
     {
         this.copy = copy;
         this.id = id;
@@ -527,10 +524,10 @@ public abstract class PacketQueue<T>
          * Specifies the number of packets allowed to be processed sequentially
          * without yielding control to executor's thread. Specifying positive
          * number will allow other possible queues sharing same
-         * {@link ExecutorService} to process their packets.
+         * {@link Executor} to process their packets.
          * @return positive value to specify max number of packets which allows
          * implementation of cooperative multi-tasking between different
-         * {@link PacketQueue} sharing same {@link ExecutorService}.
+         * {@link PacketQueue} sharing same {@link Executor}.
          */
         default long maxSequentiallyProcessedPackets()
         {

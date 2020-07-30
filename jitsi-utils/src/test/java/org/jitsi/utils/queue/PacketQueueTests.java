@@ -166,7 +166,7 @@ public class PacketQueueTests
                 queueCompletion.countDown();
                 return true;
             },
-            singleThreadExecutor);
+            singleThreadExecutor::submit);
 
         queue.add(new DummyQueue.Dummy());
 
@@ -245,12 +245,12 @@ public class PacketQueueTests
         final DummyQueue queue1 = new DummyQueue(
             queueCapacity,
             newPacketQueue.apply(queue1Counter, queue2Counter),
-            singleThreadExecutor);
+            singleThreadExecutor::submit);
 
         final DummyQueue queue2 = new DummyQueue(
             queueCapacity,
             newPacketQueue.apply(queue2Counter, queue1Counter),
-            singleThreadExecutor);
+            singleThreadExecutor::submit);
 
         for (int i = 0; i < queueCapacity; i++)
         {
@@ -293,7 +293,7 @@ public class PacketQueueTests
                     completionGuard.countDown();
                     return true;
                 },
-                singleThreadedExecutor));
+                singleThreadedExecutor::submit));
         }
 
         final DummyQueue.Dummy dummyPacket = new DummyQueue.Dummy();
