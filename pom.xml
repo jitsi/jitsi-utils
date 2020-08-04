@@ -19,7 +19,6 @@
 
     <modules>
         <module>jitsi-utils</module>
-        <module>jitsi-utils-kotlin</module>
     </modules>
 
     <properties>
