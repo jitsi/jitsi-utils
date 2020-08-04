@@ -30,6 +30,9 @@ class DurationTest : ShouldSpec() {
                 5.mins shouldBe Duration.ofMinutes(5)
                 5.hours shouldBe Duration.ofHours(5)
                 5.days shouldBe Duration.ofDays(5)
+
+                1.days * 2 shouldBe Duration.ofDays(2)
+                10.days / 2.days shouldBe 5.0
             }
         }
     }

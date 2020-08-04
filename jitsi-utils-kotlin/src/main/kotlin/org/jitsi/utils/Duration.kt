@@ -39,3 +39,6 @@ val Number.mins: Duration
 
 val Number.days: Duration
     get() = Duration.ofDays(this.toLong())
+
+operator fun Duration.times(x: Int): Duration = Duration.ofNanos(toNanos() * x)
+operator fun Duration.div(other: Duration): Double = toNanos().toDouble() / other.toNanos()
