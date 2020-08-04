@@ -21,7 +21,6 @@
 
 package org.jitsi.utils.logging2
 
-import java.util.Collections.emptyMap
 import java.util.logging.Level
 import kotlin.reflect.full.companionObject
 
