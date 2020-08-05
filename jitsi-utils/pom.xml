@@ -122,8 +122,8 @@
                         </goals>
                         <configuration>
                             <sourceDirs>
-                                <source>src/main/kotlin</source>
-                                <source>src/main/java</source>
+                                <source>src/test/kotlin</source>
+                                <source>src/test/java</source>
                             </sourceDirs>
                         </configuration>
                     </execution>
@@ -148,6 +148,12 @@
                         used here.
                         -->
                         <Import-Package>*;version=!</Import-Package>
+                        <!-- This is necessary for free/extensions functions defined in the kotlin code to be
+                        visible to kotlin code using this lib.  See https://youtrack.jetbrains.com/issue/KT-9164. -->
+                        <Include-Resource>
+                            /=src/main/resources/,
+                            META-INF=target/classes/META-INF
+                        </Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>
@@ -178,28 +184,6 @@
                         <phase>test-compile</phase>
                         <goals>
                             <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- This plugin is necessary for free/extensions functions defined in the kotlin code to be
-            visible to kotlin code using this lib.  See https://youtrack.jetbrains.com/issue/KT-9164. -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <tasks>
-                                <copy todir="src/main/resources/META-INF">
-                                    <fileset dir="${project.build.directory}/classes/META-INF">
-                                        <include name="*.kotlin_module"/>
-                                    </fileset>
-                                </copy>
-                            </tasks>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
                         </goals>
                     </execution>
                 </executions>
