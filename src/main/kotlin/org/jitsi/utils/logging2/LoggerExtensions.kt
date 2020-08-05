@@ -33,8 +33,7 @@ import kotlin.reflect.full.companionObject
 fun <T : Any> T.createLogger(
     minLogLevel: Level = Level.INFO,
     logContext: LogContext = LogContext.EMPTY
-): Logger =
-    LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
+): Logger = LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
 
 /**
  * Create a child logger from [parentLogger] with any optional [childContext]
@@ -44,8 +43,7 @@ fun <T : Any> T.createLogger(
 fun <T : Any> T.createChildLogger(
     parentLogger: Logger,
     childContext: Map<String, String> = emptyMap()
-): Logger =
-    parentLogger.createChildLogger(getClassForLogging(this.javaClass).name, childContext)
+): Logger = parentLogger.createChildLogger(getClassForLogging(this.javaClass).name, childContext)
 
 /**
  * Given a [Class], get the proper class to be used for the name of a logger

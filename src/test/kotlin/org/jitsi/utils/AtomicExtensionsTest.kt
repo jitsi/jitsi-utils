@@ -31,8 +31,7 @@ internal class AtomicExtensionsTest : ShouldSpec() {
             }
         }
         "decreaseAndGet" {
-            val l = AtomicLong(100
-            )
+            val l = AtomicLong(100)
             should("work correctly") {
                 l.minAssign(10) shouldBe 10
                 l.minAssign(25) shouldBe 10
