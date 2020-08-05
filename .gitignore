@@ -6,3 +6,5 @@
 .settings/
 *.iml
 .idea/
+.kotlintest
+target
