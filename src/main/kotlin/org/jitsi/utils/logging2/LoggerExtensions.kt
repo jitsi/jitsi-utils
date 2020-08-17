@@ -31,7 +31,7 @@ import kotlin.reflect.full.companionObject
  *
  */
 fun <T : Any> T.createLogger(
-    minLogLevel: Level = Level.INFO,
+    minLogLevel: Level = Level.ALL,
     logContext: LogContext = LogContext.EMPTY
 ): Logger = LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
 
