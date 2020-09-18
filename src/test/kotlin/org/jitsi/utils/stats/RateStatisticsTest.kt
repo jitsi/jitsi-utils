@@ -25,7 +25,7 @@ import org.jitsi.utils.ms
 class RateStatisticsTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
     private val fakeClock = FakeClock()
-    private val rateStatistics = RateStatistics(1000, 8000f, fakeClock)
+    private val rateStatistics = RateStatistics(1000, clock = fakeClock)
 
     init {
         should("work correctly") {
@@ -33,24 +33,24 @@ class RateStatisticsTest : ShouldSpec() {
                 rateStatistics.update(1)
                 fakeClock.elapse(10.ms)
             }
-            rateStatistics.accumulatedCount shouldBe 10
-            rateStatistics.rate shouldBe 10 * 8 /* bits per byte */
+            rateStatistics.getAccumulatedCount() shouldBe 10
+            rateStatistics.getRate() shouldBe 10 * 8 /* bits per byte */
 
             fakeClock.elapse(500.ms)
             (0..9).forEach {
                 rateStatistics.update(1)
                 fakeClock.elapse(10.ms)
             }
-            rateStatistics.accumulatedCount shouldBe 20
-            rateStatistics.rate shouldBe 20 * 8 /* bits per byte */
+            rateStatistics.getAccumulatedCount() shouldBe 20
+            rateStatistics.getRate() shouldBe 20 * 8 /* bits per byte */
 
             fakeClock.elapse(500.ms)
-            rateStatistics.accumulatedCount shouldBe 10
-            rateStatistics.rate shouldBe 10 * 8 /* bits per byte */
+            rateStatistics.getAccumulatedCount() shouldBe 10
+            rateStatistics.getRate() shouldBe 10 * 8 /* bits per byte */
 
             fakeClock.elapse(5.seconds)
-            rateStatistics.accumulatedCount shouldBe 0
-            rateStatistics.rate shouldBe 0
+            rateStatistics.getAccumulatedCount() shouldBe 0
+            rateStatistics.getRate() shouldBe 0
         }
     }
 }
