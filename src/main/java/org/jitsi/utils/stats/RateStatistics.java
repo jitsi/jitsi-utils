@@ -15,7 +15,7 @@
  */
 package org.jitsi.utils.stats;
 
-import edu.umd.cs.findbugs.annotations.*;
+import java.time.*;
 
 /**
  * This originally comes from webrtc.org but has been moved here so that it can
@@ -54,6 +54,8 @@ public class RateStatistics
      */
     private final float scale;
 
+    private final Clock clock;
+
     /**
      * Initializes a new {@link RateStatistics} instance with a default scale
      * of 8000 (i.e. if the input is in bytes, the result will be in bits per
@@ -62,16 +64,21 @@ public class RateStatistics
      */
     public RateStatistics(int windowSizeMs)
     {
-        this(windowSizeMs, 8000F);
+        this(windowSizeMs, 8000F, Clock.systemUTC());
     }
 
+    public RateStatistics(int windowSizeMs, float scale)
+    {
+        this(windowSizeMs, scale, Clock.systemUTC());
+    }
     /**
      * @param windowSizeMs window size in ms for the rate estimation
      * @param scale coefficient to convert counts/ms to desired units. For
      * example, if counts represents bytes, use <tt>8*1000</tt> to go to bits/s.
      */
-    public RateStatistics(int windowSizeMs, float scale)
-    { 
+    public RateStatistics(int windowSizeMs, float scale, Clock clock)
+    {
+        this.clock = clock;
         buckets = new long[windowSizeMs + 1]; // N ms in (N+1) buckets.
         this.scale = scale / (buckets.length - 1);
     }
@@ -106,7 +113,7 @@ public class RateStatistics
 
     public synchronized long getRate()
     {
-        return getRate(System.currentTimeMillis());
+        return getRate(clock.millis());
     }
 
     public synchronized long getRate(long nowMs)
@@ -117,7 +124,7 @@ public class RateStatistics
 
     public synchronized long getAccumulatedCount()
     {
-        return getAccumulatedCount(System.currentTimeMillis());
+        return getAccumulatedCount(clock.millis());
     }
 
     public synchronized long getAccumulatedCount(long nowMs)
@@ -126,6 +133,10 @@ public class RateStatistics
         return accumulatedCount;
     }
 
+    public synchronized void update(int count)
+    {
+        update(count, clock.millis());
+    }
 
     public synchronized void update(int count, long nowMs)
     {
