@@ -126,7 +126,7 @@ open class RateTracker @JvmOverloads constructor(
         if (now < oldestTime) // Too old data is ignored.
             return
         eraseOld(now)
-        val nowOffset = (now - oldestTime).toInt() / bucketSizeMs
+        val nowOffset = (now - oldestTime).toInt()
         var index = oldestIndex + nowOffset
         if (index >= buckets.size) index -= buckets.size
         buckets[index] = buckets[index] + count
