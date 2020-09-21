@@ -36,16 +36,16 @@ class RateTrackerTest : ShouldSpec() {
                 fakeClock.elapse(1.ms)
                 rateTracker.getAccumulatedCount() shouldBe it
             }
-            rateTracker.getRate() shouldBe 1000
+            rateTracker.rate shouldBe 1000
 
             fakeClock.elapse(1.ms)
-            rateTracker.getRate() shouldBe 999
+            rateTracker.rate shouldBe 999
 
             fakeClock.elapse(499.ms)
-            rateTracker.getRate() shouldBe 500
+            rateTracker.rate shouldBe 500
 
             fakeClock.elapse(500.ms)
-            rateTracker.getRate() shouldBe 0
+            rateTracker.rate shouldBe 0
         }
         should("work correctly with bucketSize > 1ms") {
             val rateTracker = RateTracker(1.secs, 100.ms, clock = fakeClock)
@@ -55,18 +55,18 @@ class RateTrackerTest : ShouldSpec() {
                 fakeClock.elapse(1.ms)
                 rateTracker.getAccumulatedCount() shouldBe it
             }
-            rateTracker.getRate() shouldBe 1000
+            rateTracker.rate shouldBe 1000
 
             fakeClock.elapse(50.ms)
-            rateTracker.getRate() shouldBe 1000
+            rateTracker.rate shouldBe 1000
             fakeClock.elapse(50.ms)
-            rateTracker.getRate() shouldBe 900
+            rateTracker.rate shouldBe 900
 
             fakeClock.elapse(400.ms)
-            rateTracker.getRate() shouldBe 500
+            rateTracker.rate shouldBe 500
 
             fakeClock.elapse(1000.ms)
-            rateTracker.getRate() shouldBe 0
+            rateTracker.rate shouldBe 0
         }
     }
 }

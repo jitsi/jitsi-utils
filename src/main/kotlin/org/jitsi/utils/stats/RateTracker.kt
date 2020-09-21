@@ -121,11 +121,12 @@ open class RateTracker @JvmOverloads constructor(
      * Get the rate in units per second.
      */
     @Synchronized
-    @JvmOverloads
-    open fun getRate(nowMs: Long = clock.millis()): Long {
+    open fun getRate(nowMs: Long): Long {
         eraseOld(coerceMs(nowMs))
         return (accumulatedCount.toDouble() * 1000 / windowSizeMs + 0.5f).toLong()
     }
+    val rate: Long
+        get() = getRate(clock.millis())
 
     @Synchronized
     @JvmOverloads

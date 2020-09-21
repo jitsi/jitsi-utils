@@ -34,7 +34,7 @@ class RateStatisticsTest : ShouldSpec() {
                 fakeClock.elapse(10.ms)
             }
             rateStatistics.getAccumulatedCount() shouldBe 10
-            rateStatistics.getRate() shouldBe 10 * 8 /* bits per byte */
+            rateStatistics.rate shouldBe 10 * 8 /* bits per byte */
 
             fakeClock.elapse(500.ms)
             (0..9).forEach {
@@ -42,15 +42,15 @@ class RateStatisticsTest : ShouldSpec() {
                 fakeClock.elapse(10.ms)
             }
             rateStatistics.getAccumulatedCount() shouldBe 20
-            rateStatistics.getRate() shouldBe 20 * 8 /* bits per byte */
+            rateStatistics.rate shouldBe 20 * 8 /* bits per byte */
 
             fakeClock.elapse(500.ms)
             rateStatistics.getAccumulatedCount() shouldBe 10
-            rateStatistics.getRate() shouldBe 10 * 8 /* bits per byte */
+            rateStatistics.rate shouldBe 10 * 8 /* bits per byte */
 
             fakeClock.elapse(5.seconds)
             rateStatistics.getAccumulatedCount() shouldBe 0
-            rateStatistics.getRate() shouldBe 0
+            rateStatistics.rate shouldBe 0
         }
     }
 }
