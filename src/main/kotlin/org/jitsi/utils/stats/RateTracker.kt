@@ -145,8 +145,9 @@ open class RateStatistics @JvmOverloads constructor(
     val tracker = RateTracker(windowSizeMs, 1, clock)
     val scale = scale / (windowSizeMs - 1)
 
-    @JvmOverloads
-    fun getRate(nowMs: Long = clock.millis()) = (tracker.getRate(nowMs) * scale + 0.5).toLong()
+    val rate: Long
+        get() = getRate(clock.millis())
+    open fun getRate(nowMs: Long = clock.millis()) = (tracker.getRate(nowMs) * scale + 0.5).toLong()
 
     @JvmOverloads
     fun getAccumulatedCount(nowMs: Long = clock.millis()) = tracker.getAccumulatedCount(nowMs)
