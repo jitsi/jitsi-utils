@@ -20,6 +20,11 @@ import java.lang.IllegalArgumentException
 import java.time.Clock
 import java.time.Duration
 
+/**
+ * Tracks an average rate (of values added via [update]) over a sliding window. The data is kept in a circular buffer
+ * of buckets with a configurable size, which can be efficient in both CPU and memory use. Useful for e.g. calculating
+ * the bitrate or packet rate of a stream.
+ */
 open class RateTracker @JvmOverloads constructor(
     /**
      * The number of buckets.
@@ -28,7 +33,7 @@ open class RateTracker @JvmOverloads constructor(
     /**
      * The size of each bucket in milliseconds.
      */
-    private val bucketSizeMs: Int = 1,
+    private val bucketSize: Duration = 1.ms,
     private val clock: Clock = Clock.systemUTC()
 ) {
     constructor(
@@ -42,10 +47,10 @@ open class RateTracker @JvmOverloads constructor(
         bucketSize: Duration = 1.ms,
         clock: Clock = Clock.systemUTC()) : this(
         numBuckets = (windowSize.toMillis() / bucketSize.toMillis()).toInt(),
-        bucketSizeMs = bucketSize.toMillis().toInt(),
+        bucketSize = bucketSize,
         clock = clock) {
 
-        if (bucketSizeMs * numBuckets.toLong() != windowSize.toMillis()) {
+        if (bucketSize.toMillis() * numBuckets.toLong() != windowSize.toMillis()) {
             throw IllegalArgumentException(
                 "The bucketSize (${bucketSize.toMillis()} ms) must divide the window size " +
                     "(${windowSize.toMillis()} ms) evenly.")
@@ -67,22 +72,32 @@ open class RateTracker @JvmOverloads constructor(
     private var oldestIndex = 0
 
     /**
-     * Oldest time recorded in buckets.
+     * Oldest time recorded in buckets. One time tick corresponds to [bucketSizeMs] milliseconds of time on the [clock].
      */
     private var oldestTime: Long = 0
 
     /**
      * The size of the window in milliseconds.
      */
-    val windowSizeMs = numBuckets * bucketSizeMs
+    private val windowSizeMs = numBuckets * bucketSize.toMillis()
 
     /**
-     * Convert a clock time to the local time representation (one tick is [bucketSizeMs] milliseconds).
+     * The size of a singe bucket in milliseconds.
+     */
+    private val bucketSizeMs = bucketSize.toMillis()
+
+    /**
+     * Convert a [clock] time to the local time representation (one tick is [bucketSizeMs] milliseconds).
      */
     private fun coerceMs(timeMs: Long) = timeMs / bucketSizeMs
 
     @Synchronized
-    private fun eraseOld(now: Long) {
+    private fun eraseOld(
+        /**
+         * The timestamp in ticks of [bucketSizeMs].
+         */
+        now: Long
+    ) {
         val newOldestTime = now - buckets.size + 1
         if (newOldestTime <= oldestTime) return
         while (oldestTime < newOldestTime) {
@@ -142,7 +157,7 @@ open class RateStatistics @JvmOverloads constructor(
     scale: Float = 8000f,
     val clock: Clock = Clock.systemUTC()) {
 
-    val tracker = RateTracker(windowSizeMs, 1, clock)
+    val tracker = RateTracker(windowSizeMs, 1.ms, clock)
     val scale = scale / (windowSizeMs - 1)
 
     val rate: Long
