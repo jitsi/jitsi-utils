@@ -36,6 +36,7 @@ open class RateTracker @JvmOverloads constructor(
     private val bucketSize: Duration = 1.ms,
     private val clock: Clock = Clock.systemUTC()
 ) {
+    @JvmOverloads
     constructor(
         /**
          * The duration of the window for which values will be kept.
