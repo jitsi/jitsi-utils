@@ -41,13 +41,13 @@ public class PacketQueueTests
         {
             // This block surrounded with try/catch necessary to ensure that
             // thread calling PacketQueue::get blocked before items is added
-            // to queue. Giving 50ms for CompletableFuture to stuck on get.
-            dummyItem.get(50, TimeUnit.MILLISECONDS);
+            // to queue. Giving 200 ms for CompletableFuture to stuck on get.
+            dummyItem.get(200, TimeUnit.MILLISECONDS);
             Assertions.fail("There is no items in queue, must not be here");
         }
         catch (TimeoutException e)
         {
-            // no item is added during 50 ms into queue.
+            // no item is added during 200 ms into queue.
         }
 
         final DummyQueue.Dummy pushedItem = new DummyQueue.Dummy();
@@ -59,8 +59,7 @@ public class PacketQueueTests
             // checks that thread stuck in PacketQueue::get notified
             // "immediately" when item added to queue. Giving a few ms for
             // CompletableFuture to transit to completed state.
-            final DummyQueue.Dummy poppedItem
-                    = dummyItem.get(50, TimeUnit.MILLISECONDS);
+            final DummyQueue.Dummy poppedItem = dummyItem.get(200, TimeUnit.MILLISECONDS);
             Assertions.assertEquals(pushedItem, poppedItem);
         }
         catch (TimeoutException e)
@@ -88,13 +87,13 @@ public class PacketQueueTests
             {
                 // This block surrounded with try/catch necessary to ensure that
                 // thread calling PacketQueue::get blocked before items is added
-                // to queue. Giving 50ms for CompletableFuture to stuck on get.
-                dummyItem.get(50, TimeUnit.MILLISECONDS);
+                // to queue. Giving 200 ms for CompletableFuture to stuck on get.
+                dummyItem.get(200, TimeUnit.MILLISECONDS);
                 Assertions.fail("There is no items in queue, must not be here");
             }
             catch (TimeoutException e)
             {
-                // no item is added during 50 ms into queue.
+                // no item is added during 200 ms into queue.
             }
         }
 
@@ -145,8 +144,7 @@ public class PacketQueueTests
             else
             {
                 Assertions.assertNotEquals(0, item.id,
-                    "Oldest item must be removed when "
-                        + "item exceeding capacity added");
+                    "Oldest item must be removed when item exceeding capacity added");
             }
         }
     }
@@ -170,11 +168,9 @@ public class PacketQueueTests
 
         queue.add(new DummyQueue.Dummy());
 
-        final boolean completed
-            = queueCompletion.await(50, TimeUnit.MILLISECONDS);
+        final boolean completed = queueCompletion.await(200, TimeUnit.MILLISECONDS);
         Assertions
-            .assertTrue(completed, "Expected all queued items are handled "
-                + "at this time point");
+            .assertTrue(completed, "Expected all queued items are handled at this time point");
 
         Future<?> executorCompletion = singleThreadExecutor.submit(() -> {
             // do nothing, just pump Runnable via executor's thread to
@@ -183,7 +179,7 @@ public class PacketQueueTests
 
         try
         {
-            executorCompletion.get(10, TimeUnit.MILLISECONDS);
+            executorCompletion.get(200, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException e)
         {
