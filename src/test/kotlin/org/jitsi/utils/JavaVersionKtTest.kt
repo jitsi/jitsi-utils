@@ -24,7 +24,6 @@ import io.kotest.matchers.shouldBe
 
 class JavaVersionKtTest : ShouldSpec({
     context("getJavaVersion") {
-        println("java version: ${System.getProperty("java.version")}")
         should("parse version strings correctly") {
             withSystemProperty("java.version", "1.8.0_192", mode = OverrideMode.SetOrOverride) {
                 getJavaVersion() shouldBe 8

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+@file:JvmName("JavaVersion")
 package org.jitsi.utils
 
 fun getJavaVersion(): Int {
