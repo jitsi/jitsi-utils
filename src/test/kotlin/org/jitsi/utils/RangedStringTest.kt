@@ -16,40 +16,40 @@
 
 package org.jitsi.utils
 
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 
 internal class RangedStringTest : ShouldSpec() {
     init {
-        "formatting a single value" {
+        context("formatting a single value") {
             val range = 1..1
             val string = range.joinToRangedString()
             should("be just that value") {
                 string shouldBe "1"
             }
         }
-        "formatting a consecutive sequence" {
+        context("formatting a consecutive sequence") {
             val range = 1..10
             val string = range.joinToRangedString()
             should("be a range") {
                 string shouldBe "1-10"
             }
         }
-        "formatting two disjoint sequences" {
+        context("formatting two disjoint sequences") {
             val range = setOf(1..10, 12..20).flatten()
             val string = range.joinToRangedString()
             should("be several ranges") {
                 string shouldBe "1-10, 12-20"
             }
         }
-        "formatting nonconsecutive values" {
+        context("formatting nonconsecutive values") {
             val range = 1..9 step 2
             val string = range.joinToRangedString()
             should("be discrete values") {
                 string shouldBe "1, 3, 5, 7, 9"
             }
         }
-        "formatting range combinations" {
+        context("formatting range combinations") {
             should("work if a single value is first") {
                 val range = setOf(1..1, 3..10).flatten()
                 val string = range.joinToRangedString()
@@ -61,35 +61,35 @@ internal class RangedStringTest : ShouldSpec() {
                 string shouldBe "1-8, 10"
             }
         }
-        "formatting with a prefix" {
+        context("formatting with a prefix") {
             val range = 1..10
             val string = range.joinToRangedString(prefix = "AAA ")
             should("work") {
                 string shouldBe "AAA 1-10"
             }
         }
-        "formatting with a postfix" {
+        context("formatting with a postfix") {
             val range = 1..10
             val string = range.joinToRangedString(postfix = " ZZZ")
             should("work") {
                 string shouldBe "1-10 ZZZ"
             }
         }
-        "formatting with a custom separator" {
+        context("formatting with a custom separator") {
             val range = 1..9 step 2
             val string = range.joinToRangedString(separator = "; ")
             should("work") {
                 string shouldBe "1; 3; 5; 7; 9"
             }
         }
-        "formatting with a custom range separator" {
+        context("formatting with a custom range separator") {
             val range = setOf(1..10, 12..20).flatten()
             val string = range.joinToRangedString(rangeSeparator = "→")
             should("work") {
                 string shouldBe "1→10, 12→20"
             }
         }
-        "setting a range limit" {
+        context("setting a range limit") {
             should("work") {
                 val range = arrayOf(1, 2, 4, 5, 7, 8, 10, 11, 13, 14)
                 val string = range.joinToRangedString(rangeLimit = 4)
@@ -111,7 +111,7 @@ internal class RangedStringTest : ShouldSpec() {
                 string shouldBe "1-2, 4, 6-7, 9-10, ..."
             }
         }
-        "setting a range limit of zero" {
+        context("setting a range limit of zero") {
             should("work") {
                 val range = arrayOf(1, 2, 4, 5, 7, 8, 10, 11, 13, 14)
                 val string = range.joinToRangedString(rangeLimit = 0)
@@ -128,35 +128,35 @@ internal class RangedStringTest : ShouldSpec() {
                 string shouldBe "[...]"
             }
         }
-        "formatting with a custom truncated value" {
+        context("formatting with a custom truncated value") {
             val range = arrayOf(1, 2, 4, 5, 7, 8, 10, 11, 13, 14)
             val string = range.joinToRangedString(rangeLimit = 4, truncated = "etc.")
             should("work") {
                 string shouldBe "1-2, 4-5, 7-8, 10-11, etc."
             }
         }
-        "formatting from a sequence" {
+        context("formatting from a sequence") {
             val range = arrayOf(1, 2, 4, 5, 7, 8, 10, 11, 13, 14).asSequence()
             val string = range.joinToRangedString()
             should("work") {
                 string shouldBe "1-2, 4-5, 7-8, 10-11, 13-14"
             }
         }
-        "formatting non-consecutive numbers" {
+        context("formatting non-consecutive numbers") {
             val range = arrayOf(8, 6, 7, 5, 3, 0, 1)
             val string = range.joinToRangedString()
             should("work") {
                 string shouldBe "8, 6-7, 5, 3, 0-1"
             }
         }
-        "formatting repeated numbers" {
+        context("formatting repeated numbers") {
             val range = arrayOf(1, 1, 2, 3, 5, 8, 13)
             val string = range.joinToRangedString()
             should("work") {
                 string shouldBe "1, 1-3, 5, 8, 13"
             }
         }
-        "formatting empty array" {
+        context("formatting empty array") {
             val range = arrayOf<Int>()
             val string = range.joinToRangedString()
             should("work") {

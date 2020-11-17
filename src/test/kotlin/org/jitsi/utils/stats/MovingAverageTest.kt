@@ -16,40 +16,40 @@
 
 package org.jitsi.utils.stats
 
-import io.kotlintest.IsolationMode
-import io.kotlintest.matchers.doubles.plusOrMinus
-import io.kotlintest.minutes
-import io.kotlintest.seconds
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.IsolationMode
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.doubles.plusOrMinus
+import io.kotest.matchers.shouldBe
 import org.jitsi.utils.FakeClock
+import org.jitsi.utils.mins
+import org.jitsi.utils.secs
 
 class MovingAverageTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
     private val fakeClock = FakeClock()
 
-    private val average = MovingAverage<Int>(5.seconds, fakeClock)
+    private val average = MovingAverage<Int>(5.secs, fakeClock)
 
     init {
-        "the average" {
+        context("the average") {
             should("only take into account values in the window") {
                 // Add 4 elements at time 0
                 (0..3).forEach {
                     average.add(it)
                 }
                 // Add 4 elements at time 6
-                fakeClock.elapse(6.seconds)
+                fakeClock.elapse(6.secs)
                 (4..7).forEach {
                     average.add(it)
                 }
-                average.get() shouldBe(5.5 plusOrMinus(.1))
+                average.get() shouldBe (5.5 plusOrMinus(.1))
             }
             should("not include values outside the window even if no adds have been done") {
                 (0..3).forEach {
                     average.add(it)
                 }
-                fakeClock.elapse(1.minutes)
+                fakeClock.elapse(1.mins)
                 average.get() shouldBe(0.0)
             }
         }

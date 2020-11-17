@@ -16,13 +16,13 @@
 
 package org.jitsi.utils.stats
 
-import io.kotlintest.IsolationMode
-import io.kotlintest.matchers.collections.shouldBeEmpty
-import io.kotlintest.matchers.collections.shouldContainExactly
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.seconds
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.IsolationMode
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldHaveSize
 import org.jitsi.utils.FakeClock
+import org.jitsi.utils.secs
 import java.time.Duration
 import java.time.Instant
 
@@ -40,7 +40,7 @@ class TimeBasedSlidingWindowTest : ShouldSpec() {
     )
 
     init {
-        "the window" {
+        context("the window") {
             should("evict values that are outside the window") {
                 // Add 4 elements at time 0
                 (0..3).forEach {
@@ -51,14 +51,14 @@ class TimeBasedSlidingWindowTest : ShouldSpec() {
                 fakeClock.setTime(Instant.ofEpochSecond(6))
                 (4..7).forEach {
                     window.add(it)
-                    fakeClock.elapse(1.seconds)
+                    fakeClock.elapse(1.secs)
                 }
                 evictedValues shouldHaveSize 4
                 evictedValues shouldContainExactly mutableListOf(0, 1, 2, 3)
                 window.values() shouldContainExactly listOf(4, 5, 6, 7)
             }
         }
-        "a window with a value of 0" {
+        context("a window with a value of 0") {
             val window = TimeBasedSlidingWindow<Int>(
                 Duration.ofSeconds(0),
                 { evictedValues.add(it) },

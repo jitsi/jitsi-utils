@@ -16,9 +16,9 @@ package org.jitsi.utils.stats
  * limitations under the License.
  */
 
-import io.kotlintest.IsolationMode
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.IsolationMode
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import org.jitsi.utils.FakeClock
 import org.jitsi.utils.ms
 import org.jitsi.utils.secs
