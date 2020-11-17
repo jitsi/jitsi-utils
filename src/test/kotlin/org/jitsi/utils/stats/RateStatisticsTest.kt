@@ -15,12 +15,12 @@
  */
 package org.jitsi.utils.stats
 
-import io.kotlintest.IsolationMode
-import io.kotlintest.seconds
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.IsolationMode
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import org.jitsi.utils.FakeClock
 import org.jitsi.utils.ms
+import org.jitsi.utils.secs
 
 class RateStatisticsTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
@@ -48,7 +48,7 @@ class RateStatisticsTest : ShouldSpec() {
             rateStatistics.getAccumulatedCount() shouldBe 10
             rateStatistics.rate shouldBe 10 * 8 /* bits per byte */
 
-            fakeClock.elapse(5.seconds)
+            fakeClock.elapse(5.secs)
             rateStatistics.getAccumulatedCount() shouldBe 0
             rateStatistics.rate shouldBe 0
         }

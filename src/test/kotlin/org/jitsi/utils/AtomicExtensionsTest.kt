@@ -15,29 +15,25 @@
  */
 package org.jitsi.utils
 
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import java.util.concurrent.atomic.AtomicLong
 
 internal class AtomicExtensionsTest : ShouldSpec() {
     init {
-        "increaseAndGet" {
+        context("increaseAndGet") {
             val l = AtomicLong()
-            should("work correctly") {
-                l.maxAssign(10) shouldBe 10
-                l.maxAssign(5) shouldBe 10
-                l.get() shouldBe 10
-                l.maxAssign(20) shouldBe 20
-            }
+            l.maxAssign(10) shouldBe 10
+            l.maxAssign(5) shouldBe 10
+            l.get() shouldBe 10
+            l.maxAssign(20) shouldBe 20
         }
-        "decreaseAndGet" {
+        context("decreaseAndGet") {
             val l = AtomicLong(100)
-            should("work correctly") {
-                l.minAssign(10) shouldBe 10
-                l.minAssign(25) shouldBe 10
-                l.get() shouldBe 10
-                l.minAssign(5) shouldBe 5
-            }
+            l.minAssign(10) shouldBe 10
+            l.minAssign(25) shouldBe 10
+            l.get() shouldBe 10
+            l.minAssign(5) shouldBe 5
         }
     }
 }

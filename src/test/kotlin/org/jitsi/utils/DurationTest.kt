@@ -16,24 +16,22 @@
 
 package org.jitsi.utils
 
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.ShouldSpec
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import java.time.Duration
 
 class DurationTest : ShouldSpec() {
     init {
-        "the duration helpers" {
-            should("work") {
-                5.nanos shouldBe Duration.ofNanos(5)
-                5.ms shouldBe Duration.ofMillis(5)
-                5.secs shouldBe Duration.ofSeconds(5)
-                5.mins shouldBe Duration.ofMinutes(5)
-                5.hours shouldBe Duration.ofHours(5)
-                5.days shouldBe Duration.ofDays(5)
+        context("the duration helpers should work") {
+            5.nanos shouldBe Duration.ofNanos(5)
+            5.ms shouldBe Duration.ofMillis(5)
+            5.secs shouldBe Duration.ofSeconds(5)
+            5.mins shouldBe Duration.ofMinutes(5)
+            5.hours shouldBe Duration.ofHours(5)
+            5.days shouldBe Duration.ofDays(5)
 
-                1.days * 2 shouldBe Duration.ofDays(2)
-                10.days / 2.days shouldBe 5.0
-            }
+            1.days * 2 shouldBe Duration.ofDays(2)
+            10.days / 2.days shouldBe 5.0
         }
     }
 }
