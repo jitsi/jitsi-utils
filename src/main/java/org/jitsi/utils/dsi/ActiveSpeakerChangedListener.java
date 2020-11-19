@@ -17,7 +17,7 @@ package org.jitsi.utils.dsi;
 
 /**
  * Implementing classes can be notified about changes to the 'active' stream
- * (identified by its SSRC) using {@link #activeSpeakerChanged(long)}.
+ * (identified by its SSRC) using {@link #activeSpeakerChanged(Object)}.
  *
  * @author Boris Grozev
  */
