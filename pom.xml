@@ -48,6 +48,7 @@
         <java.version>1.8</java.version>
         <kotlin.version>1.3.72</kotlin.version>
         <kotest.version>4.1.3</kotest.version>
+        <dokka.version>1.4.10.2</dokka.version>
     </properties>
 
     <dependencies>
@@ -244,19 +245,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
                 <version>4.0.0</version>
@@ -281,14 +269,27 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>${dokka.version}</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>dokka</goal>
+                            <goal>javadoc</goal>
+                            <goal>javadocJar</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
-                    <show>private</show>
-                    <nohelp>true</nohelp>
-                    <!-- Javadoc doesn't find the Kotlin classes -->
-                    <doclint>none</doclint>
+                    <dokkaPlugins>
+                        <plugin>
+                            <groupId>org.jetbrains.dokka</groupId>
+                            <artifactId>kotlin-as-java-plugin</artifactId>
+                            <version>${dokka.version}</version>
+                        </plugin>
+                    </dokkaPlugins>
                 </configuration>
             </plugin>
             <plugin>
@@ -315,7 +316,7 @@
             <id>release</id>
             <activation>
                 <property>
-                    <name>performRelease</name>
+                    <name>release</name>
                     <value>true</value>
                 </property>
             </activation>
@@ -345,6 +346,15 @@
             </build>
         </profile>
     </profiles>
+
+    <pluginRepositories>
+        <!-- Required for Dokka -->
+        <pluginRepository>
+            <id>jcenter</id>
+            <name>JCenter</name>
+            <url>https://jcenter.bintray.com/</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <distributionManagement>
         <snapshotRepository>
