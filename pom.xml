@@ -287,7 +287,8 @@
                 <configuration>
                     <show>private</show>
                     <nohelp>true</nohelp>
-                    <doclint>-missing</doclint>
+                    <!-- Javadoc doesn't find the Kotlin classes -->
+                    <doclint>none</doclint>
                 </configuration>
             </plugin>
             <plugin>
