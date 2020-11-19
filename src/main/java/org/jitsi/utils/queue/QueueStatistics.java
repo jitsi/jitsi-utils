@@ -73,9 +73,6 @@ public class QueueStatistics
 
     /**
      * Initializes a new {@link QueueStatistics} instance.
-     * 
-     * @param id Identifier to distinguish the log output of multiple
-     *            {@link QueueStatistics} instances.
      */
     public QueueStatistics()
     {

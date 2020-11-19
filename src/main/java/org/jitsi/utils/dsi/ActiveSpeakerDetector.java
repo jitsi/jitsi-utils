@@ -23,7 +23,7 @@ package org.jitsi.utils.dsi;
  * Implementations of <tt>ActiveSpeakerDetector</tt> get notified about the
  * (current) audio levels of multiple audio streams (identified by their
  * synchronization source identifiers/SSRCs) via calls to
- * {@link #levelChanged(long, int)} and determine/identify which stream is
+ * {@link #levelChanged(Object, int)} and determine/identify which stream is
  * dominant/active (in terms of speech). When the active stream changes,
  * listeners registered via
  * {@link #addActiveSpeakerChangedListener(ActiveSpeakerChangedListener)} are

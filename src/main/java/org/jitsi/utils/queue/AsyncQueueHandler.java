@@ -57,13 +57,13 @@ final class AsyncQueueHandler<T>
     private final ExecutorService executor;
 
     /**
-     * An {@link BlockingQueue <T>} whose items read on separate thread and
+     * An {@link BlockingQueue} whose items read on separate thread and
      * processed by provided {@link #handler}.
      */
     private final BlockingQueue<T> queue;
 
     /**
-     * The {@link Handler<T>} used to handle items read from
+     * The {@link Handler} used to handle items read from
      * {@link #queue} by {@link #reader}.
      */
     private final Handler<T> handler;
@@ -77,7 +77,7 @@ final class AsyncQueueHandler<T>
      * Specifies the number of items allowed to be handled sequentially
      * without yielding control to executor's thread. Specifying positive
      * number allows implementation of cooperative multi-tasking
-     * between different {@link AsyncQueueHandler<T>} sharing
+     * between different {@link AsyncQueueHandler} sharing
      * same {@link ExecutorService}.
      */
     private final long maxSequentiallyHandledItems;
@@ -149,7 +149,7 @@ final class AsyncQueueHandler<T>
     };
 
     /**
-     * Constructs instance of {@link AsyncQueueHandler<T>} which is capable of
+     * Constructs instance of {@link AsyncQueueHandler} which is capable of
      * asynchronous reading provided queue from thread borrowed from executor to
      * process items with provided handler.
      * @param queue thread-safe queue which holds items to process
@@ -168,7 +168,7 @@ final class AsyncQueueHandler<T>
     }
 
     /**
-     * Constructs instance of {@link AsyncQueueHandler<T>} which is capable of
+     * Constructs instance of {@link AsyncQueueHandler} which is capable of
      * asynchronous reading provided queue from thread borrowed from executor to
      * process items with provided handler.
      * @param queue thread-safe queue which holds items to process

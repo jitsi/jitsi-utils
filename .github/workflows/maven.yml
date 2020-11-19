@@ -54,6 +54,14 @@ jobs:
           server-username: SONATYPE_USER
           server-password: SONATYPE_PW
 
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Set version
         run: |
           VERSION=`git describe --match "v[0-9\.]*" --long --dirty --always`
@@ -70,6 +78,6 @@ jobs:
             --no-transfer-progress \
             --batch-mode \
             -Dgpg.passphrase="${{ secrets.GPG_PW }}" \
-            -DperformRelease=true \
+            -Drelease=true \
             -DskipTests \
             deploy

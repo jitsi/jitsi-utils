@@ -539,8 +539,8 @@ public abstract class PacketQueue<T>
     }
 
     /**
-     * An adapter class implementing {@link AsyncQueueHandler.Handler<T>}
-     * to wrap {@link PacketHandler<T>}.
+     * An adapter class implementing {@link AsyncQueueHandler.Handler}
+     * to wrap {@link PacketHandler}.
      */
     private final class HandlerAdapter implements AsyncQueueHandler.Handler<T>
     {
@@ -550,8 +550,8 @@ public abstract class PacketQueue<T>
         private final PacketHandler<T> handler;
 
         /**
-         * Constructs adapter of {@link PacketHandler<T>} to
-         * {@link AsyncQueueHandler.Handler<T>} interface.
+         * Constructs adapter of {@link PacketHandler} to
+         * {@link AsyncQueueHandler.Handler} interface.
          * @param handler an handler instance to adapt
          */
         HandlerAdapter(PacketHandler<T> handler)
