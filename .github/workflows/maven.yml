@@ -65,7 +65,7 @@ jobs:
       - name: Set version
         run: |
           VERSION=`git describe --match "v[0-9\.]*" --long --dirty --always`
-          mvn -B versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
+          mvn -B versions:set -DnewVersion=${VERSION:1} -DgenerateBackupPoms=false
 
       - name: Release to Maven Central
         env:
