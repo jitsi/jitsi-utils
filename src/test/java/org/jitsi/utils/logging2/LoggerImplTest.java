@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 public class LoggerImplTest
 {
     private static Function<String, java.util.logging.Logger> oldLoggerFactoryFunction;
-    private FakeLogger fakeLogger = new FakeLogger("fake");
+    private final FakeLogger fakeLogger = new FakeLogger("fake");
 
     @BeforeAll
     public static void beforeClass()
@@ -186,6 +186,41 @@ public class LoggerImplTest
         logger.info(() -> "hello, world!");
         assertEquals(1, fakeLogger.logLines.size());
     }
+
+    @Test
+    public void testHandler()
+    {
+        // We want to use a real logger for this test
+        LoggerImpl.loggerFactory = oldLoggerFactoryFunction;
+
+        LoggerImpl logger = new LoggerImpl("test");
+        FakeHandler handler = new FakeHandler();
+        logger.setUseParentHandlers(false);
+        logger.addHandler(handler);
+
+        logger.info("hello, world!");
+
+        assertEquals(1, handler.logRecords.size());
+        LogRecord record = handler.logRecords.get(0);
+        assertEquals(record.getMessage(), "hello, world!");
+        assertEquals(record.getLoggerName(), "test");
+    }
+}
+
+class FakeHandler extends Handler {
+    final List<LogRecord> logRecords = new ArrayList<>();
+
+    @Override
+    public void publish(LogRecord record)
+    {
+        logRecords.add(record);
+    }
+
+    @Override
+    public void flush() { }
+
+    @Override
+    public void close() throws SecurityException { }
 }
 
 class FakeLogger extends java.util.logging.Logger

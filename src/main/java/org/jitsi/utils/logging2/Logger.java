@@ -38,6 +38,22 @@ public interface Logger
      * @return the created logger
      */
     Logger createChildLogger(String name);
+
+    /**
+     * See {@link java.util.logging.Logger#setUseParentHandlers(boolean)}
+     */
+    void setUseParentHandlers(boolean useParentHandlers);
+
+    /**
+     * See {@link java.util.logging.Logger#addHandler(Handler)}
+     */
+    void addHandler(Handler handler) throws SecurityException;
+
+    /**
+     * See {@link java.util.logging.Logger#removeHandler(Handler)}
+     */
+    void removeHandler(Handler handler) throws SecurityException;
+
     /**
      * Check if a message with a TRACE level would actually be logged by this
      * logger.
