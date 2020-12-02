@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 public class LoggerImplTest
 {
     private static Function<String, java.util.logging.Logger> oldLoggerFactoryFunction;
-    private FakeLogger fakeLogger = new FakeLogger("fake");
+    private final FakeLogger fakeLogger = new FakeLogger("fake");
 
     @BeforeAll
     public static void beforeClass()
