@@ -40,11 +40,19 @@ public interface Logger
     Logger createChildLogger(String name);
 
     /**
-     * Override any existing handlers for this logger (including any parent handlers)
-     * and use the given one
-     * @param handler the handler to use
+     * See {@link java.util.logging.Logger#setUseParentHandlers(boolean)}
      */
-    void useHandler(Handler handler);
+    void setUseParentHandlers(boolean useParentHandlers);
+
+    /**
+     * See {@link java.util.logging.Logger#addHandler(Handler)}
+     */
+    void addHandler(Handler handler) throws SecurityException;
+
+    /**
+     * See {@link java.util.logging.Logger#removeHandler(Handler)}
+     */
+    void removeHandler(Handler handler) throws SecurityException;
 
     /**
      * Check if a message with a TRACE level would actually be logged by this

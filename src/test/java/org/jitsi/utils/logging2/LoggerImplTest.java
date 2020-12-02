@@ -195,7 +195,8 @@ public class LoggerImplTest
 
         LoggerImpl logger = new LoggerImpl("test");
         FakeHandler handler = new FakeHandler();
-        logger.useHandler(handler);
+        logger.setUseParentHandlers(false);
+        logger.addHandler(handler);
 
         logger.info("hello, world!");
 
