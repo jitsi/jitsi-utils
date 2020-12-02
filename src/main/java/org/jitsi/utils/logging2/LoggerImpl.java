@@ -83,6 +83,13 @@ public class LoggerImpl implements Logger
         return new LoggerImpl(name, minLogLevel, this.logContext.createSubContext(Collections.emptyMap()));
     }
 
+    @Override
+    public void useHandler(Handler handler)
+    {
+        loggerDelegate.setUseParentHandlers(false);
+        loggerDelegate.addHandler(handler);
+    }
+
     private boolean isLoggable(Level level)
     {
         return level.intValue() >= minLogLevel.intValue() && loggerDelegate.isLoggable(level);

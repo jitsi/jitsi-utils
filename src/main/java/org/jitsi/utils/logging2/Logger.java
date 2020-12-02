@@ -38,6 +38,14 @@ public interface Logger
      * @return the created logger
      */
     Logger createChildLogger(String name);
+
+    /**
+     * Override any existing handlers for this logger (including any parent handlers)
+     * and use the given one
+     * @param handler the handler to use
+     */
+    void useHandler(Handler handler);
+
     /**
      * Check if a message with a TRACE level would actually be logged by this
      * logger.
