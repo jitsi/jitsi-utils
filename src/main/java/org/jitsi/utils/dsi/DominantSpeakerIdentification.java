@@ -15,7 +15,6 @@
  */
 package org.jitsi.utils.dsi;
 
-import java.beans.*;
 import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -77,13 +76,6 @@ public class DominantSpeakerIdentification<T>
      * running the <tt>DecisionMaker</tt>s are pooled anyway.
      */
     private static final long DECISION_MAKER_IDLE_TIMEOUT = 15 * 1000;
-
-    /**
-     * The name of the <tt>DominantSpeakerIdentification</tt> property
-     * <tt>dominantSpeaker</tt> which specifies the dominant speaker.
-     */
-    public static final String DOMINANT_SPEAKER_PROPERTY_NAME
-        = DominantSpeakerIdentification.class.getName() + ".dominantSpeaker";
 
     /**
      * The interval of time without a call to {@link Speaker#levelChanged(int)}
@@ -314,15 +306,6 @@ public class DominantSpeakerIdentification<T>
     private long lastLevelIdleTime;
 
     /**
-     * The <tt>PropertyChangeNotifier</tt> which facilitates the implementations
-     * of adding and removing <tt>PropertyChangeListener</tt>s to and from this
-     * instance and firing <tt>PropertyChangeEvent</tt>s to the added
-     * <tt>PropertyChangeListener</tt>s.
-     */
-    private final PropertyChangeNotifier propertyChangeNotifier
-        = new PropertyChangeNotifier();
-
-    /**
      * The relative speech activities for the immediate, medium and long
      * time-intervals, respectively, which were last calculated for a
      * <tt>Speaker</tt>. Simply reduces the number of allocations and the
@@ -341,20 +324,6 @@ public class DominantSpeakerIdentification<T>
      */
     public DominantSpeakerIdentification()
     {
-    }
-
-    /**
-     * Adds a <tt>PropertyChangeListener</tt> to the list of listeners
-     * interested in and notified about changes in the values of the properties
-     * of this <tt>DominantSpeakerIdentification</tt>.
-     *
-     * @param listener a <tt>PropertyChangeListener</tt> to be notified about
-     * changes in the values of the properties of this
-     * <tt>DominantSpeakerIdentification</tt>
-     */
-    public void addPropertyChangeListener(PropertyChangeListener listener)
-    {
-        propertyChangeNotifier.addPropertyChangeListener(listener);
     }
 
     /**
@@ -427,32 +396,6 @@ public class DominantSpeakerIdentification<T>
             jsonObject = null;
         }
         return jsonObject;
-    }
-
-    /**
-     * Fires a new <tt>PropertyChangeEvent</tt> to the
-     * <tt>PropertyChangeListener</tt>s registered with this
-     * <tt>DominantSpeakerIdentification</tt> in order to notify about a change
-     * in the value of a specific property which had its old value modified to a
-     * specific new value.
-     *
-     * @param property the name of the property of this
-     * <tt>DominantSpeakerIdentification</tt> which had its value changed
-     * @param oldValue the value of the property with the specified name before
-     * the change
-     * @param newValue the value of the property with the specified name after
-     * the change
-     */
-    protected void firePropertyChange(
-            String property,
-            T oldValue, T newValue)
-    {
-        propertyChangeNotifier.firePropertyChange(property, oldValue, newValue);
-
-        if (DOMINANT_SPEAKER_PROPERTY_NAME.equals(property))
-        {
-            fireActiveSpeakerChanged(newValue);
-        }
     }
 
     /**
@@ -637,9 +580,7 @@ public class DominantSpeakerIdentification<T>
         if ((newDominantSpeakerValue != null) &&
             !newDominantSpeakerValue.equals(oldDominantSpeakerValue))
         {
-            firePropertyChange(
-                    DOMINANT_SPEAKER_PROPERTY_NAME,
-                    oldDominantSpeakerValue, newDominantSpeakerValue);
+            fireActiveSpeakerChanged(newDominantSpeakerValue);
         }
     }
 
@@ -672,20 +613,6 @@ public class DominantSpeakerIdentification<T>
                 }
             }
         }
-    }
-
-    /**
-     * Removes a <tt>PropertyChangeListener</tt> from the list of listeners
-     * interested in and notified about changes in the values of the properties
-     * of this <tt>DominantSpeakerIdentification</tt>.
-     *
-     * @param listener a <tt>PropertyChangeListener</tt> to no longer be
-     * notified about changes in the values of the properties of this
-     * <tt>DominantSpeakerIdentification</tt>
-     */
-    public void removePropertyChangeListener(PropertyChangeListener listener)
-    {
-        propertyChangeNotifier.removePropertyChangeListener(listener);
     }
 
     /**
