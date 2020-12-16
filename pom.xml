@@ -30,12 +30,11 @@
         <url>https://github.com/jitsi/jitsi-utils</url>
         <connection>scm:git:https://github.com/jitsi/jitsi-utils.git</connection>
         <developerConnection>scm:git:https://github.com/jitsi/jitsi-utils.git</developerConnection>
-        <tag>HEAD</tag>
     </scm>
 
     <licenses>
         <license>
-            <name>Apache License, Version 2.0</name>
+            <name>Apache-2.0</name>
             <url>https://github.com/jitsi/jitsi-utils/blob/master/LICENSE</url>
             <distribution>repo</distribution>
         </license>
@@ -240,6 +239,24 @@
                                     <version>3.5.0</version>
                                 </requireMavenVersion>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/kotlin</source>
+                            </sources>
                         </configuration>
                     </execution>
                 </executions>
