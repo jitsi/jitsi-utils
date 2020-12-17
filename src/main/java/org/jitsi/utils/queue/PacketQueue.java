@@ -58,6 +58,11 @@ public abstract class PacketQueue<T>
         enableStatisticsDefault = enable;
     }
 
+    public static boolean getEnableStatisticsDefault()
+    {
+        return enableStatisticsDefault;
+    }
+
     /**
      * The underlying {@link BlockingQueue} which holds packets.
      * Used as synchronization object between {@link #close()}, {@link #get()}
