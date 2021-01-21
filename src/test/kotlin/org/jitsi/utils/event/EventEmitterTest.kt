@@ -30,7 +30,7 @@ class EventEmitterTest : ShouldSpec({
         emitter.addHandler(handlerTwo)
 
         context("and then firing an event") {
-            emitter.fireEvent { intEvent(42) }
+            emitter.fireEventSync { intEvent(42) }
             should("notify all handlers") {
                 verify(exactly = 1) { handlerOne.intEvent(42) }
                 verify(exactly = 1) { handlerTwo.intEvent(42) }
@@ -39,7 +39,7 @@ class EventEmitterTest : ShouldSpec({
         context("and then removing a handler") {
             emitter.removeHandler(handlerOne)
             context("and then firing an event") {
-                emitter.fireEvent { stringEvent("hello") }
+                emitter.fireEventSync { stringEvent("hello") }
                 should("notify only the currently-registered handlers") {
                     verify(exactly = 1) { handlerTwo.stringEvent("hello") }
                     verify(exactly = 0) { handlerOne.stringEvent(any()) }

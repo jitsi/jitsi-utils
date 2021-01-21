@@ -16,14 +16,15 @@
 
 package org.jitsi.utils.event
 
+import org.jitsi.utils.logging2.createLogger
+import java.lang.Exception
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
 
-class EventEmitter<EventHandlerType> {
-    private val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList()
+open class EventEmitter<EventHandlerType> {
+    protected val logger = createLogger()
 
-    fun fireEvent(event: EventHandlerType.() -> Unit) {
-        eventHandlers.forEach { it.apply(event) }
-    }
+    protected val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList()
 
     fun addHandler(handler: EventHandlerType) {
         eventHandlers += handler
@@ -31,5 +32,26 @@ class EventEmitter<EventHandlerType> {
 
     fun removeHandler(handler: EventHandlerType) {
         eventHandlers -= handler
+    }
+
+    fun fireEventSync(event: EventHandlerType.() -> Unit) {
+        eventHandlers.forEach { wrap { it.apply(event) } }
+    }
+
+    protected fun wrap(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            logger.warn("Exception from event handler: ${e.message}", e)
+        }
+    }
+}
+
+class AsyncEventEmitter<EventHandlerType>(private val executor: ExecutorService) : EventEmitter<EventHandlerType>() {
+
+    fun fireEventAsync(event: EventHandlerType.() -> Unit) {
+        eventHandlers.forEach {
+            executor.submit { wrap { it.apply(event) } }
+        }
     }
 }
