@@ -20,7 +20,7 @@ import org.jitsi.utils.logging2.createLogger
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 
-sealed class EventEmitter<EventHandlerType> {
+open class EventEmitter<EventHandlerType> {
     protected val logger = createLogger()
 
     protected val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList()
@@ -32,17 +32,13 @@ sealed class EventEmitter<EventHandlerType> {
     fun removeHandler(handler: EventHandlerType) {
         eventHandlers -= handler
     }
-}
 
-open class SyncEventEmitter<EventHandlerType> : EventEmitter<EventHandlerType>() {
     fun fireEventSync(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach { it.apply(event) }
     }
 }
 
-class AsyncEventEmitter<EventHandlerType>(
-    private val executor: ExecutorService
-) : SyncEventEmitter<EventHandlerType>() {
+class AsyncEventEmitter<EventHandlerType>(private val executor: ExecutorService) : EventEmitter<EventHandlerType>() {
 
     fun fireEventAsync(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach {
