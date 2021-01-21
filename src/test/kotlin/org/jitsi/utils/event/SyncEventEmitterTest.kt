@@ -20,7 +20,7 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.mockk
 import io.mockk.verify
 
-class EventEmitterTest : ShouldSpec({
+class SyncEventEmitterTest : ShouldSpec({
     val emitter = SyncEventEmitter<EventHandler>()
 
     context("registering handlers") {
