@@ -75,7 +75,6 @@ jobs:
           cat <(echo -e "${{ secrets.GPG_KEY }}") | gpg --batch --import
           gpg --list-secret-keys --keyid-format LONG
           mvn \
-            -Pcentral \
             --no-transfer-progress \
             --batch-mode \
             -Dgpg.passphrase="${{ secrets.GPG_PW }}" \
