@@ -35,7 +35,6 @@ import java.util.stream.*;
 @SuppressWarnings("WeakerAccess")
 public class LogContext
 {
-    public static final LogContext EMPTY = new LogContext(Collections.emptyMap());
     public static final String CONTEXT_START_TOKEN = "[";
     public static final String CONTEXT_END_TOKEN = "]";
 
@@ -62,6 +61,11 @@ public class LogContext
      * anytime this context changes)
      */
     private final List<WeakReference<LogContext>> childContexts = new ArrayList<>();
+
+    public LogContext()
+    {
+        this(Collections.emptyMap());
+    }
 
     public LogContext(Map<String, String> context)
     {

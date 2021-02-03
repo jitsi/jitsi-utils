@@ -44,7 +44,7 @@ public class LoggerImpl implements Logger
 
     public LoggerImpl(String name, Level minLogLevel)
     {
-        this(name, minLogLevel, LogContext.EMPTY);
+        this(name, minLogLevel, new LogContext());
     }
 
     public LoggerImpl(String name, LogContext logContext)

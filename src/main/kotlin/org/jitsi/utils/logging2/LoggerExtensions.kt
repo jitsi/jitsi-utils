@@ -30,10 +30,8 @@ import kotlin.reflect.full.companionObject
  * the class that happens to be calling this method).
  *
  */
-fun <T : Any> T.createLogger(
-    minLogLevel: Level = Level.ALL,
-    logContext: LogContext = LogContext.EMPTY
-): Logger = LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
+fun <T : Any> T.createLogger(minLogLevel: Level = Level.ALL, logContext: LogContext = LogContext()): Logger =
+    LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
 
 /**
  * Create a child logger from [parentLogger] with any optional [childContext]
