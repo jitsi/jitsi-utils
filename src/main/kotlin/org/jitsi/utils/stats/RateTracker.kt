@@ -46,15 +46,18 @@ open class RateTracker @JvmOverloads constructor(
          * The duration of each bucket in the window. This must divide [windowSize] evenly.
          */
         bucketSize: Duration = 1.ms,
-        clock: Clock = Clock.systemUTC()) : this(
+        clock: Clock = Clock.systemUTC()
+    ) : this(
         numBuckets = (windowSize.toMillis() / bucketSize.toMillis()).toInt(),
         bucketSize = bucketSize,
-        clock = clock) {
+        clock = clock
+    ) {
 
         if (bucketSize.toMillis() * numBuckets.toLong() != windowSize.toMillis()) {
             throw IllegalArgumentException(
                 "The bucketSize (${bucketSize.toMillis()} ms) must divide the window size " +
-                    "(${windowSize.toMillis()} ms) evenly.")
+                    "(${windowSize.toMillis()} ms) evenly."
+            )
         }
     }
     /**
@@ -157,7 +160,8 @@ open class RateTracker @JvmOverloads constructor(
 open class RateStatistics @JvmOverloads constructor(
     windowSizeMs: Int = 1000,
     scale: Float = 8000f,
-    val clock: Clock = Clock.systemUTC()) {
+    val clock: Clock = Clock.systemUTC()
+) {
 
     val tracker = RateTracker(windowSizeMs, 1.ms, clock)
     val scale = scale / (windowSizeMs - 1)
