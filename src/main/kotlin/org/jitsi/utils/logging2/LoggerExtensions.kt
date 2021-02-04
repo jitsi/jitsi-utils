@@ -30,10 +30,8 @@ import kotlin.reflect.full.companionObject
  * the class that happens to be calling this method).
  *
  */
-fun <T : Any> T.createLogger(
-    minLogLevel: Level = Level.ALL,
-    logContext: LogContext = LogContext.EMPTY
-): Logger = LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
+fun <T : Any> T.createLogger(minLogLevel: Level = Level.ALL, logContext: LogContext = LogContext()): Logger =
+    LoggerImpl(getClassForLogging(this.javaClass).name, minLogLevel, logContext)
 
 /**
  * Create a child logger from [parentLogger] with any optional [childContext]
@@ -49,11 +47,8 @@ fun <T : Any> T.createChildLogger(
  * Given a [Class], get the proper class to be used for the name of a logger
  * by stripping any companion object class identifier, if present.
  */
-fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> {
-    return (javaClass.enclosingClass?.takeIf {
-        it.kotlin.companionObject?.java == javaClass
-    } ?: javaClass)
-}
+fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> =
+    javaClass.enclosingClass?.takeIf { it.kotlin.companionObject?.java == javaClass } ?: javaClass
 
 /**
  * Note that, although the logger now supports taking a message supplier
