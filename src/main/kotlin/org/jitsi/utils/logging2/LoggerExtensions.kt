@@ -47,13 +47,8 @@ fun <T : Any> T.createChildLogger(
  * Given a [Class], get the proper class to be used for the name of a logger
  * by stripping any companion object class identifier, if present.
  */
-fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> {
-    return (
-        javaClass.enclosingClass?.takeIf {
-            it.kotlin.companionObject?.java == javaClass
-        } ?: javaClass
-        )
-}
+fun <T : Any> getClassForLogging(javaClass: Class<T>): Class<*> =
+    javaClass.enclosingClass?.takeIf { it.kotlin.companionObject?.java == javaClass } ?: javaClass
 
 /**
  * Note that, although the logger now supports taking a message supplier
