@@ -16,6 +16,7 @@
 
 package org.jitsi.utils.queue;
 
+import org.jetbrains.annotations.*;
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
 
@@ -40,15 +41,6 @@ final class AsyncQueueHandler<T>
      */
     private static final Logger logger
         = Logger.getLogger(AsyncQueueHandler.class.getName());
-
-    /**
-     * The default <tt>ExecutorService</tt> to run <tt>AsyncQueueHandler</tt>
-     * when there is no executor injected in constructor.
-     */
-    private final static ExecutorService sharedExecutor
-        = Executors.newCachedThreadPool(
-            new CustomizableThreadFactory(
-                AsyncQueueHandler.class.getName() + "-executor-", true));
 
     /**
      * Executor service to run {@link #reader}, which asynchronously
@@ -86,7 +78,7 @@ final class AsyncQueueHandler<T>
      * A flag which indicates if reading of {@link #queue} is allowed
      * to continue.
      */
-    private final AtomicBoolean running = new AtomicBoolean();
+    private boolean running = true;
 
     /**
      * Synchronization object of current instance state, in particular
@@ -112,7 +104,7 @@ final class AsyncQueueHandler<T>
         {
             long sequentiallyHandledItems = 0;
 
-            while (running.get())
+            while (running)
             {
                 if (maxSequentiallyHandledItems > 0 &&
                     sequentiallyHandledItems >= maxSequentiallyHandledItems)
@@ -157,47 +149,18 @@ final class AsyncQueueHandler<T>
      * invoked per each item placed in the queue.
      * @param id optional identifier of current handler for debug purpose
      * @param executor optional executor service to borrow threads from
-     */
-    AsyncQueueHandler(
-        BlockingQueue<T> queue,
-        Handler<T> handler,
-        String id,
-        ExecutorService executor)
-    {
-        this(queue, handler, id, executor, -1);
-    }
-
-    /**
-     * Constructs instance of {@link AsyncQueueHandler} which is capable of
-     * asynchronous reading provided queue from thread borrowed from executor to
-     * process items with provided handler.
-     * @param queue thread-safe queue which holds items to process
-     * @param handler an implementation of handler routine which will be
-     * invoked per each item placed in the queue.
-     * @param id optional identifier of current handler for debug purpose
-     * @param executor optional executor service to borrow threads from
      * @param maxSequentiallyHandledItems maximum number of items sequentially
      * handled on thread borrowed from {@link #executor} before temporary
      * releasing thread and re-acquiring it from {@link #executor}.
      */
     AsyncQueueHandler(
-        BlockingQueue<T> queue,
-        Handler<T> handler,
-        String id,
-        ExecutorService executor,
+        @NotNull BlockingQueue<T> queue,
+        @NotNull Handler<T> handler,
+        @NotNull String id,
+        @NotNull ExecutorService executor,
         long maxSequentiallyHandledItems)
     {
-        if (queue == null)
-        {
-            throw new IllegalArgumentException("queue is null");
-        }
-
-        if (handler == null)
-        {
-            throw new IllegalArgumentException("handler is null");
-        }
-
-        this.executor = executor != null ? executor : sharedExecutor;
+        this.executor = executor;
         this.queue = queue;
         this.handler = handler;
         this.id = id;
@@ -250,7 +213,7 @@ final class AsyncQueueHandler<T>
     {
         synchronized (syncRoot)
         {
-            running.set(false);
+            running = false;
 
             if (readerFuture != null)
             {
@@ -267,7 +230,7 @@ final class AsyncQueueHandler<T>
     {
         synchronized (syncRoot)
         {
-            running.set(true);
+            running = true;
             readerFuture = executor.submit(reader);
         }
     }

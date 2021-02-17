@@ -30,101 +30,63 @@ import org.junit.jupiter.api.Test;
 public class PacketQueueTests
 {
     @Test
-    public void testAddingItemToQueueNotifiesBlockedThreadsImmediately()
+    public void testClosingQueueImmediatelyStopsExecutors()
         throws Exception
     {
-        final DummyQueue dummyQueue = new DummyQueue(10);
-        final CompletableFuture<DummyQueue.Dummy> dummyItem =
-            CompletableFuture.supplyAsync(dummyQueue::get);
+        final AtomicInteger tasksExecuted = new AtomicInteger(0);
+        final BlockedExecutor blockedExecutor
+            = new BlockedExecutor();
 
-        try
-        {
-            // This block surrounded with try/catch necessary to ensure that
-            // thread calling PacketQueue::get blocked before items is added
-            // to queue. Giving 200 ms for CompletableFuture to stuck on get.
-            dummyItem.get(200, TimeUnit.MILLISECONDS);
-            Assertions.fail("There is no items in queue, must not be here");
-        }
-        catch (TimeoutException e)
-        {
-            // no item is added during 200 ms into queue.
-        }
+        final DummyQueue dummyQueue = new DummyQueue(10,
+            pkt -> {
+                tasksExecuted.incrementAndGet();
+                return true;
+            },
+            blockedExecutor);
 
-        final DummyQueue.Dummy pushedItem = new DummyQueue.Dummy();
-
-        dummyQueue.add(pushedItem);
-
-        try
+        for (int i = 0; i < 10; i++)
         {
-            // checks that thread stuck in PacketQueue::get notified
-            // "immediately" when item added to queue. Giving a few ms for
-            // CompletableFuture to transit to completed state.
-            final DummyQueue.Dummy poppedItem = dummyItem.get(200, TimeUnit.MILLISECONDS);
-            Assertions.assertEquals(pushedItem, poppedItem);
-        }
-        catch (TimeoutException e)
-        {
-            Assertions.fail("Expected that blocked thread notified immediately "
-                + "about item added to queue");
-        }
-    }
-
-    @Test
-    public void testClosingQueueImmediatelyNotifiesAllThreadsBlockedOnGet()
-        throws Exception
-    {
-        final DummyQueue dummyQueue = new DummyQueue(10);
-        final ArrayList<CompletableFuture<DummyQueue.Dummy>>
-            dummyItems = new ArrayList<>();
-        for (int i = 0; i < ForkJoinPool.getCommonPoolParallelism(); i++)
-        {
-            dummyItems.add(CompletableFuture.supplyAsync(dummyQueue::get));
+            dummyQueue.add(new DummyQueue.Dummy());
         }
 
-        for (CompletableFuture<DummyQueue.Dummy> dummyItem : dummyItems)
-        {
-            try
-            {
-                // This block surrounded with try/catch necessary to ensure that
-                // thread calling PacketQueue::get blocked before items is added
-                // to queue. Giving 200 ms for CompletableFuture to stuck on get.
-                dummyItem.get(200, TimeUnit.MILLISECONDS);
-                Assertions.fail("There is no items in queue, must not be here");
-            }
-            catch (TimeoutException e)
-            {
-                // no item is added during 200 ms into queue.
-            }
-        }
+        /* No tasks executed */
+        Assertions.assertEquals(tasksExecuted.get(), 0);
 
         dummyQueue.close();
 
-        for (CompletableFuture<DummyQueue.Dummy> dummyItem : dummyItems)
-        {
-            try
-            {
-                // checks that thread stuck in PacketQueue::get notified
-                // "immediately" when PacketQueue is stopped. Giving 1 ms for
-                // CompletableFuture to transit to completed state.
-                final DummyQueue.Dummy poppedItem = dummyItem.get(
-                    1, TimeUnit.MILLISECONDS);
-                Assertions.assertNull(poppedItem, "When PacketQueue is closed "
-                    + "null must be returned");
-            }
-            catch (TimeoutException e)
-            {
-                Assertions
-                    .fail("Expected that blocked thread notified immediately "
-                        + "when queue is stopped");
-            }
-        }
+        blockedExecutor.start();
+
+        Thread.sleep(200);
+
+        /* No tasks executed */
+        Assertions.assertEquals(tasksExecuted.get(), 0);
+
+        dummyQueue.close();
+
+        blockedExecutor.shutdown();
+
+        dummyQueue.close();
+
+        /* Still no tasks executed */
+        Assertions.assertEquals(tasksExecuted.get(), 0);
     }
 
     @Test
     public void testAddingWhenCapacityReachedRemovesOldestItem()
+        throws Exception
     {
         final int capacity = 10;
-        final DummyQueue dummyQueue = new DummyQueue(capacity);
+        final BlockedExecutor blockedExecutor
+            = new BlockedExecutor();
+        final AtomicInteger tasksExecuted = new AtomicInteger(0);
+
+        final DummyQueue dummyQueue = new DummyQueue(capacity,
+            pkt -> {
+                Assertions.assertNotEquals(0, pkt.id);
+                tasksExecuted.incrementAndGet();
+                return true;
+            },
+            blockedExecutor);
 
         for (int i = 0; i < capacity + 1; i++)
         {
@@ -134,19 +96,13 @@ public class PacketQueueTests
             dummyQueue.add(item);
         }
 
-        for (int i = 0; i < capacity + 1; i++)
-        {
-            final DummyQueue.Dummy item = dummyQueue.poll();
-            if (i == capacity)
-            {
-                Assertions.assertNull(item);
-            }
-            else
-            {
-                Assertions.assertNotEquals(0, item.id,
-                    "Oldest item must be removed when item exceeding capacity added");
-            }
-        }
+        blockedExecutor.start();
+
+        Thread.sleep(200);
+        Assertions.assertEquals(10, tasksExecuted.get());
+
+        dummyQueue.close();
+        blockedExecutor.shutdown();
     }
 
     @Test
@@ -321,17 +277,17 @@ public class PacketQueueTests
 
     @Test
     public void testReleasePacketCalledForPacketsPoppedDueToQueueOverflow()
-        throws Exception
     {
-
-        final ExecutorService singleThreadedExecutor
-            = Executors.newSingleThreadExecutor();
+        final BlockedExecutor blockedExecutor
+            = new BlockedExecutor();
 
         final List<DummyQueue.Dummy> releasedPackets = new ArrayList<>();
 
         final int queueCapacity = 1;
 
-        final DummyQueue queue = new DummyQueue(queueCapacity)
+        final DummyQueue queue = new DummyQueue(queueCapacity,
+            pkt -> true,
+            blockedExecutor)
         {
             @Override
             protected void releasePacket(Dummy pkt)
@@ -349,6 +305,8 @@ public class PacketQueueTests
             queue.add(dummy);
         }
 
+        blockedExecutor.start();
+
         Assertions.assertEquals(
             itemsToEnqueue - queueCapacity, releasedPackets.size());
 
@@ -359,22 +317,23 @@ public class PacketQueueTests
             seed++;
         }
 
-        singleThreadedExecutor.shutdown();
+        blockedExecutor.shutdown();
     }
-
+    
     @Test
     public void testReleasePacketCalledForPacketsInQueueWhenClosing()
         throws Exception
     {
-
-        final ExecutorService singleThreadedExecutor
-            = Executors.newSingleThreadExecutor();
+        final BlockedExecutor blockedExecutor
+            = new BlockedExecutor();
 
         final List<DummyQueue.Dummy> releasedPackets = new ArrayList<>();
 
         final int queueCapacity = 10;
 
-        final DummyQueue queue = new DummyQueue(queueCapacity)
+        final DummyQueue queue = new DummyQueue(queueCapacity,
+            pkt -> true,
+            blockedExecutor)
         {
             @Override
             protected void releasePacket(Dummy pkt)
@@ -392,6 +351,7 @@ public class PacketQueueTests
         }
 
         queue.close();
+        blockedExecutor.start();
         Assertions.assertEquals(queueCapacity, releasedPackets.size());
 
         int seed = 1;
@@ -401,6 +361,6 @@ public class PacketQueueTests
             seed++;
         }
 
-        singleThreadedExecutor.shutdown();
+        blockedExecutor.shutdown();
     }
 }

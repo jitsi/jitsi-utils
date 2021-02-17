@@ -31,44 +31,8 @@ class DummyQueue
         PacketHandler<Dummy> packetHandler,
         ExecutorService executor)
     {
-        super(capacity, false, false, "DummyQueue", packetHandler,
+        super(capacity, false, "DummyQueue", packetHandler,
             executor);
-    }
-
-    DummyQueue(int capacity)
-    {
-        super(capacity, false, false, "DummyQueue", null,     null);
-    }
-
-    @Override
-    public byte[] getBuffer(Dummy pkt)
-    {
-        return null;
-    }
-
-    @Override
-    public int getOffset(Dummy pkt)
-    {
-        return 0;
-    }
-
-    @Override
-    public int getLength(Dummy pkt)
-    {
-        return 0;
-    }
-
-    @Override
-    public Object getContext(Dummy pkt)
-    {
-        return null;
-    }
-
-    @Override
-    protected Dummy createPacket(byte[] buf, int off, int len,
-        Object context)
-    {
-        return new Dummy();
     }
 
     static class Dummy {
