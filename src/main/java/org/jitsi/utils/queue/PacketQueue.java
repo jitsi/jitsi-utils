@@ -30,7 +30,7 @@ import java.util.concurrent.*;
  * @author Boris Grozev
  * @author Yura Yaroshevich
  */
-public abstract class PacketQueue<T>
+public class PacketQueue<T>
 {
     /**
      * The {@link Logger} used by the {@link PacketQueue} class and its
@@ -38,11 +38,6 @@ public abstract class PacketQueue<T>
      */
     private static final Logger logger
         = Logger.getLogger(PacketQueue.class.getName());
-
-    /**
-     * The default capacity of a {@link PacketQueue}.
-     */
-    private final static int DEFAULT_CAPACITY = 256;
 
     /**
      * The default value for the {@code enableStatistics} constructor argument.
@@ -73,7 +68,7 @@ public abstract class PacketQueue<T>
     @SuppressFBWarnings(
         value = "JLM_JSR166_UTILCONCURRENT_MONITORENTER",
         justification = "We synchronize on the queue intentionally.")
-    private final BlockingQueue<T> queue;
+    @NotNull private final BlockingQueue<T> queue;
 
     /**
      * The {@link QueueStatistics} instance optionally used to collect and print
