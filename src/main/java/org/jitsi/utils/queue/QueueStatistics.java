@@ -81,6 +81,7 @@ public class QueueStatistics
     /**
      * Gets a snapshot of the stats in JSON format.
      */
+    @SuppressWarnings("unchecked")
     public JSONObject getStats()
     {
         JSONObject stats = new JSONObject();
