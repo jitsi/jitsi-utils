@@ -82,7 +82,8 @@ public class PacketQueueTests
 
         final DummyQueue dummyQueue = new DummyQueue(capacity,
             pkt -> {
-                Assertions.assertNotEquals(0, pkt.id);
+                Assertions.assertNotEquals(0, pkt.id,
+                    "Item with id 0 should have been removed from the queue");
                 tasksExecuted.incrementAndGet();
                 return true;
             },
