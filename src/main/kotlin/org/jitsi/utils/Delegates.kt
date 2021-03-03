@@ -36,13 +36,10 @@ inline fun <T> observableWhenChanged(
 inline fun <T> observableWhenChanged(
     initialValue: T,
     crossinline onChange: () -> Unit
-): ReadWriteProperty<Any?, T> =
-    Delegates.observable(initialValue) { _, oldValue, newValue ->
-        if (oldValue != newValue) onChange()
-    }
+): ReadWriteProperty<Any?, T> = observableWhenChanged(initialValue) { _, _, _ -> onChange() }
 
-class ResettableLazy<T>(val initializer: () -> T) {
-    var lazyHolder = lazy { initializer() }
+class ResettableLazy<T>(private val initializer: () -> T) {
+    private var lazyHolder = lazy { initializer() }
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T = lazyHolder.value
     fun reset() {
         lazyHolder = lazy { initializer() }
