@@ -47,7 +47,7 @@
         <java.version>1.8</java.version>
         <kotlin.version>1.3.72</kotlin.version>
         <kotest.version>4.1.3</kotest.version>
-        <dokka.version>1.4.10.2</dokka.version>
+        <dokka.version>1.4.20.2-dev-74</dokka.version>
     </properties>
 
     <dependencies>
@@ -384,6 +384,11 @@
             <id>jcenter</id>
             <name>JCenter</name>
             <url>https://jcenter.bintray.com/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>dokka-dev</id>
+            <name>Dokka Dev</name>
+            <url>https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev</url>
         </pluginRepository>
     </pluginRepositories>
 
