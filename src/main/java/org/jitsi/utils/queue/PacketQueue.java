@@ -62,12 +62,7 @@ public class PacketQueue<T>
 
     /**
      * The underlying {@link BlockingQueue} which holds packets.
-     * Used as synchronization object between {@link #close()}
-     * and {@link #add(Object)}.
      */
-    @SuppressFBWarnings(
-        value = "JLM_JSR166_UTILCONCURRENT_MONITORENTER",
-        justification = "We synchronize on the queue intentionally.")
     @NotNull private final BlockingQueue<T> queue;
 
     /**
@@ -180,17 +175,8 @@ public class PacketQueue<T>
             queueStatistics.add(System.currentTimeMillis());
         }
 
-        synchronized (queue)
-        {
-            // notify single thread because only 1 item was added into queue
-            queue.notify();
-        }
-
         asyncQueueHandler.handleQueueItemsUntilEmpty();
     }
-
-
-
 
     /**
      * Closes current <tt>PacketQueue</tt> instance. No items will be added
@@ -205,12 +191,6 @@ public class PacketQueue<T>
 
             asyncQueueHandler.cancel();
 
-            synchronized (queue)
-            {
-                // notify all threads because PacketQueue is closed and all
-                // threads waiting on queue must stop reading it.
-                queue.notifyAll();
-            }
             T item;
             while ((item = queue.poll()) != null) {
                 releasePacket(item);
