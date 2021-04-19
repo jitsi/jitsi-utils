@@ -15,7 +15,6 @@
  */
 package org.jitsi.utils.queue;
 
-import edu.umd.cs.findbugs.annotations.*;
 import org.jitsi.utils.logging.*;
 import org.json.simple.*;
 import org.jetbrains.annotations.*;
