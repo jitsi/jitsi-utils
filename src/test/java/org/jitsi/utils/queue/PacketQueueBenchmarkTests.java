@@ -54,7 +54,7 @@ public class PacketQueueBenchmarkTests
      * Simulates the computation "weight" of single item processed by
      * PacketQueue
      */
-    private static final int singleQueueItemProcessingWeight = 300;
+    private static final int singleQueueItemProcessingWeight = 100;
 
     @Test
     public void testMultiplePacketQueueThroughputWithThreadPerQueue()
