@@ -10,6 +10,14 @@
 </Match>
 
 <Match>
+  <Or>
+    <!-- We expose arrays in multiple places on purpose. -->
+    <Bug pattern="EI_EXPOSE_REP"/>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+  </Or>
+</Match>
+
+<Match>
   <!-- Serialization -->
   <Bug pattern="SE_BAD_FIELD_STORE"/>
 </Match>
