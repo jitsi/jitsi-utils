@@ -24,6 +24,7 @@ import java.time.Instant
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
 import kotlin.collections.ArrayList
 
@@ -178,7 +179,14 @@ class QueueStatisticsObserver<T>(
     private val localStats = if (QueueStatistics.DEBUG) QueueStatistics(queue.capacity(), clock) else null
     private val globalStats = QueueStatistics.globalStatsFor(queue, clock)
 
+    /** Calling [PacketQueue.size] turns out to cause surprising amounts of thread contention,
+     * so mirror the queue size here.  (Note: this assumes the observer is added to the queue
+     * when the queue is empty.)
+     */
+    private val queueSize = AtomicInteger(0);
+
     override fun added(pkt: T) {
+        queueSize.incrementAndGet()
         insertionTime?.put(pkt, clock.instant())
 
         localStats?.added()
@@ -189,7 +197,7 @@ class QueueStatisticsObserver<T>(
      * Registers the removal of a packet.
      */
     override fun removed(pkt: T) {
-        val queueLength = queue.size()
+        val queueLength = queueSize.decrementAndGet()
         val wait = insertionTime?.get(pkt)?.run {
             val now = clock.instant()
             Duration.between(this, now)
@@ -203,6 +211,7 @@ class QueueStatisticsObserver<T>(
      * Registers that a packet was dropped.
      */
     override fun dropped(pkt: T) {
+        queueSize.decrementAndGet()
         insertionTime?.remove(pkt) /* TODO: track this time in stats? */
 
         localStats?.dropped()
