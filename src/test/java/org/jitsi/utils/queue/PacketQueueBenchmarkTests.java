@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
  * @author Yura Yaroshevich
  */
 @Disabled("Check only performance aspect of PacketQueue")
+@TestMethodOrder(MethodOrderer.Alphanumeric.class)
 public class PacketQueueBenchmarkTests
 {
     /**
@@ -67,9 +68,10 @@ public class PacketQueueBenchmarkTests
                 = Executors.newFixedThreadPool(numberOfQueues);
             Duration duration = runBenchmark(
                 executorService,
-                -1 /* Disable cooperative multi-tasking mode,
+                -1, /* Disable cooperative multi-tasking mode,
                  which is not relevant when each queue has it's own processing
-                 thread*/);
+                 thread*/
+                false);
             executorService.shutdownNow();
             return duration;
         });
@@ -88,9 +90,10 @@ public class PacketQueueBenchmarkTests
                 = Executors.newCachedThreadPool();
             Duration duration = runBenchmark(
                 executorService,
-                -1 /* Disable cooperative multi-tasking mode,
+                -1, /* Disable cooperative multi-tasking mode,
                  which is not relevant when each queue has it's own processing
-                 thread*/);
+                 thread*/
+                false);
             executorService.shutdownNow();
             return duration;
         });
@@ -110,9 +113,10 @@ public class PacketQueueBenchmarkTests
                     Runtime.getRuntime().availableProcessors());
             Duration duration = runBenchmark(
                 executorService,
-                50 /* Because queues will share executor
+                50, /* Because queues will share executor
                 with limited number of threads, so configure cooperative
-                multi-tasking mode*/);
+                multi-tasking mode*/
+                false);
             executorService.shutdownNow();
             return duration;
         });
@@ -138,9 +142,106 @@ public class PacketQueueBenchmarkTests
                     Runtime.getRuntime().availableProcessors());
             Duration duration = runBenchmark(
                 executorService,
-                50 /* Because queues will share executor
+                50, /* Because queues will share executor
                 with limited number of threads, so configure cooperative
-                multi-tasking mode*/);
+                multi-tasking mode*/
+                false);
+            executorService.shutdownNow();
+            return duration;
+        });
+    }
+
+    @Test
+    public void testMultiplePacketQueueThroughputWithThreadPerQueueWithStatistics()
+        throws Exception
+    {
+        /*
+         * This test roughly simulates initial implementation of PacketQueue
+         * when each PacketQueue instance has it's own processing thread
+         */
+        measureBenchmark("ThreadPerQueuePoolWithStatistics", () -> {
+            final ExecutorService executorService
+                = Executors.newFixedThreadPool(numberOfQueues);
+            Duration duration = runBenchmark(
+                executorService,
+                -1, /* Disable cooperative multi-tasking mode,
+                 which is not relevant when each queue has it's own processing
+                 thread*/
+                true);
+            executorService.shutdownNow();
+            return duration;
+        });
+    }
+
+    @Test
+    public void testMultiplePacketQueueThroughputWithCachedThreadPerQueueWithStatistics()
+        throws Exception
+    {
+        /*
+         * This test is slight modification of previous test, but now threads
+         * are re-used between PacketQueues when possible.
+         */
+        measureBenchmark("CachedThreadPerQueuePoolWithStatistics", () -> {
+            final ExecutorService executorService
+                = Executors.newCachedThreadPool();
+            Duration duration = runBenchmark(
+                executorService,
+                -1, /* Disable cooperative multi-tasking mode,
+                 which is not relevant when each queue has it's own processing
+                 thread*/
+                true);
+            executorService.shutdownNow();
+            return duration;
+        });
+    }
+
+    @Test
+    public void testMultiplePacketQueueThroughputWithFixedSizePoolWithStatistics()
+        throws Exception
+    {
+        /*
+         * This test creates pool with limited number of threads, all
+         * PacketQueues share threads in cooperative multi-tasking mode.
+         */
+        measureBenchmark("FixedSizeCPUBoundPoolWithStatistics", () -> {
+            final ExecutorService executorService
+                = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+            Duration duration = runBenchmark(
+                executorService,
+                50, /* Because queues will share executor
+                with limited number of threads, so configure cooperative
+                multi-tasking mode*/
+                true);
+            executorService.shutdownNow();
+            return duration;
+        });
+    }
+
+    @Test
+    public void testMultiplePacketQueueThroughputWithForkJoinPoolWithStatistics()
+        throws Exception
+    {
+        /*
+         * This test check proposed change to PacketQueue implementation when
+         * all created PacketQueues share single ExecutorService with limited
+         * number of threads. Execution starvation is resolved by implementing
+         * cooperative multi-tasking when each PacketQueue release it's thread
+         * borrowed for ExecutorService so other PacketQueue instances can
+         * proceed with execution.
+         * This modification has noticeable better performance when executed
+         * on system which is already loaded by other concurrent tasks.
+         */
+        measureBenchmark("ForkJoinCPUBoundPoolWithStatistics", () -> {
+            final ExecutorService executorService
+                = Executors.newWorkStealingPool(
+                Runtime.getRuntime().availableProcessors());
+            Duration duration = runBenchmark(
+                executorService,
+                50, /* Because queues will share executor
+                with limited number of threads, so configure cooperative
+                multi-tasking mode*/
+            true);
             executorService.shutdownNow();
             return duration;
         });
@@ -148,13 +249,17 @@ public class PacketQueueBenchmarkTests
 
     private Duration runBenchmark(
         final ExecutorService executor,
-        final long maxSequentiallyPackets)
+        final long maxSequentiallyPackets,
+        final boolean withStatistics)
         throws InterruptedException
     {
         final CountDownLatch completionGuard
             = new CountDownLatch(numberOfItemsInQueue * numberOfQueues);
 
         final ArrayList<DummyQueue> queues = new ArrayList<>();
+
+        PacketQueue.setEnableStatisticsDefault(withStatistics);
+
         for (int i = 0; i < numberOfQueues; i++) {
             queues.add(new DummyQueue(
                 numberOfItemsInQueue,

@@ -31,7 +31,7 @@ class DummyQueue
         PacketHandler<Dummy> packetHandler,
         ExecutorService executor)
     {
-        super(capacity, false, "DummyQueue", packetHandler,
+        super(capacity, null, "DummyQueue", packetHandler,
             executor);
     }
 
