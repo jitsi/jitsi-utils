@@ -21,6 +21,7 @@ import org.jetbrains.annotations.*;
 
 import java.lang.*;
 import java.lang.SuppressWarnings;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -65,10 +66,10 @@ public class PacketQueue<T>
     @NotNull private final BlockingQueue<T> queue;
 
     /**
-     * The {@link QueueStatistics} instance optionally used to collect and print
+     * The {@link Observer} instance optionally used to collect and print
      * detailed statistics about this queue.
      */
-    private final QueueStatistics queueStatistics;
+    private Observer<T> observer;
 
     /**
      * The {@link AsyncQueueHandler} to perpetually read packets
@@ -103,7 +104,8 @@ public class PacketQueue<T>
     /**
      * Initializes a new {@link PacketQueue} instance.
      * @param capacity the capacity of the queue.
-     * @param enableStatistics whether detailed statistics should be gathered.
+     * @param enableStatistics whether detailed statistics should be gathered
+     * using a {@link QueueStatisticsObserver} as a default queue observer.
      * This might affect performance. A value of {@code null} indicates that
      * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
@@ -129,8 +131,8 @@ public class PacketQueue<T>
         {
             enableStatistics = enableStatisticsDefault;
         }
-        queueStatistics
-            = enableStatistics ? new QueueStatistics() : null;
+        observer
+            = enableStatistics ? new QueueStatisticsObserver<>() : null;
 
         asyncQueueHandler = new AsyncQueueHandler<>(
             queue,
@@ -157,9 +159,9 @@ public class PacketQueue<T>
             T p = queue.poll();
             if (p != null)
             {
-                if (queueStatistics != null)
+                if (observer != null)
                 {
-                    queueStatistics.drop(System.currentTimeMillis());
+                    observer.dropped(p);
                 }
                 errorHandler.packetDropped();
 
@@ -169,9 +171,9 @@ public class PacketQueue<T>
             }
         }
 
-        if (queueStatistics != null)
+        if (observer != null)
         {
-            queueStatistics.add(System.currentTimeMillis());
+            observer.added(pkt);
         }
 
         asyncQueueHandler.handleQueueItemsUntilEmpty();
@@ -222,8 +224,8 @@ public class PacketQueue<T>
         debugState.put("closed", closed);
         debugState.put(
                 "statistics",
-                queueStatistics == null
-                        ? null : queueStatistics.getStats());
+                observer == null
+                        ? null : observer.getStats());
 
         return debugState;
     }
@@ -238,6 +240,22 @@ public class PacketQueue<T>
         this.errorHandler = errorHandler;
     }
 
+    /**
+     * Sets the observer for this queue.
+     * @param observer the observer to set.
+     */
+    public void setObserver(@NotNull Observer<T> observer)
+    {
+        this.observer = observer;
+    }
+
+    /**
+     * Gets the queue's current observer.
+     */
+    public Observer<T> getObserver()
+    {
+        return observer;
+    }
     /**
      * A simple interface to handle packets.
      * @param <T> the type of the packets.
@@ -268,6 +286,24 @@ public class PacketQueue<T>
     }
 
     /**
+     * An interface to observe a queue, to collect statistics or similar.
+     */
+    public interface Observer<T>
+    {
+        /** Called when a packet is added to a queue. */
+        void added(T pkt);
+
+        /** Called when a packet is removed from a queue. */
+        void removed(T pkt);
+
+        /** Called when a packet is dropped from a queue. */
+        void dropped(T pkt);
+
+        /** Get statistics gathered by this observer. */
+        Map<?, ?> getStats();
+    }
+
+    /**
      * An adapter class implementing {@link AsyncQueueHandler.Handler}
      * to wrap {@link PacketHandler}.
      */
@@ -294,9 +330,9 @@ public class PacketQueue<T>
         @Override
         public void handleItem(T item)
         {
-            if (queueStatistics != null)
+            if (observer != null)
             {
-                queueStatistics.remove(System.currentTimeMillis());
+                observer.removed(item);
             }
 
             try

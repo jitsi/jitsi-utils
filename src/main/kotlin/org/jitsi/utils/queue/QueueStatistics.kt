@@ -19,7 +19,7 @@ import org.jitsi.utils.stats.RateStatistics
 import org.json.simple.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 
-class QueueStatistics {
+class QueueStatisticsObserver<T> : PacketQueue.Observer<T> {
     /**
      * Rate of addition of packets in pps.
      */
@@ -58,29 +58,27 @@ class QueueStatistics {
     /**
      * Gets a snapshot of the stats in JSON format.
      */
-    val stats: JSONObject
-        get() {
-            val stats = JSONObject()
-            val now = System.currentTimeMillis()
-            stats["added"] = totalPacketsAdded.get()
-            stats["removed"] = totalPacketsRemoved.get()
-            stats["dropped"] = totalPacketsDropped.get()
-            stats["add_rate"] = addRate.getRate(now)
-            stats["remove_rate"] = removeRate.getRate(now)
-            stats["drop_rate"] = dropRate.getRate(now)
-            val duration = (now - firstPacketAddedMs) / 1000.0
-            stats["duration_s"] = duration
-            stats["average_remove_rate_pps"] =
-                totalPacketsRemoved.get() / duration
-            return stats
-        }
+    override fun getStats(): JSONObject {
+        val stats = JSONObject()
+        val now = System.currentTimeMillis()
+        stats["added"] = totalPacketsAdded.get()
+        stats["removed"] = totalPacketsRemoved.get()
+        stats["dropped"] = totalPacketsDropped.get()
+        stats["add_rate"] = addRate.getRate(now)
+        stats["remove_rate"] = removeRate.getRate(now)
+        stats["drop_rate"] = dropRate.getRate(now)
+        val duration = (now - firstPacketAddedMs) / 1000.0
+        stats["duration_s"] = duration
+        stats["average_remove_rate_pps"] =
+            totalPacketsRemoved.get() / duration
+        return stats
+    }
 
     /**
      * Registers the addition of a packet.
-     * @param now the time (in milliseconds since the epoch) at which the
-     * packet was added.
      */
-    fun add(now: Long) {
+    override fun added(pkt: T) {
+        val now = System.currentTimeMillis()
         if (firstPacketAddedMs < 0) {
             firstPacketAddedMs = now
         }
@@ -93,7 +91,8 @@ class QueueStatistics {
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was removed.
      */
-    fun remove(now: Long) {
+    override fun removed(pkt: T) {
+        val now = System.currentTimeMillis()
         removeRate.update(1, now)
         totalPacketsRemoved.incrementAndGet()
     }
@@ -103,7 +102,8 @@ class QueueStatistics {
      * @param now the time (in milliseconds since the epoch) at which the
      * packet was dropped.
      */
-    fun drop(now: Long) {
+    override fun dropped(pkt: T) {
+        val now = System.currentTimeMillis()
         dropRate.update(1, now)
         totalPacketsDropped.incrementAndGet()
     }
