@@ -21,6 +21,7 @@ import org.jetbrains.annotations.*;
 
 import java.lang.*;
 import java.lang.SuppressWarnings;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -115,24 +116,20 @@ public class PacketQueue<T>
      * {@code handler.handlePacket} on them.
      * @param executor An executor service to use to execute
      * packetHandler for items added to queue.
+     * @param clock If {@param enableStatistics} is true (or resolves as true),
+     *              a clock to use to construct the default {@link QueueStatisticsObserver}.
      */
     public PacketQueue(
         int capacity,
         Boolean enableStatistics,
         @NotNull String id,
         @NotNull PacketHandler<T> packetHandler,
-        ExecutorService executor)
+        ExecutorService executor,
+        Clock clock)
     {
         this.id = id;
         this.capacity = capacity;
         queue = new ArrayBlockingQueue<>(capacity);
-
-        if (enableStatistics == null)
-        {
-            enableStatistics = enableStatisticsDefault;
-        }
-        observer
-            = enableStatistics ? new QueueStatisticsObserver<>() : null;
 
         asyncQueueHandler = new AsyncQueueHandler<>(
             queue,
@@ -141,7 +138,39 @@ public class PacketQueue<T>
             executor,
             packetHandler.maxSequentiallyProcessedPackets());
 
+        if (enableStatistics == null)
+        {
+            enableStatistics = enableStatisticsDefault;
+        }
+        observer
+            = enableStatistics ? new QueueStatisticsObserver<>(this, clock) : null;
+
         logger.debug("Initialized a PacketQueue instance with ID " + id);
+    }
+
+    /**
+     * Initializes a new {@link PacketQueue} instance.
+     * @param capacity the capacity of the queue.
+     * @param enableStatistics whether detailed statistics should be gathered
+     * using a {@link QueueStatisticsObserver} as a default queue observer.
+     * This might affect performance. A value of {@code null} indicates that
+     * the default {@link #enableStatisticsDefault} value will be used.
+     * @param id the ID of the packet queue, to be used for logging.
+     * @param packetHandler An handler to be used by the queue for
+     * packets read from it.  The queue will start its own tasks on
+     * {@param executor}, which will read packets from the queue and execute
+     * {@code handler.handlePacket} on them.
+     * @param executor An executor service to use to execute
+     * packetHandler for items added to queue.
+     */
+    public PacketQueue(
+        int capacity,
+        Boolean enableStatistics,
+        @NotNull String id,
+        @NotNull PacketHandler<T> packetHandler,
+        ExecutorService executor)
+    {
+        this(capacity, enableStatistics, id, packetHandler, executor, Clock.systemUTC());
     }
 
     /**
@@ -209,6 +238,24 @@ public class PacketQueue<T>
      */
     protected void releasePacket(T pkt)
     {
+    }
+
+    /** Get the current number of packets queued in this queue. */
+    public int size()
+    {
+        return queue.size();
+    }
+
+    /** Get the maximum number of packets queued in this queue. */
+    public int capacity()
+    {
+        return capacity;
+    }
+
+    /** Get the ID of this queue. */
+    public String id()
+    {
+        return id;
     }
 
     /**

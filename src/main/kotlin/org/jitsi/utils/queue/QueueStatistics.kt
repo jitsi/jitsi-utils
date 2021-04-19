@@ -15,109 +15,202 @@
  */
 package org.jitsi.utils.queue
 
-import org.jitsi.utils.stats.RateStatistics
-import org.json.simple.JSONObject
-import java.util.concurrent.atomic.AtomicInteger
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.jitsi.utils.OrderedJsonObject
+import org.jitsi.utils.stats.BucketStats
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.LongAdder
+import kotlin.collections.ArrayList
 
-class QueueStatisticsObserver<T> : PacketQueue.Observer<T> {
-    /**
-     * Rate of addition of packets in pps.
-     */
-    private val addRate = RateStatistics(INTERVAL_MS, SCALE.toFloat())
-
-    /**
-     * Rate of removal of packets in pps.
-     */
-    private val removeRate = RateStatistics(INTERVAL_MS, SCALE.toFloat())
-
-    /**
-     * Rate of packets being dropped in pps.
-     */
-    private val dropRate = RateStatistics(INTERVAL_MS, SCALE.toFloat())
-
+class QueueStatistics(queueSize: Int, val clock: Clock) {
     /**
      * Total packets added to the queue.
      */
-    private val totalPacketsAdded = AtomicInteger()
+    private val totalPacketsAdded = LongAdder()
 
     /**
      * Total packets removed to the queue.
      */
-    private val totalPacketsRemoved = AtomicInteger()
+    private val totalPacketsRemoved = LongAdder()
 
     /**
      * Total packets dropped from the queue.
      */
-    private val totalPacketsDropped = AtomicInteger()
+    private val totalPacketsDropped = LongAdder()
 
     /**
      * The time the first packet was added.
      */
-    private var firstPacketAddedMs: Long = -1
+    private var firstPacketAdded: Instant? = null
+
+    /**
+     * Statistics about queue lengths
+     */
+    private val queueLengthStats = BucketStats(getQueueLengthBucketSizes(queueSize), "_queue_size_at_remove", "")
+
+    /**
+     * Statistics about the time that packets were waiting in the queue.
+     */
+    private val queueWaitStats = if (TRACK_TIMES) BucketStats(waitBucketSizes, "_queue_wait_time_ms", " ms") else null
 
     /**
      * Gets a snapshot of the stats in JSON format.
      */
-    override fun getStats(): JSONObject {
-        val stats = JSONObject()
-        val now = System.currentTimeMillis()
-        stats["added"] = totalPacketsAdded.get()
-        stats["removed"] = totalPacketsRemoved.get()
-        stats["dropped"] = totalPacketsDropped.get()
-        stats["add_rate"] = addRate.getRate(now)
-        stats["remove_rate"] = removeRate.getRate(now)
-        stats["drop_rate"] = dropRate.getRate(now)
-        val duration = (now - firstPacketAddedMs) / 1000.0
-        stats["duration_s"] = duration
-        stats["average_remove_rate_pps"] =
-            totalPacketsRemoved.get() / duration
-        return stats
-    }
+    val stats: OrderedJsonObject
+        get() {
+            val stats = OrderedJsonObject()
+            val now = clock.instant()
+            stats["added"] = totalPacketsAdded.sum()
+            stats["removed"] = totalPacketsRemoved.sum()
+            stats["dropped"] = totalPacketsDropped.sum()
+            val duration = Duration.between(firstPacketAdded, now)
+            val duration_s = duration.toNanos() / 1e9
+            stats["duration_s"] = duration_s
+            val packetsRemoved = totalPacketsRemoved.sum().toDouble()
+            stats["average_remove_rate_pps"] = packetsRemoved / duration_s
+            stats["queue_size_at_remove"] = queueLengthStats.toJson()
+            queueWaitStats?.let { stats["queue_wait_time"] = it.toJson() }
+            return stats
+        }
 
     /**
      * Registers the addition of a packet.
      */
-    override fun added(pkt: T) {
-        val now = System.currentTimeMillis()
-        if (firstPacketAddedMs < 0) {
-            firstPacketAddedMs = now
+    fun added() {
+        if (firstPacketAdded == null) {
+            firstPacketAdded = clock.instant()
         }
-        addRate.update(1, now)
-        totalPacketsAdded.incrementAndGet()
+        totalPacketsAdded.increment()
     }
 
     /**
      * Registers the removal of a packet.
-     * @param now the time (in milliseconds since the epoch) at which the
-     * packet was removed.
      */
-    override fun removed(pkt: T) {
-        val now = System.currentTimeMillis()
-        removeRate.update(1, now)
-        totalPacketsRemoved.incrementAndGet()
+    fun removed(queueSize: Int, waitTime: Duration?) {
+        totalPacketsRemoved.increment()
+        queueLengthStats.addValue(queueSize.toLong())
+        if (waitTime != null) {
+            queueWaitStats?.addValue(waitTime.toMillis()) /* TODO: measure in nanos? */
+        }
     }
 
     /**
      * Registers that a packet was dropped.
-     * @param now the time (in milliseconds since the epoch) at which the
-     * packet was dropped.
      */
-    override fun dropped(pkt: T) {
-        val now = System.currentTimeMillis()
-        dropRate.update(1, now)
-        totalPacketsDropped.incrementAndGet()
+    fun dropped() {
+        totalPacketsDropped.increment()
     }
 
     companion object {
-        /**
-         * The scale to use for [RateStatistics]. 1000 means units
-         * (e.g. packets) per second.
-         */
-        private const val SCALE = 1000
+        /** Whether specific per-queue statistics should be kept. */
+        @JvmField
+        @field:SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+        var DEBUG = false
+
+        /** Whether queue dwell times should be tracked. */
+        @JvmField
+        @field:SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+        var TRACK_TIMES = false
+
+        private val queueStatsById = ConcurrentHashMap<String, QueueStatistics>()
+
+        internal fun globalStatsFor(queue: PacketQueue<*>, clock: Clock) = queueStatsById.computeIfAbsent(queue.id()) {
+            /* Assume all queues with the same ID have the same capacity and can use the same size buckets. */
+            QueueStatistics(queue.capacity(), clock)
+        }
+
+        fun getStatistics(): OrderedJsonObject {
+            val stats = OrderedJsonObject()
+            with(stats) {
+                for (entry in queueStatsById.entries) {
+                    put(entry.key, entry.value.stats)
+                }
+            }
+            return stats
+        }
 
         /**
-         * The interval for which to calculate rates in milliseconds.
+         * Calculate the capacity statistics buckets for a given queue capacity.
          */
-        private const val INTERVAL_MS = 5000
+        private fun getQueueLengthBucketSizes(capacity: Int): LongArray {
+            val list = ArrayList<Long>()
+            list.add(0L)
+            var i = 1L
+
+            while (i < capacity) {
+                list.add(i)
+                i *= 4
+            }
+            val half = (capacity / 2).toLong()
+            if (half > list.last()) {
+                list.add(half)
+            }
+
+            val threeQuarters = (capacity * 3 / 4).toLong()
+            if (threeQuarters > list.last()) {
+                list.add(threeQuarters)
+            }
+
+            return list.toLongArray()
+        }
+
+        /**
+         * The queue waiting time bucket sizes.
+         */
+        private val waitBucketSizes = longArrayOf(2, 5, 20, 50, 200, 500, 1000)
     }
+}
+
+class QueueStatisticsObserver<T>(
+    val queue: PacketQueue<T>,
+    val clock: Clock
+) : PacketQueue.Observer<T> {
+    /**
+     * A map of the time when objects were put in the queue
+     */
+    private val insertionTime = if (QueueStatistics.TRACK_TIMES) Collections.synchronizedMap(IdentityHashMap<Any, Instant>()) else null
+
+    private val localStats = if (QueueStatistics.DEBUG) QueueStatistics(queue.capacity(), clock) else null
+    private val globalStats = QueueStatistics.globalStatsFor(queue, clock)
+
+    override fun added(pkt: T) {
+        insertionTime?.put(pkt, clock.instant())
+
+        localStats?.added()
+        globalStats.added()
+    }
+
+    /**
+     * Registers the removal of a packet.
+     */
+    override fun removed(pkt: T) {
+        val queueLength = queue.size()
+        val wait = insertionTime?.get(pkt)?.run {
+            val now = clock.instant()
+            Duration.between(this, now)
+        }
+
+        localStats?.removed(queueLength, wait)
+        globalStats.removed(queueLength, wait)
+    }
+
+    /**
+     * Registers that a packet was dropped.
+     */
+    override fun dropped(pkt: T) {
+        insertionTime?.remove(pkt) /* TODO: track this time in stats? */
+
+        localStats?.dropped()
+        globalStats.dropped()
+    }
+
+    /**
+     * Gets a snapshot of the stats in JSON format.
+     */
+    override fun getStats(): OrderedJsonObject? = localStats?.stats
 }
