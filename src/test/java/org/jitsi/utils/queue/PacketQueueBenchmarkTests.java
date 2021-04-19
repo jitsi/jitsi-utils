@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.*;
 
 /**
  * Contains test for checking performance aspects of various
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Yura Yaroshevich
  */
-@Disabled("Check only performance aspect of PacketQueue")
+@EnabledIfSystemProperty(named="org.jitsi.utils.doPerf", matches=".*")
 @TestMethodOrder(MethodOrderer.Alphanumeric.class)
 public class PacketQueueBenchmarkTests
 {
