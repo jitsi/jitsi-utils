@@ -183,7 +183,7 @@ class QueueStatisticsObserver<T>(
      * so mirror the queue size here.  (Note: this assumes the observer is added to the queue
      * when the queue is empty.)
      */
-    private val queueSize = AtomicInteger(0);
+    private val queueSize = AtomicInteger(0)
 
     override fun added(pkt: T) {
         queueSize.incrementAndGet()
