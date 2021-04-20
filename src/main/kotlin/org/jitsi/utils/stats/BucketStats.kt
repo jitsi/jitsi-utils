@@ -48,6 +48,7 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, 
         val snapshot = snapshot
         put("average$averageMaxLabel", snapshot.average)
         put("max$averageMaxLabel", snapshot.maxValue)
+        put("total_value", snapshot.totalValue)
         put("total_count", snapshot.totalCount)
 
         put("buckets", getBucketsJson(snapshot.buckets))
@@ -57,6 +58,7 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, 
         get() = Snapshot(
             average = average,
             maxValue = maxValue.get(),
+            totalValue = totalValue.sum(),
             totalCount = totalCount.sum(),
             buckets = buckets.snapshot
         )
@@ -64,6 +66,7 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, 
     data class Snapshot(
         val average: Double,
         val maxValue: Long,
+        val totalValue: Long,
         val totalCount: Long,
         val buckets: Buckets.Snapshot
     )
