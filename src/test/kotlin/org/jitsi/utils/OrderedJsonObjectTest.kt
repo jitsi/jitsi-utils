@@ -40,6 +40,20 @@ class OrderedJsonObjectTest : ShouldSpec() {
                 ojo.keys shouldContainExactly mutableSetOf("one", "two", "three", "four", "five", "six")
                 ojo.values shouldContainExactly mutableSetOf(1, 2, 3, 4, 5, 6)
             }
+
+            should("print recursive objects properly") {
+                val subOjo = OrderedJsonObject()
+                subOjo["Washington"] = 1
+                subOjo["Adams"] = 2
+                subOjo["Jefferson"] = 3
+                subOjo["Madison"] = 4
+
+                ojo["presidents"] = subOjo
+
+                ojo.toJSONString() shouldBe """
+                    {"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,"presidents":{"Washington":1,"Adams":2,"Jefferson":3,"Madison":4}}
+                """.trimIndent()
+            }
         }
     }
 }
