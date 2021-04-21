@@ -125,15 +125,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
             QueueStatistics(queue.capacity(), clock)
         }
 
-        fun getStatistics(): OrderedJsonObject {
-            val stats = OrderedJsonObject()
-            with(stats) {
-                for (entry in queueStatsById.entries) {
-                    put(entry.key, entry.value.stats)
-                }
-            }
-            return stats
-        }
+        fun getStatistics() = OrderedJsonObject().apply { queueStatsById.entries.forEach { put(it.key, it.value.stats) } }
 
         /**
          * Calculate the capacity statistics buckets for a given queue capacity.
