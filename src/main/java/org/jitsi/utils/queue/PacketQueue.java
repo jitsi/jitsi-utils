@@ -15,13 +15,14 @@
  */
 package org.jitsi.utils.queue;
 
-import edu.umd.cs.findbugs.annotations.*;
 import org.jitsi.utils.logging.*;
 import org.json.simple.*;
 import org.jetbrains.annotations.*;
 
 import java.lang.*;
 import java.lang.SuppressWarnings;
+import java.time.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -66,10 +67,10 @@ public class PacketQueue<T>
     @NotNull private final BlockingQueue<T> queue;
 
     /**
-     * The {@link QueueStatistics} instance optionally used to collect and print
+     * The {@link Observer} instance optionally used to collect and print
      * detailed statistics about this queue.
      */
-    private final QueueStatistics queueStatistics;
+    protected final Observer<T> observer;
 
     /**
      * The {@link AsyncQueueHandler} to perpetually read packets
@@ -102,9 +103,66 @@ public class PacketQueue<T>
     private ErrorHandler errorHandler = new ErrorHandler(){};
 
     /**
+     * Creates a queue observer.
+     */
+    protected Observer<T> createObserver(Clock clock)
+    {
+        return new QueueStatisticsObserver<>(this, clock);
+    }
+
+    /**
      * Initializes a new {@link PacketQueue} instance.
      * @param capacity the capacity of the queue.
-     * @param enableStatistics whether detailed statistics should be gathered.
+     * @param enableStatistics whether detailed statistics should be gathered by
+     * constructing an {@link Observer}.
+     * (In the base {@link PacketQueue} class this will be a {@link QueueStatisticsObserver}
+     * but subclasses can override this).
+     * This might affect performance. A value of {@code null} indicates that
+     * the default {@link #enableStatisticsDefault} value will be used.
+     * @param id the ID of the packet queue, to be used for logging.
+     * @param packetHandler An handler to be used by the queue for
+     * packets read from it.  The queue will start its own tasks on
+     * {@param executor}, which will read packets from the queue and execute
+     * {@code handler.handlePacket} on them.
+     * @param executor An executor service to use to execute
+     * packetHandler for items added to queue.
+     * @param clock If {@param enableStatistics} is true (or resolves as true),
+     *              a clock to use to construct the {@link Observer}.
+     */
+    public PacketQueue(
+        int capacity,
+        Boolean enableStatistics,
+        @NotNull String id,
+        @NotNull PacketHandler<T> packetHandler,
+        ExecutorService executor,
+        Clock clock)
+    {
+        this.id = id;
+        this.capacity = capacity;
+        queue = new ArrayBlockingQueue<>(capacity);
+
+        asyncQueueHandler = new AsyncQueueHandler<>(
+            queue,
+            new HandlerAdapter(packetHandler),
+            id,
+            executor,
+            packetHandler.maxSequentiallyProcessedPackets());
+
+        if (enableStatistics == null)
+        {
+            enableStatistics = enableStatisticsDefault;
+        }
+
+        observer = enableStatistics ? createObserver(clock) : null;
+
+        logger.debug("Initialized a PacketQueue instance with ID " + id);
+    }
+
+    /**
+     * Initializes a new {@link PacketQueue} instance.
+     * @param capacity the capacity of the queue.
+     * @param enableStatistics whether detailed statistics should be gathered
+     * using a {@link QueueStatisticsObserver} as a default queue observer.
      * This might affect performance. A value of {@code null} indicates that
      * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
@@ -122,25 +180,7 @@ public class PacketQueue<T>
         @NotNull PacketHandler<T> packetHandler,
         ExecutorService executor)
     {
-        this.id = id;
-        this.capacity = capacity;
-        queue = new ArrayBlockingQueue<>(capacity);
-
-        if (enableStatistics == null)
-        {
-            enableStatistics = enableStatisticsDefault;
-        }
-        queueStatistics
-            = enableStatistics ? new QueueStatistics() : null;
-
-        asyncQueueHandler = new AsyncQueueHandler<>(
-            queue,
-            new HandlerAdapter(packetHandler),
-            id,
-            executor,
-            packetHandler.maxSequentiallyProcessedPackets());
-
-        logger.debug("Initialized a PacketQueue instance with ID " + id);
+        this(capacity, enableStatistics, id, packetHandler, executor, Clock.systemUTC());
     }
 
     /**
@@ -158,9 +198,9 @@ public class PacketQueue<T>
             T p = queue.poll();
             if (p != null)
             {
-                if (queueStatistics != null)
+                if (observer != null)
                 {
-                    queueStatistics.drop(System.currentTimeMillis());
+                    observer.dropped(p);
                 }
                 errorHandler.packetDropped();
 
@@ -170,9 +210,9 @@ public class PacketQueue<T>
             }
         }
 
-        if (queueStatistics != null)
+        if (observer != null)
         {
-            queueStatistics.add(System.currentTimeMillis());
+            observer.added(pkt);
         }
 
         asyncQueueHandler.handleQueueItemsUntilEmpty();
@@ -210,6 +250,24 @@ public class PacketQueue<T>
     {
     }
 
+    /** Get the current number of packets queued in this queue. */
+    public int size()
+    {
+        return queue.size();
+    }
+
+    /** Get the maximum number of packets queued in this queue. */
+    public int capacity()
+    {
+        return capacity;
+    }
+
+    /** Get the ID of this queue. */
+    public String id()
+    {
+        return id;
+    }
+
     /**
      * Gets a JSON representation of the parts of this object's state that
      * are deemed useful for debugging.
@@ -223,8 +281,8 @@ public class PacketQueue<T>
         debugState.put("closed", closed);
         debugState.put(
                 "statistics",
-                queueStatistics == null
-                        ? null : queueStatistics.getStats());
+                observer == null
+                        ? null : observer.getStats());
 
         return debugState;
     }
@@ -269,6 +327,24 @@ public class PacketQueue<T>
     }
 
     /**
+     * An interface to observe a queue, to collect statistics or similar.
+     */
+    public interface Observer<T>
+    {
+        /** Called when a packet is added to a queue. */
+        void added(T pkt);
+
+        /** Called when a packet is removed from a queue. */
+        void removed(T pkt);
+
+        /** Called when a packet is dropped from a queue. */
+        void dropped(T pkt);
+
+        /** Get statistics gathered by this observer. */
+        Map<?, ?> getStats();
+    }
+
+    /**
      * An adapter class implementing {@link AsyncQueueHandler.Handler}
      * to wrap {@link PacketHandler}.
      */
@@ -295,9 +371,9 @@ public class PacketQueue<T>
         @Override
         public void handleItem(T item)
         {
-            if (queueStatistics != null)
+            if (observer != null)
             {
-                queueStatistics.remove(System.currentTimeMillis());
+                observer.removed(item);
             }
 
             try

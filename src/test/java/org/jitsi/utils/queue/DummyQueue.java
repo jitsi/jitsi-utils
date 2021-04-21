@@ -28,12 +28,22 @@ class DummyQueue
 {
     DummyQueue(
         int capacity,
+        String id,
         PacketHandler<Dummy> packetHandler,
         ExecutorService executor)
     {
-        super(capacity, false, "DummyQueue", packetHandler,
+        super(capacity, null, id, packetHandler,
             executor);
     }
+
+    DummyQueue(
+        int capacity,
+        PacketHandler<Dummy> packetHandler,
+        ExecutorService executor)
+    {
+        this(capacity, "DummyQueue", packetHandler, executor);
+    }
+
 
     static class Dummy {
         int id;
