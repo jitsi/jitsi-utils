@@ -70,7 +70,7 @@ public class PacketQueue<T>
      * The {@link Observer} instance optionally used to collect and print
      * detailed statistics about this queue.
      */
-    private Observer<T> observer;
+    protected final Observer<T> observer;
 
     /**
      * The {@link AsyncQueueHandler} to perpetually read packets
@@ -103,10 +103,20 @@ public class PacketQueue<T>
     private ErrorHandler errorHandler = new ErrorHandler(){};
 
     /**
+     * Creates a queue observer.
+     */
+    protected Observer<T> createObserver(Clock clock)
+    {
+        return new QueueStatisticsObserver<>(this, clock);
+    }
+
+    /**
      * Initializes a new {@link PacketQueue} instance.
      * @param capacity the capacity of the queue.
-     * @param enableStatistics whether detailed statistics should be gathered
-     * using a {@link QueueStatisticsObserver} as a default queue observer.
+     * @param enableStatistics whether detailed statistics should be gathered by
+     * constructing an {@link Observer}.
+     * (In the base {@link PacketQueue} class this will be a {@link QueueStatisticsObserver}
+     * but subclasses can override this).
      * This might affect performance. A value of {@code null} indicates that
      * the default {@link #enableStatisticsDefault} value will be used.
      * @param id the ID of the packet queue, to be used for logging.
@@ -117,7 +127,7 @@ public class PacketQueue<T>
      * @param executor An executor service to use to execute
      * packetHandler for items added to queue.
      * @param clock If {@param enableStatistics} is true (or resolves as true),
-     *              a clock to use to construct the default {@link QueueStatisticsObserver}.
+     *              a clock to use to construct the {@link Observer}.
      */
     public PacketQueue(
         int capacity,
@@ -142,8 +152,8 @@ public class PacketQueue<T>
         {
             enableStatistics = enableStatisticsDefault;
         }
-        observer
-            = enableStatistics ? new QueueStatisticsObserver<>(this, clock) : null;
+
+        observer = enableStatistics ? createObserver(clock) : null;
 
         logger.debug("Initialized a PacketQueue instance with ID " + id);
     }
@@ -287,22 +297,6 @@ public class PacketQueue<T>
         this.errorHandler = errorHandler;
     }
 
-    /**
-     * Sets the observer for this queue.
-     * @param observer the observer to set.
-     */
-    public void setObserver(@NotNull Observer<T> observer)
-    {
-        this.observer = observer;
-    }
-
-    /**
-     * Gets the queue's current observer.
-     */
-    public Observer<T> getObserver()
-    {
-        return observer;
-    }
     /**
      * A simple interface to handle packets.
      * @param <T> the type of the packets.

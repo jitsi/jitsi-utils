@@ -172,8 +172,7 @@ class QueueStatisticsObserver<T>(
     private val globalStats = QueueStatistics.globalStatsFor(queue, clock)
 
     /** Calling [PacketQueue.size] turns out to cause surprising amounts of thread contention,
-     * so mirror the queue size here.  (Note: this assumes the observer is added to the queue
-     * when the queue is empty.)
+     * so mirror the queue size here.
      */
     private val queueSize = AtomicInteger(0)
 
