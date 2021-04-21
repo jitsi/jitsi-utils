@@ -22,7 +22,7 @@ import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.maxAssign
 import java.lang.IllegalArgumentException
 
-open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String, val bucketLabel: String) {
+open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String = "", val bucketLabel: String = "") {
     init {
         if (!thresholdsNoMax.contentEquals(thresholdsNoMax.sortedArray())) {
             throw IllegalArgumentException("Thresholds must be sorted: ${thresholdsNoMax.joinToString()}")
@@ -107,8 +107,9 @@ class Buckets(thresholdsNoMax: LongArray) {
             return Snapshot(bucketCounts, p99, p999)
         }
 
-    private fun findBucket(value: Long): LongAdder {
+    protected open fun findBucket(value: Long): LongAdder {
         // The vast majority of values are in the first bucket, so linear search is likely faster than binary.
+        // Subclasses can override this if necessary.
         for (i in thresholds.indices) {
             if (value <= thresholds[i]) return thresholdCounts[i]
         }
