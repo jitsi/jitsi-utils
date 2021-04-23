@@ -69,11 +69,13 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
             stats["added_packets"] = totalPacketsAdded.sum()
             stats["removed_packets"] = totalPacketsRemoved.sum()
             stats["dropped_packets"] = totalPacketsDropped.sum()
-            val duration = Duration.between(firstPacketAdded, now)
-            val duration_s = duration.toNanos() / 1e9
-            stats["duration_s"] = duration_s
-            val packetsRemoved = totalPacketsRemoved.sum().toDouble()
-            stats["average_remove_rate_pps"] = packetsRemoved / duration_s
+            if (firstPacketAdded != null) {
+                val duration = Duration.between(firstPacketAdded, now)
+                val duration_s = duration.toNanos() / 1e9
+                stats["duration_s"] = duration_s
+                val packetsRemoved = totalPacketsRemoved.sum().toDouble()
+                stats["average_remove_rate_pps"] = packetsRemoved / duration_s
+            }
             stats["queue_size_at_remove"] = queueLengthStats.toJson()
             queueWaitStats?.let { stats["queue_wait_time"] = it.toJson() }
             return stats
