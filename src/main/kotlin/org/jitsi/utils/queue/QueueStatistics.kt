@@ -66,9 +66,9 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
         get() {
             val stats = OrderedJsonObject()
             val now = clock.instant()
-            stats["added"] = totalPacketsAdded.sum()
-            stats["removed"] = totalPacketsRemoved.sum()
-            stats["dropped"] = totalPacketsDropped.sum()
+            stats["added_packets"] = totalPacketsAdded.sum()
+            stats["removed_packets"] = totalPacketsRemoved.sum()
+            stats["dropped_packets"] = totalPacketsDropped.sum()
             val duration = Duration.between(firstPacketAdded, now)
             val duration_s = duration.toNanos() / 1e9
             stats["duration_s"] = duration_s
