@@ -67,7 +67,9 @@ public abstract class Logger
 
     /**
      * Logs an entry in the calling method.
+     * @deprecated Use your own log statement
      */
+    @Deprecated
     public void logEntry()
     {
         if (isLoggable(Level.FINEST))
@@ -79,7 +81,9 @@ public abstract class Logger
 
     /**
      * Logs exiting the calling method
+     * @deprecated Use your own log statement
      */
+    @Deprecated
     public void logExit()
     {
         if (isLoggable(Level.FINEST))

@@ -40,7 +40,7 @@ final class AsyncQueueHandler<T>
      * {@link AsyncQueueHandler} class and its instances for logging output.
      */
     private static final Logger logger
-        = Logger.getLogger(AsyncQueueHandler.class.getName());
+        = Logger.getLogger(AsyncQueueHandler.class);
 
     /**
      * Executor service to run {@link #reader}, which asynchronously
