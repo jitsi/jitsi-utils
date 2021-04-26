@@ -21,7 +21,10 @@ import java.net.*;
  * Represents a filter which selects or deselects <tt>DatagramPacket</tt>s.
  *
  * @author Lubomir Marinov
+ * @deprecated Use a Java 8 lambda ({@link java.util.function.Function})
  */
+@Deprecated
+@FunctionalInterface
 public interface DatagramPacketFilter
 {
     /**

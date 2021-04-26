@@ -37,8 +37,7 @@ public class PacketQueue<T>
      * The {@link Logger} used by the {@link PacketQueue} class and its
      * instances for logging output.
      */
-    private static final Logger logger
-        = Logger.getLogger(PacketQueue.class.getName());
+    private static final Logger logger = Logger.getLogger(PacketQueue.class);
 
     /**
      * The default value for the {@code enableStatistics} constructor argument.

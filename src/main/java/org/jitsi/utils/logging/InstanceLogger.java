@@ -30,7 +30,7 @@ public class InstanceLogger
     /**
      * The {@link org.jitsi.utils.logging.Logger} used for logging.
      */
-    private org.jitsi.utils.logging.Logger loggingDelegate;
+    private final Logger loggingDelegate;
 
     /**
      * The {@link org.jitsi.utils.logging.Logger} used for configuring the level. Messages are logged
@@ -39,7 +39,7 @@ public class InstanceLogger
      * 2. {@link #loggingDelegate} allows it.
      * 3. {@link #level}, is not set or allows it.
      */
-    private org.jitsi.utils.logging.Logger levelDelegate;
+    private final Logger levelDelegate;
 
     /**
      * The level configured for this instance.
