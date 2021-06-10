@@ -1071,7 +1071,7 @@ public class DominantSpeakerIdentification<T>
          * Gets the (history of) audio levels received or measured for this
          * <tt>Speaker</tt>.
          *
-         * @return a <tt>byte</tt> array which represents the (history of) audio
+         * @return a <tt>String</tt> that lists the (history of) audio
          * levels received or measured for this <tt>Speaker</tt>
          */
         String getLevels()
@@ -1079,8 +1079,7 @@ public class DominantSpeakerIdentification<T>
             // The levels of Speaker are internally maintained starting with the
             // last audio level received or measured for this Speaker and ending
             // with the first audio level received or measured for this Speaker.
-            // Unfortunately, the method is expected to return levels in reverse
-            // order.
+            // Reverse the list and print them in the order they were received.
             byte[] src = this.levels;
             StringBuffer sb = new StringBuffer();
             sb.append('[');
@@ -1091,8 +1090,7 @@ public class DominantSpeakerIdentification<T>
                 sb.append(',');
             }
 
-            sb.setLength(sb.length() - 1); /* pop last comma */
-            sb.append(']');
+            sb.setCharAt(sb.length() - 1, ']'); /* replace last comma */
             return sb.toString();
         }
 
