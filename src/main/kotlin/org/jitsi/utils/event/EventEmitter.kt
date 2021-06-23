@@ -19,7 +19,7 @@ package org.jitsi.utils.event
 import org.jitsi.utils.logging2.createLogger
 import java.lang.Exception
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executor
 
 open class EventEmitter<EventHandlerType> {
     protected val logger = createLogger()
@@ -47,11 +47,11 @@ open class EventEmitter<EventHandlerType> {
     }
 }
 
-class AsyncEventEmitter<EventHandlerType>(private val executor: ExecutorService) : EventEmitter<EventHandlerType>() {
+class AsyncEventEmitter<EventHandlerType>(private val executor: Executor) : EventEmitter<EventHandlerType>() {
 
     fun fireEventAsync(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach {
-            executor.submit { wrap { it.apply(event) } }
+            executor.execute { wrap { it.apply(event) } }
         }
     }
 }
