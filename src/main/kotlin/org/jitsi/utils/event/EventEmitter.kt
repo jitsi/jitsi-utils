@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 
 interface EventEmitter<EventHandlerType> {
-    /** Fire an event (it may be fired synchronously or asynchronously depending on the implementation. */
+    /** Fire an event (it may be fired synchronously or asynchronously depending on the implementation). */
     fun fireEvent(event: EventHandlerType.() -> Unit)
     fun addHandler(handler: EventHandlerType)
     fun removeHandler(handler: EventHandlerType)
