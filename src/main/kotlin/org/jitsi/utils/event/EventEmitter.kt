@@ -19,23 +19,29 @@ package org.jitsi.utils.event
 import org.jitsi.utils.logging2.createLogger
 import java.lang.Exception
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executor
 
-open class EventEmitter<EventHandlerType> {
-    protected val logger = createLogger()
+interface EventEmitter<EventHandlerType> {
+    /** Fire an event (it may be fired synchronously or asynchronously depending on the implementation). */
+    fun fireEvent(event: EventHandlerType.() -> Unit)
+    fun addHandler(handler: EventHandlerType)
+    fun removeHandler(handler: EventHandlerType)
+    val eventHandlers: List<EventHandlerType>
+}
 
-    protected val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList()
+sealed class BaseEventEmitter<EventHandlerType>(
+    initialHandlers: List<EventHandlerType>
+) : EventEmitter<EventHandlerType> {
+    private val logger = createLogger()
 
-    fun addHandler(handler: EventHandlerType) {
+    override val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList(initialHandlers)
+
+    override fun addHandler(handler: EventHandlerType) {
         eventHandlers += handler
     }
 
-    fun removeHandler(handler: EventHandlerType) {
+    override fun removeHandler(handler: EventHandlerType) {
         eventHandlers -= handler
-    }
-
-    fun fireEventSync(event: EventHandlerType.() -> Unit) {
-        eventHandlers.forEach { wrap { it.apply(event) } }
     }
 
     protected fun wrap(block: () -> Unit) {
@@ -47,11 +53,29 @@ open class EventEmitter<EventHandlerType> {
     }
 }
 
-class AsyncEventEmitter<EventHandlerType>(private val executor: ExecutorService) : EventEmitter<EventHandlerType>() {
+/** An [EventEmitter] which fires events synchronously. */
 
-    fun fireEventAsync(event: EventHandlerType.() -> Unit) {
+class SyncEventEmitter<EventHandlerType>(initialHandlers: List<EventHandlerType>) :
+    BaseEventEmitter<EventHandlerType>(initialHandlers) {
+
+    constructor() : this(emptyList())
+
+    override fun fireEvent(event: EventHandlerType.() -> Unit) {
+        eventHandlers.forEach { wrap { it.apply(event) } }
+    }
+}
+
+/** An [EventEmitter] which fires events asynchronously. */
+class AsyncEventEmitter<EventHandlerType>(
+    private val executor: Executor,
+    initialHandlers: List<EventHandlerType> = emptyList()
+) : BaseEventEmitter<EventHandlerType>(initialHandlers) {
+
+    constructor(executor: Executor) : this(executor, emptyList())
+
+    override fun fireEvent(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach {
-            executor.submit { wrap { it.apply(event) } }
+            executor.execute { wrap { it.apply(event) } }
         }
     }
 }
