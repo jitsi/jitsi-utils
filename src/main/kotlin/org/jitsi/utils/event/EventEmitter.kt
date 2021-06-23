@@ -21,21 +21,24 @@ import java.lang.Exception
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 
-open class EventEmitter<EventHandlerType> {
-    protected val logger = createLogger()
+interface EventEmitter<EventHandlerType> {
+    /** Fire an event (it may be fired synchronously or asynchronously depending on the implementation. */
+    fun fireEvent(event: EventHandlerType.() -> Unit)
+    fun addHandler(handler: EventHandlerType)
+    fun removeHandler(handler: EventHandlerType)
+}
+
+sealed class BaseEventEmitter<EventHandlerType> : EventEmitter<EventHandlerType> {
+    private val logger = createLogger()
 
     protected val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList()
 
-    fun addHandler(handler: EventHandlerType) {
+    override fun addHandler(handler: EventHandlerType) {
         eventHandlers += handler
     }
 
-    fun removeHandler(handler: EventHandlerType) {
+    override fun removeHandler(handler: EventHandlerType) {
         eventHandlers -= handler
-    }
-
-    fun fireEventSync(event: EventHandlerType.() -> Unit) {
-        eventHandlers.forEach { wrap { it.apply(event) } }
     }
 
     protected fun wrap(block: () -> Unit) {
@@ -47,9 +50,17 @@ open class EventEmitter<EventHandlerType> {
     }
 }
 
-class AsyncEventEmitter<EventHandlerType>(private val executor: Executor) : EventEmitter<EventHandlerType>() {
+/** An [EventEmitter] which fires events synchronously. */
+open class SyncEventEmitter<EventHandlerType> : BaseEventEmitter<EventHandlerType>() {
+    override fun fireEvent(event: EventHandlerType.() -> Unit) {
+        eventHandlers.forEach { wrap { it.apply(event) } }
+    }
+}
 
-    fun fireEventAsync(event: EventHandlerType.() -> Unit) {
+/** An [EventEmitter] which fires events asynchronously. */
+class AsyncEventEmitter<EventHandlerType>(private val executor: Executor) : BaseEventEmitter<EventHandlerType>() {
+
+    override fun fireEvent(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach {
             executor.execute { wrap { it.apply(event) } }
         }
