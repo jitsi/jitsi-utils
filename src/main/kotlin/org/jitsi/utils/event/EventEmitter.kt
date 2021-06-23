@@ -26,12 +26,15 @@ interface EventEmitter<EventHandlerType> {
     fun fireEvent(event: EventHandlerType.() -> Unit)
     fun addHandler(handler: EventHandlerType)
     fun removeHandler(handler: EventHandlerType)
+    val eventHandlers: List<EventHandlerType>
 }
 
-sealed class BaseEventEmitter<EventHandlerType> : EventEmitter<EventHandlerType> {
+sealed class BaseEventEmitter<EventHandlerType>(
+    initialHandlers: List<EventHandlerType>
+) : EventEmitter<EventHandlerType> {
     private val logger = createLogger()
 
-    protected val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList()
+    override val eventHandlers: MutableList<EventHandlerType> = CopyOnWriteArrayList(initialHandlers)
 
     override fun addHandler(handler: EventHandlerType) {
         eventHandlers += handler
@@ -51,14 +54,24 @@ sealed class BaseEventEmitter<EventHandlerType> : EventEmitter<EventHandlerType>
 }
 
 /** An [EventEmitter] which fires events synchronously. */
-open class SyncEventEmitter<EventHandlerType> : BaseEventEmitter<EventHandlerType>() {
+
+class SyncEventEmitter<EventHandlerType>(initialHandlers: List<EventHandlerType>) :
+    BaseEventEmitter<EventHandlerType>(initialHandlers) {
+
+    constructor() : this(emptyList())
+
     override fun fireEvent(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach { wrap { it.apply(event) } }
     }
 }
 
 /** An [EventEmitter] which fires events asynchronously. */
-class AsyncEventEmitter<EventHandlerType>(private val executor: Executor) : BaseEventEmitter<EventHandlerType>() {
+class AsyncEventEmitter<EventHandlerType>(
+    private val executor: Executor,
+    initialHandlers: List<EventHandlerType> = emptyList()
+) : BaseEventEmitter<EventHandlerType>(initialHandlers) {
+
+    constructor(executor: Executor) : this(executor, emptyList())
 
     override fun fireEvent(event: EventHandlerType.() -> Unit) {
         eventHandlers.forEach {
