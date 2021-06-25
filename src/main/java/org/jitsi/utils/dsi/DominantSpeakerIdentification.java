@@ -18,9 +18,11 @@ package org.jitsi.utils.dsi;
 import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Level;
 
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
+import org.jitsi.utils.stats.BucketStats;
 import org.json.simple.*;
 
 /**
@@ -320,10 +322,39 @@ public class DominantSpeakerIdentification<T>
     private final Map<T,Speaker> speakers = new HashMap<>();
 
     /**
+     * The <tt>Speaker</tt>s in the multipoint conference with the highest
+     * current energy levels.
+     */
+    private final ArrayList<Speaker> loudest = new ArrayList<Speaker>();
+
+    /**
      * Initializes a new <tt>DominantSpeakerIdentification</tt> instance.
      */
     public DominantSpeakerIdentification()
     {
+    }
+
+    private int numLoudestToRoute = 3;
+    private boolean alwaysRouteDominant = false;
+    private int energyExpireTimeMs = 150;
+    private int energyAlphaPct = 50;
+    private BucketStats tossedPacketsEnergyStats = null;
+
+    public synchronized void setLoudestConfig(int numLoudestToRoute_, boolean alwaysRouteDominant_, int energyExpireTimeMs_, int energyAlphaPct_)
+    {
+        numLoudestToRoute = numLoudestToRoute_;
+        alwaysRouteDominant = alwaysRouteDominant_;
+        energyExpireTimeMs = energyExpireTimeMs_;
+        energyAlphaPct = energyAlphaPct_;
+        logger.log(Level.CONFIG, "numLoudestToRoute = " + numLoudestToRoute);
+        logger.log(Level.CONFIG, "alwaysRouteDominant = " + alwaysRouteDominant);
+        logger.log(Level.CONFIG, "energyExpireTimeMs = " + energyExpireTimeMs);
+        logger.log(Level.CONFIG, "energyAlphaPct = " + energyAlphaPct);
+    }
+
+    public synchronized void setTossedPacketsEnergyStats(BucketStats tossedPacketsEnergyStats_)
+    {
+        tossedPacketsEnergyStats = tossedPacketsEnergyStats_;
     }
 
     /**
@@ -431,6 +462,96 @@ public class DominantSpeakerIdentification<T>
         return speaker;
     }
 
+    private synchronized void updateLoudestList(Speaker speaker, int level, long now)
+    {
+        long oldestValid = now - energyExpireTimeMs;
+
+        /* exponential smoothing */
+        speaker.energyScore = (energyAlphaPct * level + (100 - energyAlphaPct) * speaker.energyScore) / 100;
+
+        logger.log(Level.FINE, "Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
+
+        int i = 0;
+        while (i < loudest.size())
+        {
+            Speaker cur = loudest.get(i);
+            if (cur.getLastLevelChangedTime() < oldestValid)
+            {
+                logger.log(Level.FINE, "Removing " + cur.id.toString() + ". old.");
+                loudest.remove(i);
+                continue;
+            }
+            if (cur == speaker)
+            {
+                logger.log(Level.FINE, "Removing " + cur.id.toString() + ". same.");
+                loudest.remove(i);
+                continue;
+            }
+            ++i;
+        }
+
+        i = 0;
+        while (i < loudest.size())
+        {
+            Speaker cur = loudest.get(i);
+            if (cur.energyScore < speaker.energyScore)
+                break;
+            ++i;
+        }
+
+        if(i < numLoudestToRoute)
+        {
+            logger.log(Level.FINE, "Adding " + speaker.id.toString() + " at position " + i + ".");
+            loudest.add(i, speaker);
+        }
+
+        while (loudest.size() > numLoudestToRoute)
+            loudest.remove(numLoudestToRoute);
+
+        i = 0;
+        while (i < loudest.size())
+        {
+            Speaker cur = loudest.get(i);
+            logger.log(Level.FINE, "New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
+            ++i;
+        }
+    }
+
+    public synchronized boolean isAmongLoudestSpeakers(T id)
+    {
+        if(alwaysRouteDominant && dominantId != null && dominantId.equals(id))
+        {
+            logger.log(Level.FINE, "Found " + id + ". Dominant speaker.");
+            return true;
+        }
+
+        int i = 0;
+        while (i < loudest.size())
+        {
+            Speaker cur = loudest.get(i);
+            if (cur.id.equals(id))
+            {
+                logger.log(Level.FINE, "Found " + id + " at location " + i + ".");
+                return true;
+            }
+            ++i;
+        }
+
+        logger.log(Level.FINE, id + " not found.");
+
+        BucketStats tossedPacketsEnergyStats = this.tossedPacketsEnergyStats;
+        if(tossedPacketsEnergyStats != null)
+        {
+            Speaker speaker = getOrCreateSpeaker(id);
+            if(speaker != null)
+            {
+                tossedPacketsEnergyStats.addValue(speaker.energyScore);
+            }
+        }
+
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -461,7 +582,10 @@ public class DominantSpeakerIdentification<T>
         }
         if (speaker != null)
         {
-            speaker.levelChanged(level, now);
+            int cookedLevel = speaker.levelChanged(level, now);
+
+            if(cookedLevel >= 0)
+                updateLoudestList(speaker, cookedLevel, now);
         }
     }
 
@@ -949,6 +1073,11 @@ public class DominantSpeakerIdentification<T>
          */
         private int nextMinLevelWindowLength;
 
+        /** Exponential smoothing of filtered energy values.
+         *  Synchronized by parent class.
+         */
+        int energyScore;
+
         /**
          * The identifier of this <tt>Speaker</tt> which is unique within this {@link DominantSpeakerIdentification}.
          */
@@ -1141,7 +1270,7 @@ public class DominantSpeakerIdentification<T>
          * @param time the (local <tt>System</tt>) time in milliseconds at which
          * the specified <tt>level</tt> has been received or measured
          */
-        public synchronized void levelChanged(int level, long time)
+        public synchronized int levelChanged(int level, long time)
         {
             // It sounds relatively reasonable that late audio levels should
             // better be discarded.
@@ -1168,6 +1297,12 @@ public class DominantSpeakerIdentification<T>
                 // Determine the minimum level received or measured for this
                 // Speaker.
                 updateMinLevel(b);
+
+                return b >= (minLevel + N1_SUBUNIT_LENGTH) ? b : 0;
+            }
+            else
+            {
+                return -1;
             }
         }
 
