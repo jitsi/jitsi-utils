@@ -18,7 +18,7 @@ package org.jitsi.utils.dsi;
 import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
+import java.util.logging.Level;
 
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
