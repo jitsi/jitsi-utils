@@ -18,11 +18,11 @@ package org.jitsi.utils.dsi;
 import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
+import java.util.logging.*;
 
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
-import org.jitsi.utils.stats.BucketStats;
+import org.jitsi.utils.stats.*;
 import org.json.simple.*;
 
 /**
@@ -334,10 +334,30 @@ public class DominantSpeakerIdentification<T>
     {
     }
 
+    /**
+      * The number of current loudest speakers to route audio packets for.
+      */
     private int numLoudestToRoute = 3;
+
+    /**
+      * Whether to route dominant speaker when it is not among the current loudest speakers.
+      */
     private boolean alwaysRouteDominant = false;
+
+    /**
+      * Time in milliseconds after which speaker is removed from loudest list if
+      * no new audio packets have been received from that speaker.
+      */
     private int energyExpireTimeMs = 150;
+
+    /**
+      * Alpha factor for exponential smoothing of energy values, multiplied by 100.
+      */
     private int energyAlphaPct = 50;
+
+    /**
+      * Distribution of energy scores for discarded audio packets
+      */
     private BucketStats tossedPacketsEnergyStats = null;
 
     public synchronized void setLoudestConfig(int numLoudestToRoute_, boolean alwaysRouteDominant_, int energyExpireTimeMs_, int energyAlphaPct_)
