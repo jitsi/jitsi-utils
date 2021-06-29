@@ -1289,6 +1289,9 @@ public class DominantSpeakerIdentification<T>
          * this <tt>Speaker</tt>
          * @param time the (local <tt>System</tt>) time in milliseconds at which
          * the specified <tt>level</tt> has been received or measured
+         * @return the audio level that was applied, after any filtering or
+         * level adjustment has taken place. If negative, the audio level
+         * was ignored.
          */
         public synchronized int levelChanged(int level, long time)
         {
