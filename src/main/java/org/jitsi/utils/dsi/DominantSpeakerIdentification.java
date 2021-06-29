@@ -489,7 +489,7 @@ public class DominantSpeakerIdentification<T>
         /* exponential smoothing */
         speaker.energyScore = (energyAlphaPct * level + (100 - energyAlphaPct) * speaker.energyScore) / 100;
 
-        logger.log(Level.FINE, "Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
+        logger.debug("Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
 
         int i = 0;
         while (i < loudest.size())
@@ -497,13 +497,13 @@ public class DominantSpeakerIdentification<T>
             Speaker cur = loudest.get(i);
             if (cur.getLastLevelChangedTime() < oldestValid)
             {
-                logger.log(Level.FINE, "Removing " + cur.id.toString() + ". old.");
+                logger.debug("Removing " + cur.id.toString() + ". old.");
                 loudest.remove(i);
                 continue;
             }
             if (cur == speaker)
             {
-                logger.log(Level.FINE, "Removing " + cur.id.toString() + ". same.");
+                logger.debug("Removing " + cur.id.toString() + ". same.");
                 loudest.remove(i);
                 continue;
             }
@@ -521,7 +521,7 @@ public class DominantSpeakerIdentification<T>
 
         if(i < numLoudestToRoute)
         {
-            logger.log(Level.FINE, "Adding " + speaker.id.toString() + " at position " + i + ".");
+            logger.debug("Adding " + speaker.id.toString() + " at position " + i + ".");
             loudest.add(i, speaker);
         }
 
@@ -532,7 +532,7 @@ public class DominantSpeakerIdentification<T>
         while (i < loudest.size())
         {
             Speaker cur = loudest.get(i);
-            logger.log(Level.FINE, "New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
+            logger.debug("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
             ++i;
         }
     }
@@ -541,7 +541,7 @@ public class DominantSpeakerIdentification<T>
     {
         if(alwaysRouteDominant && dominantId != null && dominantId.equals(id))
         {
-            logger.log(Level.FINE, "Found " + id + ". Dominant speaker.");
+            logger.debug("Found " + id + ". Dominant speaker.");
             return true;
         }
 
@@ -551,13 +551,13 @@ public class DominantSpeakerIdentification<T>
             Speaker cur = loudest.get(i);
             if (cur.id.equals(id))
             {
-                logger.log(Level.FINE, "Found " + id + " at location " + i + ".");
+                logger.debug("Found " + id + " at location " + i + ".");
                 return true;
             }
             ++i;
         }
 
-        logger.log(Level.FINE, id + " not found.");
+        logger.debug(id + " not found.");
 
         BucketStats tossedPacketsEnergyStats = this.tossedPacketsEnergyStats;
         if(tossedPacketsEnergyStats != null)
