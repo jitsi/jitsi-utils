@@ -519,7 +519,7 @@ public class DominantSpeakerIdentification<T>
             ++i;
         }
 
-        if(i < numLoudestToRoute)
+        if (i < numLoudestToRoute)
         {
             logger.debug("Adding " + speaker.id.toString() + " at position " + i + ".");
             loudest.add(i, speaker);
@@ -539,7 +539,7 @@ public class DominantSpeakerIdentification<T>
 
     public synchronized boolean isAmongLoudestSpeakers(T id)
     {
-        if(alwaysRouteDominant && dominantId != null && dominantId.equals(id))
+        if (alwaysRouteDominant && dominantId != null && dominantId.equals(id))
         {
             logger.debug("Found " + id + ". Dominant speaker.");
             return true;
@@ -560,10 +560,10 @@ public class DominantSpeakerIdentification<T>
         logger.debug(id + " not found.");
 
         BucketStats tossedPacketsEnergyStats = this.tossedPacketsEnergyStats;
-        if(tossedPacketsEnergyStats != null)
+        if (tossedPacketsEnergyStats != null)
         {
             Speaker speaker = getOrCreateSpeaker(id);
-            if(speaker != null)
+            if (speaker != null)
             {
                 tossedPacketsEnergyStats.addValue(speaker.energyScore);
             }
@@ -604,7 +604,7 @@ public class DominantSpeakerIdentification<T>
         {
             int cookedLevel = speaker.levelChanged(level, now);
 
-            if(cookedLevel >= 0)
+            if (cookedLevel >= 0)
                 updateLoudestList(speaker, cookedLevel, now);
         }
     }
