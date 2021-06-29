@@ -17,8 +17,8 @@ package org.jitsi.utils.stats
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode
-import io.kotest.matchers.shouldBe
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jitsi.utils.OrderedJsonObject
 import java.lang.IllegalArgumentException

@@ -16,11 +16,11 @@
 
 package org.jitsi.utils.stats
 
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.LongAdder
 import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.maxAssign
 import java.lang.IllegalArgumentException
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 
 open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String = "", val bucketLabel: String = "") {
     init {
