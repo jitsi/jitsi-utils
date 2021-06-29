@@ -528,12 +528,15 @@ public class DominantSpeakerIdentification<T>
         while (loudest.size() > numLoudestToRoute)
             loudest.remove(numLoudestToRoute);
 
-        i = 0;
-        while (i < loudest.size())
+        if (logger.isDebugEnabled())
         {
-            Speaker cur = loudest.get(i);
-            logger.debug("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
-            ++i;
+            i = 0;
+            while (i < loudest.size())
+            {
+                Speaker cur = loudest.get(i);
+                logger.debug("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
+                ++i;
+            }
         }
     }
 
