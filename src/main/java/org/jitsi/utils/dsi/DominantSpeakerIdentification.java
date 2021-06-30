@@ -22,7 +22,6 @@ import java.util.logging.Level;
 
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
-import org.jitsi.utils.stats.*;
 import org.json.simple.*;
 
 /**
@@ -335,14 +334,9 @@ public class DominantSpeakerIdentification<T>
     }
 
     /**
-      * The number of current loudest speakers to route audio packets for.
+      * The number of current loudest speakers to keep track of.
       */
-    private int numLoudestToRoute = 3;
-
-    /**
-      * Whether to route dominant speaker when it is not among the current loudest speakers.
-      */
-    private boolean alwaysRouteDominant = false;
+    private int numLoudestToTrack = 3;
 
     /**
       * Time in milliseconds after which speaker is removed from loudest list if
@@ -356,25 +350,16 @@ public class DominantSpeakerIdentification<T>
     private int energyAlphaPct = 50;
 
     /**
-      * Distribution of energy scores for discarded audio packets
-      */
-    private BucketStats tossedPacketsEnergyStats = null;
-
-    public synchronized void setLoudestConfig(int numLoudestToRoute_, boolean alwaysRouteDominant_, int energyExpireTimeMs_, int energyAlphaPct_)
+     * Set energy ranking options
+     */
+    public synchronized void setLoudestConfig(int numLoudestToTrack_, int energyExpireTimeMs_, int energyAlphaPct_)
     {
-        numLoudestToRoute = numLoudestToRoute_;
-        alwaysRouteDominant = alwaysRouteDominant_;
+        numLoudestToTrack = numLoudestToTrack_;
         energyExpireTimeMs = energyExpireTimeMs_;
         energyAlphaPct = energyAlphaPct_;
-        logger.log(Level.CONFIG, "numLoudestToRoute = " + numLoudestToRoute);
-        logger.log(Level.CONFIG, "alwaysRouteDominant = " + alwaysRouteDominant);
+        logger.log(Level.CONFIG, "numLoudestToTrack = " + numLoudestToTrack);
         logger.log(Level.CONFIG, "energyExpireTimeMs = " + energyExpireTimeMs);
         logger.log(Level.CONFIG, "energyAlphaPct = " + energyAlphaPct);
-    }
-
-    public synchronized void setTossedPacketsEnergyStats(BucketStats tossedPacketsEnergyStats_)
-    {
-        tossedPacketsEnergyStats = tossedPacketsEnergyStats_;
     }
 
     /**
@@ -482,6 +467,12 @@ public class DominantSpeakerIdentification<T>
         return speaker;
     }
 
+    /**
+     * Update loudest speaker list.
+     * @param speaker the speaker with a new energy level
+     * @param level the energy level
+     * @param now the current time
+     */
     private synchronized void updateLoudestList(Speaker speaker, int level, long now)
     {
         long oldestValid = now - energyExpireTimeMs;
@@ -519,14 +510,14 @@ public class DominantSpeakerIdentification<T>
             ++i;
         }
 
-        if (i < numLoudestToRoute)
+        if (i < numLoudestToTrack)
         {
             logger.debug("Adding " + speaker.id.toString() + " at position " + i + ".");
             loudest.add(i, speaker);
         }
 
-        while (loudest.size() > numLoudestToRoute)
-            loudest.remove(numLoudestToRoute);
+        while (loudest.size() > numLoudestToTrack)
+            loudest.remove(numLoudestToTrack);
 
         if (logger.isDebugEnabled())
         {
@@ -540,39 +531,58 @@ public class DominantSpeakerIdentification<T>
         }
     }
 
-    public synchronized boolean isAmongLoudestSpeakers(T id)
+    /**
+     * Returns information about an endpoint's energy levels relative
+     * to other endpoints.
+     */
+    public class SpeakerRanking {
+
+        /**
+         * Whether the endpoint is currently the dominant speaker.
+         */
+        public final boolean isDominant;
+
+        /**
+         * The endpoint's current rank by energy level.
+         */
+        public final int energyRanking;
+
+        /**
+         * The endpoint's energy score, a smoothed average of processed
+         * energy levels.
+         */
+        public final int energyScore;
+
+        /**
+         * Initializes a new <tt>SpeakerRanking</tt> instance.
+         */
+        public SpeakerRanking(boolean isDominant_, int energyRanking_, int energyScore_) {
+            isDominant = isDominant_;
+            energyRanking = energyRanking_;
+            energyScore = energyScore_;
+        }
+    }
+
+    /**
+     * Get current energy rank and related data for an endpoint.
+     */
+    public synchronized SpeakerRanking getRanking(T id)
     {
-        if (alwaysRouteDominant && dominantId != null && dominantId.equals(id))
+        boolean isDominant = dominantId != null && dominantId.equals(id);
+        int rank = 0;
+        while (rank < loudest.size())
         {
-            logger.debug("Found " + id + ". Dominant speaker.");
-            return true;
-        }
-
-        int i = 0;
-        while (i < loudest.size())
-        {
-            Speaker cur = loudest.get(i);
-            if (cur.id.equals(id))
+            Speaker speaker = loudest.get(rank);
+            if (speaker.id.equals(id))
             {
-                logger.debug("Found " + id + " at location " + i + ".");
-                return true;
+                return new SpeakerRanking(isDominant, rank, speaker.energyScore);
             }
-            ++i;
+            ++rank;
         }
 
-        logger.debug(id + " not found.");
-
-        BucketStats tossedPacketsEnergyStats = this.tossedPacketsEnergyStats;
-        if (tossedPacketsEnergyStats != null)
-        {
-            Speaker speaker = getOrCreateSpeaker(id);
-            if (speaker != null)
-            {
-                tossedPacketsEnergyStats.addValue(speaker.energyScore);
-            }
-        }
-
-        return false;
+        Speaker speaker = getOrCreateSpeaker(id);
+        int energyScore = speaker != null ? speaker.energyScore : 0;
+        return new SpeakerRanking(isDominant, rank, energyScore);
     }
 
     /**
