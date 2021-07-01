@@ -18,10 +18,9 @@ package org.jitsi.utils.dsi;
 import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
 
 import org.jitsi.utils.concurrent.*;
-import org.jitsi.utils.logging.*;
+import org.jitsi.utils.logging2.*;
 import org.json.simple.*;
 
 /**
@@ -93,8 +92,7 @@ public class DominantSpeakerIdentification<T>
      * The <tt>Logger</tt> used by the <tt>DominantSpeakerIdentification</tt>
      * class and its instances to print debug information.
      */
-    private static final Logger logger
-        = Logger.getLogger(DominantSpeakerIdentification.class);
+    private static final Logger logger = new LoggerImpl(DominantSpeakerIdentification.class.getName());
 
     /**
      * The (total) number of long time-intervals used for speech activity score
@@ -357,9 +355,9 @@ public class DominantSpeakerIdentification<T>
         numLoudestToTrack = numLoudestToTrack_;
         energyExpireTimeMs = energyExpireTimeMs_;
         energyAlphaPct = energyAlphaPct_;
-        logger.log(Level.CONFIG, "numLoudestToTrack = " + numLoudestToTrack);
-        logger.log(Level.CONFIG, "energyExpireTimeMs = " + energyExpireTimeMs);
-        logger.log(Level.CONFIG, "energyAlphaPct = " + energyAlphaPct);
+        logger.trace(() -> "numLoudestToTrack = " + numLoudestToTrack);
+        logger.trace(() -> "energyExpireTimeMs = " + energyExpireTimeMs);
+        logger.trace(() -> "energyAlphaPct = " + energyAlphaPct);
 
         while (loudest.size() > numLoudestToTrack)
             loudest.remove(numLoudestToTrack);
@@ -486,7 +484,7 @@ public class DominantSpeakerIdentification<T>
 
         long oldestValid = now - energyExpireTimeMs;
 
-        logger.debug("Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
+        logger.trace(() -> "Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
 
         int i = 0;
         while (i < loudest.size())
@@ -494,13 +492,13 @@ public class DominantSpeakerIdentification<T>
             Speaker cur = loudest.get(i);
             if (cur.getLastLevelChangedTime() < oldestValid)
             {
-                logger.debug("Removing " + cur.id.toString() + ". old.");
+                logger.trace(() -> "Removing " + cur.id.toString() + ". old.");
                 loudest.remove(i);
                 continue;
             }
             if (cur == speaker)
             {
-                logger.debug("Removing " + cur.id.toString() + ". same.");
+                logger.trace(() -> "Removing " + cur.id.toString() + ". same.");
                 loudest.remove(i);
                 continue;
             }
@@ -518,7 +516,8 @@ public class DominantSpeakerIdentification<T>
 
         if (i < numLoudestToTrack)
         {
-            logger.debug("Adding " + speaker.id.toString() + " at position " + i + ".");
+            final int pos = i;
+            logger.trace(() -> "Adding " + speaker.id.toString() + " at position " + pos + ".");
             loudest.add(i, speaker);
 
             if (loudest.size() > numLoudestToTrack)
@@ -531,7 +530,7 @@ public class DominantSpeakerIdentification<T>
             while (i < loudest.size())
             {
                 Speaker cur = loudest.get(i);
-                logger.debug("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
+                logger.trace("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
                 ++i;
             }
         }
