@@ -549,6 +549,10 @@ public class DominantSpeakerIdentification<T>
 
         /**
          * The endpoint's current rank by energy level.
+         * If the endpoint is not in the list of the current loudest speakers,
+         * this will be set to the size of the list (which will be <tt>numLoudestToTrack</tt>
+         * if the list is at its maximum size). In essence, all untracked endpoints
+         * are considered tied for the next highest rank after the tracked ones.
          */
         public final int energyRanking;
 
