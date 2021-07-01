@@ -360,6 +360,9 @@ public class DominantSpeakerIdentification<T>
         logger.log(Level.CONFIG, "numLoudestToTrack = " + numLoudestToTrack);
         logger.log(Level.CONFIG, "energyExpireTimeMs = " + energyExpireTimeMs);
         logger.log(Level.CONFIG, "energyAlphaPct = " + energyAlphaPct);
+
+        while (loudest.size() > numLoudestToTrack)
+            loudest.remove(numLoudestToTrack);
     }
 
     /**
@@ -475,10 +478,13 @@ public class DominantSpeakerIdentification<T>
      */
     private synchronized void updateLoudestList(Speaker speaker, int level, long now)
     {
-        long oldestValid = now - energyExpireTimeMs;
+        /* exponential smoothing. round to nearest. */
+        speaker.energyScore = (energyAlphaPct * level + (100 - energyAlphaPct) * speaker.energyScore + 50) / 100;
 
-        /* exponential smoothing */
-        speaker.energyScore = (energyAlphaPct * level + (100 - energyAlphaPct) * speaker.energyScore) / 100;
+        if (numLoudestToTrack == 0)
+            return;
+
+        long oldestValid = now - energyExpireTimeMs;
 
         logger.debug("Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
 
@@ -514,10 +520,10 @@ public class DominantSpeakerIdentification<T>
         {
             logger.debug("Adding " + speaker.id.toString() + " at position " + i + ".");
             loudest.add(i, speaker);
-        }
 
-        while (loudest.size() > numLoudestToTrack)
-            loudest.remove(numLoudestToTrack);
+            if (loudest.size() > numLoudestToTrack)
+                loudest.remove(numLoudestToTrack);
+        }
 
         if (logger.isDebugEnabled())
         {
