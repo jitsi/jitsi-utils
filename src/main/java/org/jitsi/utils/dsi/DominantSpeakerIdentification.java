@@ -524,7 +524,7 @@ public class DominantSpeakerIdentification<T>
                 loudest.remove(numLoudestToTrack);
         }
 
-        if (logger.isDebugEnabled())
+        if (logger.isTraceEnabled())
         {
             i = 0;
             while (i < loudest.size())
