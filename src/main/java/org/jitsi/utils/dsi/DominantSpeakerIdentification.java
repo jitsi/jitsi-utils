@@ -19,8 +19,9 @@ import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.jetbrains.annotations.*;
 import org.jitsi.utils.concurrent.*;
-import org.jitsi.utils.logging.*;
+import org.jitsi.utils.logging2.*;
 import org.json.simple.*;
 
 /**
@@ -92,8 +93,7 @@ public class DominantSpeakerIdentification<T>
      * The <tt>Logger</tt> used by the <tt>DominantSpeakerIdentification</tt>
      * class and its instances to print debug information.
      */
-    private static final Logger logger
-        = Logger.getLogger(DominantSpeakerIdentification.class);
+    private static final Logger logger = new LoggerImpl(DominantSpeakerIdentification.class.getName());
 
     /**
      * The (total) number of long time-intervals used for speech activity score
@@ -320,10 +320,48 @@ public class DominantSpeakerIdentification<T>
     private final Map<T,Speaker> speakers = new HashMap<>();
 
     /**
+     * The <tt>Speaker</tt>s in the multipoint conference with the highest
+     * current energy levels.
+     */
+    private final ArrayList<Speaker> loudest = new ArrayList<Speaker>();
+
+    /**
      * Initializes a new <tt>DominantSpeakerIdentification</tt> instance.
      */
     public DominantSpeakerIdentification()
     {
+    }
+
+    /**
+      * The number of current loudest speakers to keep track of.
+      */
+    private int numLoudestToTrack = 0;
+
+    /**
+      * Time in milliseconds after which speaker is removed from loudest list if
+      * no new audio packets have been received from that speaker.
+      */
+    private int energyExpireTimeMs = 150;
+
+    /**
+      * Alpha factor for exponential smoothing of energy values, multiplied by 100.
+      */
+    private int energyAlphaPct = 50;
+
+    /**
+     * Set energy ranking options
+     */
+    public synchronized void setLoudestConfig(int numLoudestToTrack_, int energyExpireTimeMs_, int energyAlphaPct_)
+    {
+        numLoudestToTrack = numLoudestToTrack_;
+        energyExpireTimeMs = energyExpireTimeMs_;
+        energyAlphaPct = energyAlphaPct_;
+        logger.trace(() -> "numLoudestToTrack = " + numLoudestToTrack);
+        logger.trace(() -> "energyExpireTimeMs = " + energyExpireTimeMs);
+        logger.trace(() -> "energyAlphaPct = " + energyAlphaPct);
+
+        while (loudest.size() > numLoudestToTrack)
+            loudest.remove(numLoudestToTrack);
     }
 
     /**
@@ -414,6 +452,7 @@ public class DominantSpeakerIdentification<T>
      * @param id the identifier of the <tt>Speaker</tt> to return.
      * @return the <tt>Speaker</tt> in this multipoint conference identified by {@code id}.
      */
+    @NotNull
     private synchronized Speaker getOrCreateSpeaker(T id)
     {
         Speaker speaker = speakers.get(id);
@@ -429,6 +468,131 @@ public class DominantSpeakerIdentification<T>
             maybeStartDecisionMaker();
         }
         return speaker;
+    }
+
+    /**
+     * Update loudest speaker list.
+     * @param speaker the speaker with a new energy level
+     * @param level the energy level
+     * @param now the current time
+     */
+    private synchronized void updateLoudestList(Speaker speaker, int level, long now)
+    {
+        /* exponential smoothing. round to nearest. */
+        speaker.energyScore = (energyAlphaPct * level + (100 - energyAlphaPct) * speaker.energyScore + 50) / 100;
+
+        if (numLoudestToTrack == 0)
+            return;
+
+        long oldestValid = now - energyExpireTimeMs;
+
+        logger.trace(() -> "Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
+
+        int i = 0;
+        while (i < loudest.size())
+        {
+            Speaker cur = loudest.get(i);
+            if (cur.getLastLevelChangedTime() < oldestValid)
+            {
+                logger.trace(() -> "Removing " + cur.id.toString() + ". old.");
+                loudest.remove(i);
+                continue;
+            }
+            if (cur == speaker)
+            {
+                logger.trace(() -> "Removing " + cur.id.toString() + ". same.");
+                loudest.remove(i);
+                continue;
+            }
+            ++i;
+        }
+
+        i = 0;
+        while (i < loudest.size())
+        {
+            Speaker cur = loudest.get(i);
+            if (cur.energyScore < speaker.energyScore)
+                break;
+            ++i;
+        }
+
+        if (i < numLoudestToTrack)
+        {
+            final int pos = i;
+            logger.trace(() -> "Adding " + speaker.id.toString() + " at position " + pos + ".");
+            loudest.add(i, speaker);
+
+            if (loudest.size() > numLoudestToTrack)
+                loudest.remove(numLoudestToTrack);
+        }
+
+        if (logger.isTraceEnabled())
+        {
+            i = 0;
+            while (i < loudest.size())
+            {
+                Speaker cur = loudest.get(i);
+                logger.trace("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
+                ++i;
+            }
+        }
+    }
+
+    /**
+     * Returns information about an endpoint's energy levels relative
+     * to other endpoints.
+     */
+    public class SpeakerRanking {
+
+        /**
+         * Whether the endpoint is currently the dominant speaker.
+         */
+        public final boolean isDominant;
+
+        /**
+         * The endpoint's current rank by energy level.
+         * If the endpoint is not in the list of the current loudest speakers,
+         * this will be set to the size of the list (which will be <tt>numLoudestToTrack</tt>
+         * if the list is at its maximum size). In essence, all untracked endpoints
+         * are considered tied for the next highest rank after the tracked ones.
+         */
+        public final int energyRanking;
+
+        /**
+         * The endpoint's energy score, a smoothed average of processed
+         * energy levels.
+         */
+        public final int energyScore;
+
+        /**
+         * Initializes a new <tt>SpeakerRanking</tt> instance.
+         */
+        public SpeakerRanking(boolean isDominant_, int energyRanking_, int energyScore_) {
+            isDominant = isDominant_;
+            energyRanking = energyRanking_;
+            energyScore = energyScore_;
+        }
+    }
+
+    /**
+     * Get current energy rank and related data for an endpoint.
+     */
+    public synchronized SpeakerRanking getRanking(T id)
+    {
+        boolean isDominant = dominantId != null && dominantId.equals(id);
+        int rank = 0;
+        while (rank < loudest.size())
+        {
+            Speaker speaker = loudest.get(rank);
+            if (speaker.id.equals(id))
+            {
+                return new SpeakerRanking(isDominant, rank, speaker.energyScore);
+            }
+            ++rank;
+        }
+
+        Speaker speaker = getOrCreateSpeaker(id);
+        return new SpeakerRanking(isDominant, rank, speaker.energyScore);
     }
 
     /**
@@ -459,10 +623,11 @@ public class DominantSpeakerIdentification<T>
                 maybeStartDecisionMaker();
             }
         }
-        if (speaker != null)
-        {
-            speaker.levelChanged(level, now);
-        }
+
+        int cookedLevel = speaker.levelChanged(level, now);
+
+        if (cookedLevel >= 0)
+            updateLoudestList(speaker, cookedLevel, now);
     }
 
     /**
@@ -949,6 +1114,11 @@ public class DominantSpeakerIdentification<T>
          */
         private int nextMinLevelWindowLength;
 
+        /** Exponential smoothing of filtered energy values.
+         *  Synchronized by parent class.
+         */
+        int energyScore;
+
         /**
          * The identifier of this <tt>Speaker</tt> which is unique within this {@link DominantSpeakerIdentification}.
          */
@@ -1140,8 +1310,11 @@ public class DominantSpeakerIdentification<T>
          * this <tt>Speaker</tt>
          * @param time the (local <tt>System</tt>) time in milliseconds at which
          * the specified <tt>level</tt> has been received or measured
+         * @return the audio level that was applied, after any filtering or
+         * level adjustment has taken place. If negative, the audio level
+         * was ignored.
          */
-        public synchronized void levelChanged(int level, long time)
+        public synchronized int levelChanged(int level, long time)
         {
             // It sounds relatively reasonable that late audio levels should
             // better be discarded.
@@ -1168,6 +1341,12 @@ public class DominantSpeakerIdentification<T>
                 // Determine the minimum level received or measured for this
                 // Speaker.
                 updateMinLevel(b);
+
+                return b >= (minLevel + N1_SUBUNIT_LENGTH) ? b : 0;
+            }
+            else
+            {
+                return -1;
             }
         }
 
