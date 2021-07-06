@@ -19,6 +19,7 @@ import java.lang.ref.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.jetbrains.annotations.*;
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging2.*;
 import org.json.simple.*;
@@ -451,6 +452,7 @@ public class DominantSpeakerIdentification<T>
      * @param id the identifier of the <tt>Speaker</tt> to return.
      * @return the <tt>Speaker</tt> in this multipoint conference identified by {@code id}.
      */
+    @NotNull
     private synchronized Speaker getOrCreateSpeaker(T id)
     {
         Speaker speaker = speakers.get(id);
@@ -590,8 +592,7 @@ public class DominantSpeakerIdentification<T>
         }
 
         Speaker speaker = getOrCreateSpeaker(id);
-        int energyScore = speaker != null ? speaker.energyScore : 0;
-        return new SpeakerRanking(isDominant, rank, energyScore);
+        return new SpeakerRanking(isDominant, rank, speaker.energyScore);
     }
 
     /**
@@ -622,13 +623,11 @@ public class DominantSpeakerIdentification<T>
                 maybeStartDecisionMaker();
             }
         }
-        if (speaker != null)
-        {
-            int cookedLevel = speaker.levelChanged(level, now);
 
-            if (cookedLevel >= 0)
-                updateLoudestList(speaker, cookedLevel, now);
-        }
+        int cookedLevel = speaker.levelChanged(level, now);
+
+        if (cookedLevel >= 0)
+            updateLoudestList(speaker, cookedLevel, now);
     }
 
     /**
