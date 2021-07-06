@@ -334,7 +334,7 @@ public class DominantSpeakerIdentification<T>
     /**
       * The number of current loudest speakers to keep track of.
       */
-    private int numLoudestToTrack = 3;
+    private int numLoudestToTrack = 0;
 
     /**
       * Time in milliseconds after which speaker is removed from loudest list if
