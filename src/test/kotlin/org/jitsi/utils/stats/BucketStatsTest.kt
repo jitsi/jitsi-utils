@@ -15,6 +15,7 @@
  */
 package org.jitsi.utils.stats
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.ShouldSpec
@@ -23,6 +24,10 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jitsi.utils.OrderedJsonObject
 import java.lang.IllegalArgumentException
 
+@SuppressFBWarnings(
+    value = ["NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"],
+    justification = "False positives"
+)
 class BucketStatsTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
 
@@ -53,7 +58,6 @@ class BucketStatsTest : ShouldSpec() {
                 val bucketsJson = bucketStats.toJson()["buckets"]
                 bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
 
-                bucketsJson as OrderedJsonObject
                 bucketsJson["<= 2 ms"] shouldBe 100
                 bucketsJson["<= 5 ms"] shouldBe 100
                 bucketsJson["<= 200 ms"] shouldBe 1
