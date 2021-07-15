@@ -486,7 +486,8 @@ public class DominantSpeakerIdentification<T>
 
         long oldestValid = now - energyExpireTimeMs;
 
-        logger.trace(() -> "Want to add " + speaker.id.toString() + " with score " + speaker.energyScore + ". Last level = " + level + ".");
+        logger.trace(() -> "Want to add " + speaker.id.toString()
+            + " with score " + speaker.energyScore + ". Last level = " + level + ".");
 
         int i = 0;
         while (i < loudest.size())
