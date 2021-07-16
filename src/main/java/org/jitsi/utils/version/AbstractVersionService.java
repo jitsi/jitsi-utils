@@ -46,7 +46,7 @@ public abstract class AbstractVersionService
     {
         Matcher matcher = PARSE_VERSION_STRING_PATTERN.matcher(version);
 
-        if(matcher.matches() && matcher.groupCount() == 3)
+        if (matcher.matches() && matcher.groupCount() == 3)
         {
             return createVersionImpl(
                 Integer.parseInt(matcher.group(1)),

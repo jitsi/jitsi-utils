@@ -264,7 +264,7 @@ public class ConfigUtils
      * values will be masked when 'sun.java.command' is printed to the logs.
      * Separate each name with a comma.
      */
-    @SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD","MS_SHOULD_BE_FINAL"})
+    @SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "MS_SHOULD_BE_FINAL"})
     public static String PASSWORD_CMD_LINE_ARGS;
 
     /**
@@ -272,7 +272,7 @@ public class ConfigUtils
      * system properties keys whose values should be masked when printed out to
      * the logs.
      */
-    @SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD","MS_SHOULD_BE_FINAL"})
+    @SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "MS_SHOULD_BE_FINAL"})
     public static String PASSWORD_SYS_PROPS;
 
     /**
@@ -296,7 +296,7 @@ public class ConfigUtils
             if (PASSWORD_CMD_LINE_ARGS != null)
                 passwordArgs = PASSWORD_CMD_LINE_ARGS.split(",");
 
-            for (Map.Entry<Object,Object> e : System.getProperties().entrySet())
+            for (Map.Entry<Object, Object> e : System.getProperties().entrySet())
             {
                 String key = String.valueOf(e.getKey());
                 String value = String.valueOf(e.getValue());

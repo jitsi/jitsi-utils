@@ -132,7 +132,7 @@ public class VersionImpl implements Version
     @Override
     public String getNightlyBuildID()
     {
-        if(!isNightly())
+        if (!isNightly())
             return null;
 
         return nightlyBuildID;
@@ -161,13 +161,13 @@ public class VersionImpl implements Version
      */
     public int compareTo(Version version)
     {
-        if(version == null)
+        if (version == null)
             return -1;
 
-        if(getVersionMajor() != version.getVersionMajor())
+        if (getVersionMajor() != version.getVersionMajor())
             return getVersionMajor() - version.getVersionMajor();
 
-        if(getVersionMinor() != version.getVersionMinor())
+        if (getVersionMinor() != version.getVersionMinor())
             return getVersionMinor() - version.getVersionMinor();
 
         try
@@ -199,17 +199,17 @@ public class VersionImpl implements Version
         String[] s2 = v2.split("\\.");
 
         int len = Math.max(s1.length, s2.length);
-        for(int i = 0; i < len; i++)
+        for (int i = 0; i < len; i++)
         {
             int n1 = 0;
             int n2 = 0;
 
-            if(i < s1.length)
+            if (i < s1.length)
                 n1 = Integer.parseInt(s1[i]);
-            if(i < s2.length)
+            if (i < s2.length)
                 n2 = Integer.parseInt(s2[i]);
 
-            if(n1 == n2)
+            if (n1 == n2)
                 continue;
             else
                 return n1 - n2;
@@ -265,13 +265,13 @@ public class VersionImpl implements Version
         versionStringBuff.append(".");
         versionStringBuff.append(getVersionMinor());
 
-        if(isPreRelease())
+        if (isPreRelease())
         {
             versionStringBuff.append("-");
             versionStringBuff.append(getPreReleaseID());
         }
 
-        if(isNightly())
+        if (isNightly())
         {
             versionStringBuff.append(".");
             versionStringBuff.append(getNightlyBuildID());

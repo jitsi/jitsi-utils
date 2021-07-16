@@ -317,7 +317,7 @@ public class DominantSpeakerIdentification<T>
      * The <tt>Speaker</tt>s in the multipoint conference associated with this
      * <tt>ActiveSpeakerDetector</tt>.
      */
-    private final Map<T,Speaker> speakers = new HashMap<>();
+    private final Map<T, Speaker> speakers = new HashMap<>();
 
     /**
      * The <tt>Speaker</tt>s in the multipoint conference with the highest
@@ -671,7 +671,7 @@ public class DominantSpeakerIdentification<T>
             // let the other speakers compete with the nominated one.
             if (dominantSpeaker == null)
             {
-                Map.Entry<T,Speaker> s = speakers.entrySet().iterator().next();
+                Map.Entry<T, Speaker> s = speakers.entrySet().iterator().next();
 
                 dominantSpeaker = s.getValue();
                 newDominantId = s.getKey();
@@ -689,7 +689,7 @@ public class DominantSpeakerIdentification<T>
             // time-interval.
             double newDominantC2 = C2;
 
-            for (Map.Entry<T,Speaker> s : speakers.entrySet())
+            for (Map.Entry<T, Speaker> s : speakers.entrySet())
             {
                 Speaker speaker = s.getValue();
 
@@ -884,7 +884,7 @@ public class DominantSpeakerIdentification<T>
      */
     private synchronized void timeoutIdleLevels(long now)
     {
-        Iterator<Map.Entry<T,Speaker>> i = speakers.entrySet().iterator();
+        Iterator<Map.Entry<T, Speaker>> i = speakers.entrySet().iterator();
 
         while (i.hasNext())
         {

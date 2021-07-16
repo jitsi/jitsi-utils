@@ -114,7 +114,7 @@ class FileHandler
      */
     private static int getLimit()
     {
-        if(limit == -1)
+        if (limit == -1)
         {
             String limitStr = LogManager.getLogManager().getProperty(
                             FileHandler.class.getName() + ".limit");
@@ -215,7 +215,7 @@ class FileHandler
         {
             int ix = pattern.lastIndexOf('/');
 
-            if(ix != -1)
+            if (ix != -1)
             {
                 String dirName = pattern.substring(0, ix);
                 dirName = dirName.replaceAll(
