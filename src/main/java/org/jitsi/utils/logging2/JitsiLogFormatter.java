@@ -87,7 +87,7 @@ public class JitsiLogFormatter extends Formatter
             sb.append(' ');
         }
 
-        if(!timestampDisabled)
+        if (!timestampDisabled)
         {
             //current time
             Calendar cal = Calendar.getInstance();
@@ -135,7 +135,7 @@ public class JitsiLogFormatter extends Formatter
             sb.append(record.getSourceMethodName());
 
             //include the line number if we have it.
-            if(lineNumber != -1)
+            if (lineNumber != -1)
             {
                 sb.append("#").append(lineNumber);
             }

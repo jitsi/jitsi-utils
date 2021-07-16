@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+// CHECKSTYLE:OFF
 /**
  * Like ArrayBlockingQueue but with additional {@link #shutdown()} and {@link #start} methods. Will
  * throw {@link InterruptedException} if Queue has been shutdown on {@link #take()} and
@@ -511,3 +512,5 @@ public class ArrayBlockingQueueWithShutdown<E> extends AbstractQueue<E> implemen
     }
 
 }
+// CHECKSTYLE:ON
+
