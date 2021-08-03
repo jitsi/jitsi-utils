@@ -111,7 +111,8 @@ public class PacketQueue<T>
 
     /**
      * Initializes a new {@link PacketQueue} instance.
-     * @param capacity the capacity of the queue.
+     * @param capacity the capacity of the queue.  {@link Integer#MAX_VALUE} for
+     *                 unbounded.
      * @param enableStatistics whether detailed statistics should be gathered by
      * constructing an {@link Observer}.
      * (In the base {@link PacketQueue} class this will be a {@link QueueStatisticsObserver}
@@ -138,7 +139,7 @@ public class PacketQueue<T>
     {
         this.id = id;
         this.capacity = capacity;
-        queue = new ArrayBlockingQueue<>(capacity);
+        queue = new LinkedBlockingQueue<>(capacity);
 
         asyncQueueHandler = new AsyncQueueHandler<>(
             queue,
