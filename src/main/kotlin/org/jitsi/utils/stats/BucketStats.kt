@@ -107,7 +107,7 @@ class Buckets(thresholdsNoMax: LongArray) {
             return Snapshot(bucketCounts, p99, p999)
         }
 
-    protected open fun findBucket(value: Long): LongAdder {
+    private fun findBucket(value: Long): LongAdder {
         // The vast majority of values are in the first bucket, so linear search is likely faster than binary.
         // Subclasses can override this if necessary.
         for (i in thresholds.indices) {

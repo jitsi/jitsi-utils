@@ -459,7 +459,7 @@ public class DominantSpeakerIdentification<T>
 
         if (speaker == null)
         {
-            speaker = new Speaker(id);
+            speaker = new Speaker<>(id);
             speakers.put(id, speaker);
 
             // Since we've created a new Speaker in the multipoint conference,
