@@ -152,8 +152,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
                 if (threeQuarters > list.last()) {
                     list.add(threeQuarters)
                 }
-            }
-            else {
+            } else {
                 list.add(boundedCapacity.toLong())
             }
 
