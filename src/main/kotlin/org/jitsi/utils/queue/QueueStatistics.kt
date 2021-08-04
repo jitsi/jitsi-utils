@@ -133,22 +133,27 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
          * Calculate the capacity statistics buckets for a given queue capacity.
          */
         private fun getQueueLengthBucketSizes(capacity: Int): LongArray {
+            val boundedCapacity = capacity.coerceAtMost(16384)
             val list = ArrayList<Long>()
             list.add(0L)
             var i = 1L
 
-            while (i < capacity) {
+            while (i < boundedCapacity) {
                 list.add(i)
                 i *= 4
             }
-            val half = (capacity / 2).toLong()
-            if (half > list.last()) {
-                list.add(half)
-            }
+            if (capacity == boundedCapacity) {
+                val half = (capacity / 2).toLong()
+                if (half > list.last()) {
+                    list.add(half)
+                }
 
-            val threeQuarters = (capacity * 3 / 4).toLong()
-            if (threeQuarters > list.last()) {
-                list.add(threeQuarters)
+                val threeQuarters = (capacity * 3 / 4).toLong()
+                if (threeQuarters > list.last()) {
+                    list.add(threeQuarters)
+                }
+            } else {
+                list.add(boundedCapacity.toLong())
             }
 
             return list.toLongArray()
