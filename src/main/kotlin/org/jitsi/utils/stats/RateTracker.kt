@@ -164,7 +164,7 @@ open class RateStatistics @JvmOverloads constructor(
 ) {
 
     val tracker = RateTracker(windowSizeMs, 1.ms, clock)
-    val scale = scale / (windowSizeMs - 1)
+    val scale = scale / windowSizeMs
 
     val rate: Long
         get() = getRate(clock.millis())
