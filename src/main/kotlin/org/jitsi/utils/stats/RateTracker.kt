@@ -19,6 +19,7 @@ import org.jitsi.utils.ms
 import java.lang.IllegalArgumentException
 import java.time.Clock
 import java.time.Duration
+import kotlin.math.roundToLong
 
 /**
  * Tracks an average rate (of values added via [update]) over a sliding window. The data is kept in a circular buffer
@@ -81,6 +82,11 @@ open class RateTracker @JvmOverloads constructor(
     private var oldestTime: Long = 0
 
     /**
+     * The [clock] time at which the first value was inserted (via [update]).
+     */
+    private var firstInsertTimeMs = -1L
+
+    /**
      * The size of the window in milliseconds.
      */
     private val windowSizeMs = numBuckets * bucketSize.toMillis()
@@ -127,7 +133,10 @@ open class RateTracker @JvmOverloads constructor(
     @Synchronized
     open fun getRate(nowMs: Long): Long {
         eraseOld(coerceMs(nowMs))
-        return (accumulatedCount.toDouble() * 1000 / windowSizeMs + 0.5f).toLong()
+
+        // This avoids slow convergence at the start if the full window is used to compute the average rate.
+        val effectiveWindowSizeMs = (nowMs - firstInsertTimeMs).coerceIn(bucketSizeMs, windowSizeMs)
+        return (accumulatedCount.toDouble() * 1000 / effectiveWindowSizeMs).roundToLong()
     }
     val rate: Long
         get() = getRate(clock.millis())
@@ -145,6 +154,7 @@ open class RateTracker @JvmOverloads constructor(
         val now = coerceMs(nowMs)
         if (now < oldestTime) // Too old data is ignored.
             return
+        if (firstInsertTimeMs < 0) firstInsertTimeMs = nowMs
         eraseOld(now)
         val nowOffset = (now - oldestTime).toInt()
         var index = oldestIndex + nowOffset
@@ -168,7 +178,7 @@ open class RateStatistics @JvmOverloads constructor(
 
     val rate: Long
         get() = getRate(clock.millis())
-    open fun getRate(nowMs: Long = clock.millis()) = (tracker.getRate(nowMs) * scale + 0.5).toLong()
+    open fun getRate(nowMs: Long = clock.millis()) = (tracker.getRate(nowMs) * scale).roundToLong()
 
     @JvmOverloads
     fun getAccumulatedCount(nowMs: Long = clock.millis()) = tracker.getAccumulatedCount(nowMs)

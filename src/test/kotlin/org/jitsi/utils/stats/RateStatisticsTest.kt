@@ -17,6 +17,8 @@ package org.jitsi.utils.stats
 
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.doubles.percent
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.jitsi.utils.FakeClock
 import org.jitsi.utils.ms
@@ -25,7 +27,8 @@ import org.jitsi.utils.secs
 class RateStatisticsTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
     private val fakeClock = FakeClock()
-    private val rateStatistics = RateStatistics(1000, clock = fakeClock)
+    private val windowSize = 1.secs
+    private val rateStatistics = RateStatistics(windowSize.toMillis().toInt(), clock = fakeClock)
 
     init {
         should("work correctly") {
@@ -34,7 +37,7 @@ class RateStatisticsTest : ShouldSpec() {
                 fakeClock.elapse(10.ms)
             }
             rateStatistics.getAccumulatedCount() shouldBe 10
-            rateStatistics.rate shouldBe 10 * 8L /* bits per byte */
+            rateStatistics.rate.toDouble() shouldBe averageBpsRange(rateStatistics.getAccumulatedCount())
 
             fakeClock.elapse(500.ms)
             (0..9).forEach {
@@ -42,15 +45,24 @@ class RateStatisticsTest : ShouldSpec() {
                 fakeClock.elapse(10.ms)
             }
             rateStatistics.getAccumulatedCount() shouldBe 20
-            rateStatistics.rate shouldBe 20 * 8L /* bits per byte */
+            rateStatistics.rate.toDouble().shouldBe(averageBpsRange(rateStatistics.getAccumulatedCount()))
 
             fakeClock.elapse(500.ms)
             rateStatistics.getAccumulatedCount() shouldBe 10
-            rateStatistics.rate shouldBe 10 * 8L /* bits per byte */
+            rateStatistics.rate.toDouble().shouldBe(averageBpsRange(rateStatistics.getAccumulatedCount()))
 
             fakeClock.elapse(5.secs)
             rateStatistics.getAccumulatedCount() shouldBe 0
             rateStatistics.rate shouldBe 0
         }
     }
+
+    /**
+     * Return a matcher for [bytes]/duration in bits per second with a 10% tolerance, where duration is the time
+     * elapsed on [fakeClock] (but at most [windowSize]).
+     * I.e. simulate calculating the average bitrate with a tolerance. We need the tolerance because [RateStatistics]
+     * loses precision when converting from bits to bytes.
+     */
+    private fun averageBpsRange(bytes: Long) =
+        (8000.toDouble() * bytes / fakeClock.millis().coerceAtMost(windowSize.toMillis())) plusOrMinus 10.percent
 }
