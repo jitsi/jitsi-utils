@@ -125,6 +125,10 @@ open class RateTracker @JvmOverloads constructor(
             }
         }
         oldestTime = newOldestTime
+        if (accumulatedCount == 0L) {
+            // The stream has had no packets in a whole window, reset.
+            firstInsertTimeMs = -1
+        }
     }
 
     /**
