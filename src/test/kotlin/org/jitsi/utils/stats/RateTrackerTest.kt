@@ -22,6 +22,8 @@ import io.kotest.matchers.shouldBe
 import org.jitsi.utils.FakeClock
 import org.jitsi.utils.ms
 import org.jitsi.utils.secs
+import java.io.File
+import java.time.Instant
 
 class RateTrackerTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
@@ -67,6 +69,34 @@ class RateTrackerTest : ShouldSpec() {
 
             fakeClock.elapse(1000.ms)
             rateTracker.rate shouldBe 0
+        }
+        xcontext("Test with a stream capture") {
+            data class ParsedLine(
+                val timeMs: Long,
+                val value: Long
+            ) {
+                constructor(line: String) : this(
+                    (line.split(" ")[0].toDouble() * 1000).toLong(),
+                    line.split(" ")[1].toLong()
+                )
+            }
+
+            fun run(stream: List<ParsedLine>) {
+                val clock = FakeClock()
+                var tracker = RateTracker(5.secs, 10.ms, clock)
+                stream.forEachIndexed { index, parsedLine ->
+                    if (index % 500 == 0) {
+                        tracker = RateTracker(5.secs, 10.ms, clock)
+                    }
+                    clock.setTime(Instant.ofEpochMilli(parsedLine.timeMs))
+                    tracker.update(parsedLine.value)
+                    println("${parsedLine.timeMs}\t${tracker.rate}")
+                }
+            }
+
+            val stream = File("${System.getProperty("user.dir")}/src/test/resources/stream-180p.txt")
+                .readLines().drop(1).map { ParsedLine(it) }.toList()
+            run(stream)
         }
     }
 }
