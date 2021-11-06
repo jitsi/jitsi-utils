@@ -6,7 +6,7 @@
     <groupId>org.jitsi</groupId>
     <artifactId>jitsi-utils</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
 
     <name>jitsi-utils</name>
     <description>A set of basic utilities used in Jitsi projects</description>
@@ -42,11 +42,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spotbugs.version>4.0.3</spotbugs.version>
-        <org.junit.version>5.6.2</org.junit.version>
+        <spotbugs.version>4.4.2</spotbugs.version>
+        <org.junit.version>5.8.1</org.junit.version>
         <java.version>1.8</java.version>
-        <kotlin.version>1.5.20</kotlin.version>
-        <kotest.version>4.6.1</kotest.version>
+        <kotlin.version>1.5.31</kotlin.version>
+        <kotest.version>4.6.3</kotest.version>
         <dokka.version>1.4.32</dokka.version>
     </properties>
 
@@ -67,18 +67,18 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>19.0.0</version>
+            <version>22.0.0</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.5.0</version>
+            <version>5.9.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>30.1.1-jre</version>
+            <version>31.0.1-jre</version>
         </dependency>
         <dependency>
             <groupId>com.github.spotbugs</groupId>
@@ -101,7 +101,12 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-osgi-bundle</artifactId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
          <dependency>
@@ -157,28 +162,25 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>4.2.1</version>
-                <extensions>true</extensions>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+                <version>6.0.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bnd-process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
-                    <instructions>
-                        <_removeheaders>Bnd-*, Tool, Require-Capability, Include-Resource
-                        </_removeheaders>
-                        <!--
-                        Prevent importing a specific version. Some libraries
-                        like Guava rapidly change major versions, which is a pain for
-                        downstream consumers wanting a different/newer version than
-                        used here.
-                        -->
-                        <Import-Package>*;version=!</Import-Package>
-                        <!-- This is necessary for free/extensions functions defined in the kotlin code to be
-                        visible to kotlin code using this lib.  See https://youtrack.jetbrains.com/issue/KT-9164. -->
-                        <Include-Resource>
-                            /=src/main/resources/,
-                            META-INF=target/classes/META-INF
-                        </Include-Resource>
-                    </instructions>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
                 </configuration>
             </plugin>
             <plugin>
@@ -246,6 +248,16 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.0.0-M3</version>
                 <executions>
@@ -299,10 +311,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.2</version>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>9.1</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <goals>
@@ -314,7 +333,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.0.0</version>
+                <version>4.4.2.2</version>
                 <configuration>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                     <includeTests>true</includeTests>
@@ -370,15 +389,12 @@
     <profiles>
         <profile>
             <id>coverage</id>
-            <properties>
-                <jacoco.version>0.8.7</jacoco.version>
-            </properties>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>${jacoco.version}</version>
+                        <version>0.8.7</version>
                         <executions>
                             <execution>
                                 <goals>

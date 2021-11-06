@@ -31,7 +31,7 @@ import org.junit.jupiter.api.condition.*;
  * @author Yura Yaroshevich
  */
 @EnabledIfSystemProperty(named="org.jitsi.utils.doPerf", matches=".*")
-@TestMethodOrder(MethodOrderer.Alphanumeric.class)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class PacketQueueBenchmarkTests
 {
     /**

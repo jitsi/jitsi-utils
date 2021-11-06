@@ -1,0 +1,6 @@
+Export-Package: org.jitsi.*
+Import-Package: *;version=!
+Bundle-SymbolicName: org.jitsi.utils
+-noextraheaders: true
+-snapshot: SNAPSHOT
+-removeheaders: Require-Capability, Bundle-SCM, Bundle-Developers
