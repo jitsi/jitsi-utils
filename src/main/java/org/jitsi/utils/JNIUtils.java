@@ -16,6 +16,7 @@
 package org.jitsi.utils;
 
 import com.sun.jna.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jitsi.utils.logging.*;
 
 import java.io.*;
@@ -129,6 +130,7 @@ public final class JNIUtils
      * @param clazz The class where to load it.
      * @param isAbsolute Whether the library is name or path.
      */
+    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private static <T> void loadNativeInClassloader(
         String lib, Class<T> clazz, boolean isAbsolute)
     {
@@ -144,11 +146,7 @@ public final class JNIUtils
             loadLibrary0.setAccessible(true);
             loadLibrary0.invoke(Runtime.getRuntime(), clazz, lib);
         }
-        catch (NoSuchMethodException
-            | SecurityException
-            | IllegalAccessException
-            | IllegalArgumentException
-            | InvocationTargetException e)
+        catch (Exception e)
         {
             System.loadLibrary(lib);
         }
