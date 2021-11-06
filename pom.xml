@@ -47,7 +47,6 @@
         <java.version>1.8</java.version>
         <kotlin.version>1.5.31</kotlin.version>
         <kotest.version>4.6.3</kotest.version>
-        <dokka.version>1.4.32</dokka.version>
     </properties>
 
     <dependencies>
@@ -224,7 +223,7 @@
             <plugin>
               <groupId>com.github.gantsign.maven</groupId>
               <artifactId>ktlint-maven-plugin</artifactId>
-              <version>1.9.0</version>
+              <version>1.10.2</version>
               <configuration>
                 <sourceRoots>
                   <sourceRoot>${project.basedir}/src/main/kotlin</sourceRoot>
@@ -357,7 +356,7 @@
             <plugin>
                 <groupId>org.jetbrains.dokka</groupId>
                 <artifactId>dokka-maven-plugin</artifactId>
-                <version>${dokka.version}</version>
+                <version>${kotlin.version}</version>
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
@@ -373,7 +372,7 @@
                         <plugin>
                             <groupId>org.jetbrains.dokka</groupId>
                             <artifactId>kotlin-as-java-plugin</artifactId>
-                            <version>${dokka.version}</version>
+                            <version>${kotlin.version}</version>
                         </plugin>
                     </dokkaPlugins>
                 </configuration>
