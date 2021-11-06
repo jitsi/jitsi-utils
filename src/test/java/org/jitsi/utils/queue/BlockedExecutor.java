@@ -16,8 +16,6 @@
 
 package org.jitsi.utils.queue;
 
-import org.junit.jupiter.api.*;
-
 import java.util.concurrent.*;
 
 /**
@@ -49,10 +47,5 @@ public class BlockedExecutor extends ThreadPoolExecutor
     public void start()
     {
         startBlocker.release();
-    }
-
-    protected void finalize() {
-        super.shutdown();
-        super.finalize();
     }
 }
