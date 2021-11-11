@@ -58,7 +58,7 @@ public class CountingErrorHandler implements ErrorHandler
     @Override
     public void packetHandlingFailed(Throwable t)
     {
-        logger.warn("Failed to handle packet: ", t);
+        logger.error("Failed to handle packet: ", t);
         numExceptions.incrementAndGet();
     }
 

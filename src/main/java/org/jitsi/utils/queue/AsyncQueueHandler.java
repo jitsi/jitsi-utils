@@ -134,7 +134,7 @@ final class AsyncQueueHandler<T>
                 }
                 catch (Throwable e)
                 {
-                    logger.warn("Failed to handle item: ", e);
+                    logger.error("Failed to handle item: ", e);
                 }
             }
         }
