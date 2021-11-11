@@ -48,7 +48,7 @@ sealed class BaseEventEmitter<EventHandlerType>(
         try {
             block()
         } catch (e: Exception) {
-            logger.warn("Exception from event handler: ${e.message}", e)
+            logger.error("Exception from event handler: ${e.message}", e)
         }
     }
 }

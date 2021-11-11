@@ -137,7 +137,7 @@ public class PropertyChangeNotifier
                     }
                     else
                     {
-                        logger.warn(
+                        logger.error(
                                 "A PropertyChangeListener threw an exception"
                                     + " while handling a PropertyChangeEvent.",
                                 t);
