@@ -130,12 +130,46 @@ public class PacketQueue<T>
      *              a clock to use to construct the {@link Observer}.
      */
     public PacketQueue(
+            int capacity,
+            Boolean enableStatistics,
+            @NotNull String id,
+            @NotNull PacketHandler<T> packetHandler,
+            ExecutorService executor,
+            Clock clock)
+    {
+        this(capacity, enableStatistics, id, packetHandler, executor, clock, true);
+    }
+
+    /**
+     * Initializes a new {@link PacketQueue} instance.
+     * @param capacity the capacity of the queue.  {@link Integer#MAX_VALUE} for
+     *                 unbounded.
+     * @param enableStatistics whether detailed statistics should be gathered by
+     * constructing an {@link Observer}.
+     * (In the base {@link PacketQueue} class this will be a {@link QueueStatisticsObserver}
+     * but subclasses can override this).
+     * This might affect performance. A value of {@code null} indicates that
+     * the default {@link #enableStatisticsDefault} value will be used.
+     * @param id the ID of the packet queue, to be used for logging.
+     * @param packetHandler An handler to be used by the queue for
+     * packets read from it.  The queue will start its own tasks on
+     * {@param executor}, which will read packets from the queue and execute
+     * {@code handler.handlePacket} on them.
+     * @param executor An executor service to use to execute
+     * packetHandler for items added to queue.
+     * @param clock If {@param enableStatistics} is true (or resolves as true),
+     *              a clock to use to construct the {@link Observer}.
+     * @param interruptOnClose whether the running task (if any) should be interrupted when the queue is closed. This
+     * is useful when the queue is closed from within a task.
+     */
+    public PacketQueue(
         int capacity,
         Boolean enableStatistics,
         @NotNull String id,
         @NotNull PacketHandler<T> packetHandler,
         ExecutorService executor,
-        Clock clock)
+        Clock clock,
+        boolean interruptOnClose)
     {
         this.id = id;
         this.capacity = capacity;
@@ -146,7 +180,8 @@ public class PacketQueue<T>
             new HandlerAdapter(packetHandler),
             id,
             executor,
-            packetHandler.maxSequentiallyProcessedPackets());
+            packetHandler.maxSequentiallyProcessedPackets(),
+            interruptOnClose);
 
         if (enableStatistics == null)
         {

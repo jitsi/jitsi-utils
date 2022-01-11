@@ -17,11 +17,9 @@
 package org.jitsi.utils.queue;
 
 import org.jetbrains.annotations.*;
-import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging.*;
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 
 /**
  * Asynchronously reads items from provided {@link #queue} on separate thread
@@ -94,6 +92,11 @@ final class AsyncQueueHandler<T>
     private Future<?> readerFuture;
 
     /**
+     * Whether canceling this {@link AsyncQueueHandler} is allowed to interrupt {@link #readerFuture} (if it's running).
+     */
+    private final boolean interruptOnCancel;
+
+    /**
      * Perpetually reads item from {@link #queue} and uses
      * {@link #handler} on each of them.
      */
@@ -158,13 +161,15 @@ final class AsyncQueueHandler<T>
         @NotNull Handler<T> handler,
         @NotNull String id,
         @NotNull ExecutorService executor,
-        long maxSequentiallyHandledItems)
+        long maxSequentiallyHandledItems,
+        boolean interruptOnCancel)
     {
         this.executor = executor;
         this.queue = queue;
         this.handler = handler;
         this.id = id;
         this.maxSequentiallyHandledItems = maxSequentiallyHandledItems;
+        this.interruptOnCancel = interruptOnCancel;
     }
 
     /**
@@ -172,7 +177,7 @@ final class AsyncQueueHandler<T>
      */
     void cancel()
     {
-        cancel(true);
+        cancel(interruptOnCancel);
     }
 
     /**
