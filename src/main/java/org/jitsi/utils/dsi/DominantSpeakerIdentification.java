@@ -597,6 +597,14 @@ public class DominantSpeakerIdentification<T>
     }
 
     /**
+     * Query whether a particular endpoint is currently one of the loudest speakers.
+     */
+    public synchronized boolean isAmongLoudest(T id)
+    {
+        return loudest.stream().anyMatch(speaker -> speaker.id.equals(id));
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
