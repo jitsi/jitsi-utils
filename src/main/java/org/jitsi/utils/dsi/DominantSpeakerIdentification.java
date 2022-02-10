@@ -475,14 +475,27 @@ public class DominantSpeakerIdentification<T>
      * @param speaker the speaker with a new energy level
      * @param level the energy level
      * @param now the current time
+     * @return The current ranking statistics.
      */
-    private synchronized void updateLoudestList(Speaker speaker, int level, long now)
+    private synchronized SpeakerRanking updateLoudestList(Speaker speaker, int level, long now)
     {
+        boolean isDominant = dominantId != null && dominantId.equals(speaker.id);
+
+        if (level < 0)
+        {
+            /* Ignore this level, it is too old. Just gather the stats. */
+            int rank = 0;
+            while (rank < loudest.size() && loudest.get(rank) != speaker)
+                ++rank;
+
+            return new SpeakerRanking(isDominant, rank, speaker.energyScore);
+        }
+
         /* exponential smoothing. round to nearest. */
         speaker.energyScore = (energyAlphaPct * level + (100 - energyAlphaPct) * speaker.energyScore + 50) / 100;
 
         if (numLoudestToTrack == 0)
-            return;
+            return new SpeakerRanking(isDominant, 0, speaker.energyScore);
 
         long oldestValid = now - energyExpireTimeMs;
 
@@ -508,20 +521,20 @@ public class DominantSpeakerIdentification<T>
             ++i;
         }
 
-        i = 0;
-        while (i < loudest.size())
+        int rank = 0;
+        while (rank < loudest.size())
         {
-            Speaker cur = loudest.get(i);
+            Speaker cur = loudest.get(rank);
             if (cur.energyScore < speaker.energyScore)
                 break;
-            ++i;
+            ++rank;
         }
 
-        if (i < numLoudestToTrack)
+        if (rank < numLoudestToTrack)
         {
-            final int pos = i;
+            final int pos = rank;
             logger.trace(() -> "Adding " + speaker.id.toString() + " at position " + pos + ".");
-            loudest.add(i, speaker);
+            loudest.add(rank, speaker);
 
             if (loudest.size() > numLoudestToTrack)
                 loudest.remove(numLoudestToTrack);
@@ -537,62 +550,7 @@ public class DominantSpeakerIdentification<T>
                 ++i;
             }
         }
-    }
 
-    /**
-     * Returns information about an endpoint's energy levels relative
-     * to other endpoints.
-     */
-    public class SpeakerRanking {
-
-        /**
-         * Whether the endpoint is currently the dominant speaker.
-         */
-        public final boolean isDominant;
-
-        /**
-         * The endpoint's current rank by energy level.
-         * If the endpoint is not in the list of the current loudest speakers,
-         * this will be set to the size of the list (which will be <tt>numLoudestToTrack</tt>
-         * if the list is at its maximum size). In essence, all untracked endpoints
-         * are considered tied for the next highest rank after the tracked ones.
-         */
-        public final int energyRanking;
-
-        /**
-         * The endpoint's energy score, a smoothed average of processed
-         * energy levels.
-         */
-        public final int energyScore;
-
-        /**
-         * Initializes a new <tt>SpeakerRanking</tt> instance.
-         */
-        public SpeakerRanking(boolean isDominant_, int energyRanking_, int energyScore_) {
-            isDominant = isDominant_;
-            energyRanking = energyRanking_;
-            energyScore = energyScore_;
-        }
-    }
-
-    /**
-     * Get current energy rank and related data for an endpoint.
-     */
-    public synchronized SpeakerRanking getRanking(T id)
-    {
-        boolean isDominant = dominantId != null && dominantId.equals(id);
-        int rank = 0;
-        while (rank < loudest.size())
-        {
-            Speaker speaker = loudest.get(rank);
-            if (speaker.id.equals(id))
-            {
-                return new SpeakerRanking(isDominant, rank, speaker.energyScore);
-            }
-            ++rank;
-        }
-
-        Speaker speaker = getOrCreateSpeaker(id);
         return new SpeakerRanking(isDominant, rank, speaker.energyScore);
     }
 
@@ -608,7 +566,7 @@ public class DominantSpeakerIdentification<T>
      * {@inheritDoc}
      */
     @Override
-    public void levelChanged(T id, int level)
+    public SpeakerRanking levelChanged(T id, int level)
     {
         Speaker speaker;
         long now = System.currentTimeMillis();
@@ -634,9 +592,7 @@ public class DominantSpeakerIdentification<T>
         }
 
         int cookedLevel = speaker.levelChanged(level, now);
-
-        if (cookedLevel >= 0)
-            updateLoudestList(speaker, cookedLevel, now);
+        return updateLoudestList(speaker, cookedLevel, now);
     }
 
     /**

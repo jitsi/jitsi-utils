@@ -53,8 +53,9 @@ public interface ActiveSpeakerDetector<T>
      * @param ssrc the SSRC of the stream/speaker
      * @param level the latest/current audio level of the stream/speaker with
      * the specified <tt>ssrc</tt>
+     * @return The current energy rank and related data.
      */
-    public void levelChanged(T id, int level);
+    public SpeakerRanking levelChanged(T id, int level);
 
     /**
      * Removes a listener to no longer be notified by this active speaker
