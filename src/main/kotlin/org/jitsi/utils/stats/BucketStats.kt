@@ -44,7 +44,7 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String =
         }
     }
 
-    fun toJson() = OrderedJsonObject().apply {
+    open fun toJson() = OrderedJsonObject().apply {
         val snapshot = snapshot
         put("average$averageMaxLabel", snapshot.average)
         put("max$averageMaxLabel", snapshot.maxValue)
