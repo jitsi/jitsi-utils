@@ -31,13 +31,6 @@ import java.util.regex.*;
  */
 public final class JNIUtils
 {
-    /**
-     * The regular expression pattern which matches the file extension
-     * &quot;dylib&quot; that is commonly used on Mac OS X for dynamic
-     * libraries/shared objects.
-     */
-    private static final Pattern DYLIB_PATTERN = Pattern.compile("\\.dylib$");
-
     private static final Logger logger = Logger.getLogger(JNIUtils.class);
 
     public static void loadLibrary(String libname, ClassLoader classLoader)
@@ -80,8 +73,6 @@ public final class JNIUtils
             // Attempt to extract the library from the resources and load it that
             // way.
             libname = System.mapLibraryName(libname);
-            if (Platform.isMac())
-                libname = DYLIB_PATTERN.matcher(libname).replaceFirst(".jnilib");
 
             File embedded;
 
