@@ -69,6 +69,11 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V>
     }
 
     /**
+     * @return the eldest item in the cache.
+     */
+    public Map.Entry<K, V> eldest() { return this.entrySet().iterator().next(); }
+
+    /**
      * {@inheritDoc}
      */
     @Override
