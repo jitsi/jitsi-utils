@@ -33,6 +33,8 @@ class LogContext private constructor(
         ancestorsContext = emptyMap()
     )
 
+    constructor(key: String, value: String) : this(context = mapOf(key to value))
+
     private var ancestorsContext: Map<String, String> = ancestorsContext
         set(newValue) {
             field = newValue
