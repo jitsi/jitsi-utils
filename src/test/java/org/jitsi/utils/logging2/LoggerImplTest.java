@@ -29,6 +29,18 @@ import org.junit.jupiter.api.Test;
 @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class LoggerImplTest
 {
+    private static boolean containsData(String[] dataTokens, String expected)
+    {
+        for (String dataToken : dataTokens)
+        {
+            if (dataToken.equalsIgnoreCase(expected))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static Function<String, java.util.logging.Logger> oldLoggerFactoryFunction;
     private final FakeLogger fakeLogger = new FakeLogger("fake");
 
@@ -125,8 +137,8 @@ public class LoggerImplTest
         logger.info("hello, world!");
 
         String[] contextTokens = fakeLogger.getLastLineContextTokens();
-        assertTrue(LogContextTest.containsData(contextTokens, "keyOne=value1"));
-        assertTrue(LogContextTest.containsData(contextTokens, "keyTwo=value2"));
+        assertTrue(containsData(contextTokens, "keyOne=value1"));
+        assertTrue(containsData(contextTokens, "keyTwo=value2"));
     }
 
     @Test
@@ -146,9 +158,9 @@ public class LoggerImplTest
         childLogger.info("hello, world!");
 
         String[] contextTokens = fakeLogger.getLastLineContextTokens();
-        assertTrue(LogContextTest.containsData(contextTokens, "keyOne=value1"));
-        assertTrue(LogContextTest.containsData(contextTokens, "keyTwo=value2"));
-        assertTrue(LogContextTest.containsData(contextTokens, "keyThree=value3"));
+        assertTrue(containsData(contextTokens, "keyOne=value1"));
+        assertTrue(containsData(contextTokens, "keyTwo=value2"));
+        assertTrue(containsData(contextTokens, "keyThree=value3"));
     }
 
     /**
