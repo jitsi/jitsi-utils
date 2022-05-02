@@ -17,7 +17,6 @@
 package org.jitsi.utils.logging2;
 
 import org.jitsi.utils.collections.*;
-import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
 
 import static org.jitsi.utils.collections.JMap.*;
