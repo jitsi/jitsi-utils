@@ -27,6 +27,7 @@ import java.util.*;
  * taking individual arguments--are in Java 9 and are provided here
  * for convenience.
  */
+@Deprecated
 public class JMap
 {
     /**
