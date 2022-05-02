@@ -45,15 +45,11 @@ class LogContext private constructor(
      * The formatted String representing the total context (the combination of the ancestors' context and this
      * context)
      */
-    var formattedContext: String = formatContext(context)
+    var formattedContext: String = formatContext(ancestorsContext + context)
         private set
 
     /** Child [LogContext]s of this [LogContext] (which will be notified anytime this context changes) */
     private val childContexts: MutableList<WeakReference<LogContext>> = ArrayList()
-
-    init {
-        updateFormattedContext()
-    }
 
     @Synchronized
     private fun updateFormattedContext() {
