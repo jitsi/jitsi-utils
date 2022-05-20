@@ -33,7 +33,7 @@ class BucketStatsTest : ShouldSpec() {
 
     init {
         context("adding stats") {
-            val bucketStats = BucketStats(longArrayOf(2, 5, 200, 999), "_delay_ms", " ms")
+            val bucketStats = BucketStats(longArrayOf(2, 3, 5, 200, 999), "_delay_ms", "_ms")
 
             should("calculate the average correctly") {
                 repeat(100) { bucketStats.addValue(1) }
@@ -58,10 +58,12 @@ class BucketStatsTest : ShouldSpec() {
                 val bucketsJson = bucketStats.toJson()["buckets"]
                 bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
 
-                bucketsJson["<= 2 ms"] shouldBe 100
-                bucketsJson["<= 5 ms"] shouldBe 100
-                bucketsJson["<= 200 ms"] shouldBe 1
-                bucketsJson["> 999 ms"] shouldBe 1
+                bucketsJson["0_to_2_ms"] shouldBe 100
+                bucketsJson["3_ms"] shouldBe 0
+                bucketsJson["4_to_5_ms"] shouldBe 100
+                bucketsJson["6_to_200_ms"] shouldBe 1
+                bucketsJson["201_to_999_ms"] shouldBe 0
+                bucketsJson["1000_to_max_ms"] shouldBe 1
             }
 
             should("calculate p99 and p999 correctly") {
