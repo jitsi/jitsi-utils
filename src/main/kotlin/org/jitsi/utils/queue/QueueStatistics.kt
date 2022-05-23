@@ -164,7 +164,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
         /**
          * The queue waiting time bucket sizes.
          */
-        private val waitBucketSizes = listOf(0, 2L, 5, 20, 50, 200, 500, 1000, Long.MAX_VALUE)
+        private val waitBucketSizes = listOf(0L, 2, 5, 20, 50, 200, 500, 1000, Long.MAX_VALUE)
     }
 }
 

@@ -29,6 +29,8 @@ open class BucketStats(
     /**
      * The thresholds that define the intervals to be measured. Note that a max value is no longer automatically
      * appended and values larger than the last threshold are not counted.
+     * The intervals are closed on the left, and open on the right, with the exception of the last interval, which is
+     * closed. E.g. with thresholds listOf(0, 1, 2, 5) the intervals will be [0,1), [1, 2), [2, 5].
      */
     thresholds: List<Long>,
     val averageMaxMinLabel: String = "",
@@ -51,13 +53,14 @@ open class BucketStats(
     /** The minimum value that has been added. */
     private val minValue = AtomicLong(0)
     private val buckets = Buckets(thresholds)
+    private val discarded = LongAdder()
 
     fun addValue(value: Long) {
         totalValue.add(value)
         maxValue.maxAssign(value)
         minValue.minAssign(value)
         totalCount.increment()
-        buckets.addValue(value)
+        if (!buckets.addValue(value)) discarded.increment()
     }
 
     @JvmOverloads
@@ -68,6 +71,7 @@ open class BucketStats(
         put("min$averageMaxMinLabel", snapshot.minValue)
         put("total_value", snapshot.totalValue)
         put("total_count", snapshot.totalCount)
+        put("discarded", discarded.sum())
 
         put("buckets", getBucketsJson(snapshot.buckets, format))
     }
@@ -131,11 +135,11 @@ open class BucketStats(
 
     /** How to format the JSON output. */
     enum class Format {
-        /** Include individual buckets, e.g. (min, 0], (0, 10], (10, 20], (20, max) */
+        /** Include individual buckets, e.g. [min, 0), [0, 10), [10, 20), [20, max] */
         Separate,
-        /** Combine buckets summing from the left, e.g. (min, 0], (min, 10], (min, 20] */
+        /** Combine buckets summing from the left, e.g. [min, 0), [min, 10), [min, 20) */
         CumulativeLeft,
-        /** Combine buckets summing from the right, e.g. (0, max), (10, max), (20, max) */
+        /** Combine buckets summing from the right, e.g. [0, max], [10, max], [20, max] */
         CumulativeRight
     }
 }
@@ -170,23 +174,30 @@ class Buckets(private val thresholds: List<Long>) {
         // The vast majority of values are in the first bucket, so linear search is likely faster than binary.
         // Subclasses can override this if necessary.
         for (i in thresholdCounts.indices) {
-            if (value <= thresholds[i + 1]) return thresholdCounts[i]
+            if (value < thresholds[i + 1]) return thresholdCounts[i]
         }
         return thresholdCounts.last()
     }
 
-    /** Add a value. If the value is outside of range defined by the thresholds it is silently ignored. */
-    fun addValue(value: Number) {
+    /**
+     * Add a value. If the value is outside of range defined by the thresholds it is ignored and the function returns
+     * false.
+     * @return true iff the value was successfully added.
+     */
+    fun addValue(value: Number): Boolean {
         val v = value.toDouble()
-        if (v >= thresholds.first() && v <= thresholds.last()) {
+        return if (v < thresholds.first() || v > thresholds.last()) {
+            return false
+        } else {
             findBucket(v).increment()
+            true
         }
     }
 
     data class Snapshot(
         val buckets: Array<Pair<Pair<Long, Long>, Long>>,
         val p99bound: Long,
-        val p999bound: Long
+        val p999bound: Long,
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -206,4 +217,4 @@ class Buckets(private val thresholds: List<Long>) {
 }
 
 /** Utility class with thresholds suitable for recording conference sizes. */
-class ConferenceSizeBuckets : BucketStats(listOf(0, 1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500))
+class ConferenceSizeBuckets : BucketStats(listOf(0, 1, 2, 3, 5, 10, 20, 50, 100, 200, 300, 400, 500, Long.MAX_VALUE))
