@@ -33,11 +33,10 @@ class BucketStatsTest : ShouldSpec() {
 
     init {
         context("adding stats") {
-            val bucketStats = BucketStats(longArrayOf(0, 2, 3, 5, 200, 999), "_delay_ms", "_ms")
+            val bucketStats = BucketStats(listOf(0, 2, 3, 5, 200, 999, Long.MAX_VALUE), "_delay_ms", "_ms")
 
             should("use the correct thresholds") {
                 bucketStats.snapshot.buckets.buckets.map { it.first } shouldBe setOf(
-                    Pair(Long.MIN_VALUE, 0L),
                     Pair(0L, 2L),
                     Pair(2L, 3L),
                     Pair(3L, 5L),
@@ -63,7 +62,6 @@ class BucketStatsTest : ShouldSpec() {
             }
 
             context("export the buckets correctly to json") {
-                bucketStats.addValue(-100)
                 repeat(100) { bucketStats.addValue(1) }
                 repeat(100) { bucketStats.addValue(5) }
                 bucketStats.addValue(150)
@@ -73,7 +71,6 @@ class BucketStatsTest : ShouldSpec() {
                     val bucketsJson = bucketStats.toJson()["buckets"]
                     bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
 
-                    bucketsJson["min_to_0_ms"] shouldBe 1
                     bucketsJson["0_to_2_ms"] shouldBe 100
                     bucketsJson["2_to_3_ms"] shouldBe 0
                     bucketsJson["3_to_5_ms"] shouldBe 100
@@ -85,18 +82,16 @@ class BucketStatsTest : ShouldSpec() {
                     val bucketsJson = bucketStats.toJson(format = BucketStats.Format.CumulativeLeft)["buckets"]
                     bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
 
-                    bucketsJson["min_to_0_ms"] shouldBe 1
-                    bucketsJson["min_to_2_ms"] shouldBe 101
-                    bucketsJson["min_to_3_ms"] shouldBe 101
-                    bucketsJson["min_to_5_ms"] shouldBe 201
-                    bucketsJson["min_to_200_ms"] shouldBe 202
-                    bucketsJson["min_to_999_ms"] shouldBe 202
+                    bucketsJson["0_to_2_ms"] shouldBe 100
+                    bucketsJson["0_to_3_ms"] shouldBe 100
+                    bucketsJson["0_to_5_ms"] shouldBe 200
+                    bucketsJson["0_to_200_ms"] shouldBe 201
+                    bucketsJson["0_to_999_ms"] shouldBe 201
                 }
                 context("Cumulative from the right") {
                     val bucketsJson = bucketStats.toJson(format = BucketStats.Format.CumulativeRight)["buckets"]
                     bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
 
-                    bucketsJson["0_to_max_ms"] shouldBe 202
                     bucketsJson["2_to_max_ms"] shouldBe 102
                     bucketsJson["3_to_max_ms"] shouldBe 102
                     bucketsJson["5_to_max_ms"] shouldBe 2
@@ -128,7 +123,7 @@ class BucketStatsTest : ShouldSpec() {
 
         context("initializing with invalid thresholds should throw") {
             shouldThrow<IllegalArgumentException> {
-                BucketStats(longArrayOf(2, 10, 5), "_delay_ms", " ms")
+                BucketStats(listOf(2, 10, 5), "_delay_ms", " ms")
             }
         }
     }

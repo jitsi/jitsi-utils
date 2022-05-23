@@ -20,24 +20,37 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.maxAssign
 import org.jitsi.utils.minAssign
-import java.lang.IllegalArgumentException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.LongAdder
+import kotlin.IllegalArgumentException
 
 @SuppressFBWarnings(value = ["SF_SWITCH_NO_DEFAULT"], justification = "False positive with kotlin's 'when'.")
-open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String = "", val bucketLabel: String = "") {
+open class BucketStats(
+    /**
+     * The thresholds that define the intervals to be measured. Note that a max value is no longer automatically
+     * appended and values larger than the last threshold are not counted.
+     */
+    thresholds: List<Long>,
+    val averageMaxMinLabel: String = "",
+    val bucketLabel: String = ""
+) {
     init {
-        if (!thresholdsNoMax.contentEquals(thresholdsNoMax.sortedArray())) {
-            throw IllegalArgumentException("Thresholds must be sorted: ${thresholdsNoMax.joinToString()}")
+        if (thresholds.size < 2) {
+            throw IllegalArgumentException("At least 2 thresholds are required.")
+        }
+        if (thresholds != thresholds.sorted()) {
+            throw IllegalArgumentException("Thresholds must be sorted: ${thresholds.joinToString()}")
         }
     }
     private val totalValue = LongAdder()
     private val totalCount = LongAdder()
     private val average: Double
         get() = totalValue.sum() / totalCount.sum().toDouble()
+    /** The maximum value that has been added. */
     private val maxValue = AtomicLong(0)
+    /** The minimum value that has been added. */
     private val minValue = AtomicLong(0)
-    private val buckets = Buckets(thresholdsNoMax)
+    private val buckets = Buckets(thresholds)
 
     fun addValue(value: Long) {
         totalValue.add(value)
@@ -50,9 +63,9 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String =
     @JvmOverloads
     open fun toJson(format: Format = Format.Separate) = OrderedJsonObject().apply {
         val snapshot = snapshot
-        put("average$averageMaxLabel", snapshot.average)
-        put("max$averageMaxLabel", snapshot.maxValue)
-        put("min$averageMaxLabel", snapshot.minValue)
+        put("average$averageMaxMinLabel", snapshot.average)
+        put("max$averageMaxMinLabel", snapshot.maxValue)
+        put("min$averageMaxMinLabel", snapshot.minValue)
         put("total_value", snapshot.totalValue)
         put("total_count", snapshot.totalCount)
 
@@ -88,20 +101,24 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String =
             }
             Format.CumulativeLeft -> {
                 var sum = 0L
+                val f = b.buckets.first().first.first.let { if (it == Long.MIN_VALUE) "min" else "$it" }
                 b.buckets.forEach {
                     if (it.first.second != Long.MAX_VALUE) {
                         sum += it.second
-                        val key = "min_to_${it.first.second}"
+                        val s = "${it.first.second}"
+                        val key = "${f}_to_$s"
                         this["$key$bucketLabel"] = sum
                     }
                 }
             }
             Format.CumulativeRight -> {
                 var sum = 0L
+                val s = b.buckets.last().first.second.let { if (it == Long.MAX_VALUE) "max" else "$it" }
                 b.buckets.reversed().forEach {
                     if (it.first.first != Long.MIN_VALUE) {
                         sum += it.second
-                        val key = "${it.first.first}_to_max"
+                        val f = "${it.first.first}"
+                        val key = "${f}_to_$s"
                         this["$key$bucketLabel"] = sum
                     }
                 }
@@ -123,8 +140,7 @@ open class BucketStats(thresholdsNoMax: LongArray, val averageMaxLabel: String =
     }
 }
 
-class Buckets(thresholdsNoMax: LongArray) {
-    private val thresholds = longArrayOf(Long.MIN_VALUE, *thresholdsNoMax, Long.MAX_VALUE)
+class Buckets(private val thresholds: List<Long>) {
     // The bucket for (thresholds[i], thresholds[i+1]].
     private val thresholdCounts = Array(thresholds.size - 1) { LongAdder() }
     val snapshot: Snapshot
@@ -159,7 +175,13 @@ class Buckets(thresholdsNoMax: LongArray) {
         return thresholdCounts.last()
     }
 
-    fun addValue(value: Number) = findBucket(value.toDouble()).increment()
+    /** Add a value. If the value is outside of range defined by the thresholds it is silently ignored. */
+    fun addValue(value: Number) {
+        val v = value.toDouble()
+        if (v >= thresholds.first() && v <= thresholds.last()) {
+            findBucket(v).increment()
+        }
+    }
 
     data class Snapshot(
         val buckets: Array<Pair<Pair<Long, Long>, Long>>,
@@ -184,4 +206,4 @@ class Buckets(thresholdsNoMax: LongArray) {
 }
 
 /** Utility class with thresholds suitable for recording conference sizes. */
-class ConferenceSizeBuckets : BucketStats(longArrayOf(0, 1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500))
+class ConferenceSizeBuckets : BucketStats(listOf(0, 1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500))
