@@ -42,7 +42,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spotbugs.version>4.7.0</spotbugs.version>
+        <spotbugs.version>4.6.0</spotbugs.version>
         <org.junit.version>5.8.1</org.junit.version>
         <java.version>1.8</java.version>
         <kotlin.version>1.6.21</kotlin.version>
@@ -327,7 +327,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.4.2.2</version>
+                <version>4.7.0.0</version>
                 <configuration>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                     <includeTests>true</includeTests>

@@ -95,29 +95,31 @@ class LogContextTest : ShouldSpec() {
 
         context("testChildContextDisappearing") {
             val ctx = LogContext(mapOf("confId" to "111"))
-            val subCtx1 = ctx.createSubContext(mapOf("epId" to "123"))
-            var subCtx2: LogContext? = ctx.createSubContext(mapOf("epId" to "456"))
-            val subCtx3 = ctx.createSubContext(mapOf("epId" to "789"))
+            // We use an array here rather than three separate variables to stop various code-analysis
+            // tools from complaining about unused variables.
+            val subCtxs = Array<LogContext?>(3) { i ->
+                ctx.createSubContext(mapOf("epId" to "$i$i$i"))
+            }
             ctx.addContext("newKey", "newValue")
 
-            // We set subCtx to null here and attempt to invoke GC in order for it to be null
+            // We set subCtx[1] to null here and attempt to invoke GC in order for it to be null
             // for when we add more context to the parent logger.  Although we don't have a
             // guarantee that GC will always run, it did so reliably when I wrote these tests
             // to at least validate that LogContext behaves as expected.
-            subCtx2 = null
+            subCtxs[1] = null
             System.gc()
 
             ctx.addContext("anotherNewKey", "anotherNewValue")
-            val subCtx1Data = getTokens(subCtx1.formattedContext)
+            val subCtx1Data = getTokens(subCtxs[0]!!.formattedContext)
             subCtx1Data shouldContain "confId=111"
             subCtx1Data shouldContain "newKey=newValue"
-            subCtx1Data shouldContain "epId=123"
+            subCtx1Data shouldContain "epId=000"
             subCtx1Data shouldContain "anotherNewKey=anotherNewValue"
 
-            val subCtx3Data = getTokens(subCtx3.toString())
+            val subCtx3Data = getTokens(subCtxs[2]!!.toString())
             subCtx3Data shouldContain "confId=111"
             subCtx3Data shouldContain "newKey=newValue"
-            subCtx3Data shouldContain "epId=789"
+            subCtx3Data shouldContain "epId=222"
             subCtx3Data shouldContain "anotherNewKey=anotherNewValue"
         }
     }
