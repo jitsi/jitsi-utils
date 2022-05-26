@@ -13,7 +13,7 @@ on:
 
 env:
   # Java version to use for the release
-  RELEASE_JAVA_VERSION: 8
+  RELEASE_JAVA_VERSION: 11
 
 jobs:
   test:
@@ -22,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        java: [ 8, 11, 17 ]
+        java: [ 11, 17 ]
 
     name: Java ${{ matrix.java }}
 
