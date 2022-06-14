@@ -16,6 +16,7 @@
 package org.jitsi.utils.dsi;
 
 import java.lang.ref.*;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -325,11 +326,19 @@ public class DominantSpeakerIdentification<T>
      */
     private final ArrayList<Speaker> loudest = new ArrayList<Speaker>();
 
+    private final Clock clock;
+
     /**
      * Initializes a new <tt>DominantSpeakerIdentification</tt> instance.
      */
     public DominantSpeakerIdentification()
     {
+        this(Clock.systemUTC());
+    }
+
+    public DominantSpeakerIdentification(Clock clock)
+    {
+        this.clock = clock;
     }
 
     /**
@@ -569,7 +578,7 @@ public class DominantSpeakerIdentification<T>
     public SpeakerRanking levelChanged(T id, int level)
     {
         Speaker speaker;
-        long now = System.currentTimeMillis();
+        long now = clock.millis();
 
         synchronized (this)
         {
@@ -755,7 +764,7 @@ public class DominantSpeakerIdentification<T>
      */
     private long runInDecisionMaker()
     {
-        long now = System.currentTimeMillis();
+        long now = clock.millis();
         long levelIdleTimeout = LEVEL_IDLE_TIMEOUT - (now - lastLevelIdleTime);
         long sleep = 0;
 
@@ -785,7 +794,7 @@ public class DominantSpeakerIdentification<T>
             // time-consuming ordeal so the timeout to the next decision
             // iteration should be computed after the end of the decision
             // iteration.
-            decisionTimeout = DECISION_INTERVAL - (System.currentTimeMillis() - now);
+            decisionTimeout = DECISION_INTERVAL - (clock.millis() - now);
 
         }
         if ((decisionTimeout > 0) && (sleep > decisionTimeout))
@@ -1012,7 +1021,7 @@ public class DominantSpeakerIdentification<T>
      *
      * @author Lyubomir Marinov
      */
-    private static class Speaker<T>
+    private class Speaker<T>
     {
         private final byte[] immediates = new byte[LONG_COUNT * N3 * N2];
 
@@ -1031,7 +1040,7 @@ public class DominantSpeakerIdentification<T>
          * <tt>DominantSpeakerIdentification</tt> will presume that this
          * <tt>Speaker</tt> was muted for the duration of a certain frame.
          */
-        private long lastLevelChangedTime = System.currentTimeMillis();
+        private long lastLevelChangedTime = clock.millis();
 
         /**
          * The (history of) audio levels received or measured for this
@@ -1264,7 +1273,7 @@ public class DominantSpeakerIdentification<T>
         @SuppressWarnings("unused")
         public void levelChanged(int level)
         {
-            levelChanged(level, System.currentTimeMillis());
+            levelChanged(level, clock.millis());
         }
 
         /**
