@@ -112,7 +112,7 @@ public class LoggerImpl implements Logger
         {
             return;
         }
-        LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
+        LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.getFormattedContext());
         lr.setThrown(thrown);
         lr.setLoggerName(this.loggerDelegate.getName());
         loggerDelegate.log(lr);
@@ -124,7 +124,7 @@ public class LoggerImpl implements Logger
         {
             return;
         }
-        LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.formattedContext);
+        LogRecord lr = new ContextLogRecord(level, msg.toString(), logContext.getFormattedContext());
         lr.setLoggerName(this.loggerDelegate.getName());
         loggerDelegate.log(lr);
     }
@@ -135,7 +135,7 @@ public class LoggerImpl implements Logger
         {
             return;
         }
-        LogRecord lr = new ContextLogRecord(level, msgSupplier.get(), logContext.formattedContext);
+        LogRecord lr = new ContextLogRecord(level, msgSupplier.get(), logContext.getFormattedContext());
         lr.setLoggerName(this.loggerDelegate.getName());
         loggerDelegate.log(lr);
     }

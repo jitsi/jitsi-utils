@@ -42,11 +42,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spotbugs.version>4.4.2</spotbugs.version>
+        <spotbugs.version>4.6.0</spotbugs.version>
         <org.junit.version>5.8.1</org.junit.version>
-        <java.version>1.8</java.version>
-        <kotlin.version>1.5.31</kotlin.version>
-        <kotest.version>4.6.3</kotest.version>
+        <java.version>11</java.version>
+        <kotlin.version>1.6.21</kotlin.version>
+        <kotest.version>5.3.0</kotest.version>
     </properties>
 
     <dependencies>
@@ -73,11 +73,6 @@
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>5.9.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>31.0.1-jre</version>
         </dependency>
         <dependency>
             <groupId>com.github.spotbugs</groupId>
@@ -157,7 +152,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>11</jvmTarget>
                 </configuration>
             </plugin>
             <plugin>
@@ -223,7 +218,7 @@
             <plugin>
               <groupId>com.github.gantsign.maven</groupId>
               <artifactId>ktlint-maven-plugin</artifactId>
-              <version>1.10.2</version>
+              <version>1.13.1</version>
               <configuration>
                 <sourceRoots>
                   <sourceRoot>${project.basedir}/src/main/kotlin</sourceRoot>
@@ -332,7 +327,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.4.2.2</version>
+                <version>4.7.0.0</version>
                 <configuration>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                     <includeTests>true</includeTests>
@@ -393,7 +388,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.7</version>
+                        <version>0.8.8</version>
                         <executions>
                             <execution>
                                 <goals>
