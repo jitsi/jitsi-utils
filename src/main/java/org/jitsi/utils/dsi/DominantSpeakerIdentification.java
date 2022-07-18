@@ -182,14 +182,8 @@ public class DominantSpeakerIdentification<T>
      */
     private static final long SPEAKER_IDLE_TIMEOUT = 60 * 60 * 1000;
 
-    /**
-     * The pool of <tt>Thread</tt>s which run
-     * <tt>DominantSpeakerIdentification</tt>s.
-     */
-    private static final ExecutorService threadPool
-        = ExecutorUtils.newCachedThreadPool(
-                true,
-                "DominantSpeakerIdentification");
+    private static final ScheduledExecutorService DEFAULT_EXECUTOR
+            = Executors.newScheduledThreadPool(1, new CustomizableThreadFactory("dsi", true));
 
     static
     {
@@ -273,8 +267,7 @@ public class DominantSpeakerIdentification<T>
     }
 
     /**
-     * The background thread which repeatedly makes the (global) decision about
-     * speaker switches.
+     * The background task which repeatedly makes the (global) decision about speaker switches.
      */
     private DecisionMaker decisionMaker;
 
@@ -329,16 +322,22 @@ public class DominantSpeakerIdentification<T>
     private final Clock clock;
 
     /**
+     * The executor used to schedule {@link #decisionMaker}.
+     */
+    private final ScheduledExecutorService executor;
+
+    /**
      * Initializes a new <tt>DominantSpeakerIdentification</tt> instance.
      */
     public DominantSpeakerIdentification()
     {
-        this(Clock.systemUTC());
+        this(Clock.systemUTC(), DEFAULT_EXECUTOR);
     }
 
-    public DominantSpeakerIdentification(Clock clock)
+    public DominantSpeakerIdentification(Clock clock, ScheduledExecutorService executor)
     {
         this.clock = clock;
+        this.executor = executor;
     }
 
     /**
@@ -741,7 +740,7 @@ public class DominantSpeakerIdentification<T>
             this.decisionMaker = decisionMaker;
             try
             {
-                threadPool.execute(decisionMaker);
+                executor.execute(decisionMaker);
                 scheduled = true;
             }
             finally
@@ -921,54 +920,42 @@ public class DominantSpeakerIdentification<T>
         @Override
         public void run()
         {
-            try
+            boolean exit = false;
+
+            DominantSpeakerIdentification<?> algorithm = this.algorithm.get();
+
+            if (algorithm == null)
             {
-                do
-                {
-                    DominantSpeakerIdentification algorithm = this.algorithm.get();
-
-                    if (algorithm == null)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        long sleep = algorithm.runInDecisionMaker(this);
-
-                        // A negative sleep value is explicitly supported i.e.
-                        // expected and is contracted to mean that this
-                        // DecisionMaker is instructed by the algorithm to
-                        // commit suicide.
-                        if (sleep < 0)
-                        {
-                            break;
-                        }
-                        else if (sleep > 0)
-                        {
-                            // Before sleeping, make the currentThread release
-                            // its reference to the associated
-                            // DominantSpeakerIdentification instance.
-                            algorithm = null;
-                            try
-                            {
-                                Thread.sleep(sleep);
-                            }
-                            catch (InterruptedException ie)
-                            {
-                                // Continue with the next iteration.
-                            }
-                        }
-                    }
-                }
-                while (true);
+                exit = true;
             }
-            finally
+            else
+            {
+                long sleep = algorithm.runInDecisionMaker(this);
+
+                // A negative sleep value is explicitly supported i.e.
+                // expected and is contracted to mean that this
+                // DecisionMaker is instructed by the algorithm to
+                // commit suicide.
+                if (sleep < 0)
+                {
+                    exit = true;
+                }
+                else
+                {
+                    // Before sleeping, make the currentThread release
+                    // its reference to the associated
+                    // DominantSpeakerIdentification instance.
+                    algorithm.executor.schedule(this, sleep, TimeUnit.MILLISECONDS);
+                }
+            }
+
+            if (exit)
             {
                 // Notify the algorithm that this background thread will no
                 // longer run it in order to make the (global) decision about
                 // speaker switches. Subsequently, the algorithm may decide to
                 // spawn another background thread to run the same task.
-                DominantSpeakerIdentification algorithm = this.algorithm.get();
+                algorithm = this.algorithm.get();
 
                 if (algorithm != null)
                 {
