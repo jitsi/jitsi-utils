@@ -34,6 +34,7 @@ import org.json.simple.*;
  *
  * @author Lyubomir Marinov
  */
+@SuppressWarnings("unused")
 public class DominantSpeakerIdentification<T>
     extends AbstractActiveSpeakerDetector<T>
 {
@@ -252,9 +253,9 @@ public class DominantSpeakerIdentification<T>
     private static double computeSpeechActivityScore(
             int vL,
             int nR,
-            double p,
             double lambda)
     {
+        double p = 0.5;
         double speechActivityScore
             = Math.log(binomialCoefficient(nR, vL)) + vL * Math.log(p)
                 + (nR - vL) * Math.log(1 - p) - Math.log(lambda) + lambda * vL;
@@ -311,13 +312,13 @@ public class DominantSpeakerIdentification<T>
      * The <tt>Speaker</tt>s in the multipoint conference associated with this
      * <tt>ActiveSpeakerDetector</tt>.
      */
-    private final Map<T, Speaker> speakers = new HashMap<>();
+    private final Map<T, Speaker<T>> speakers = new HashMap<>();
 
     /**
      * The <tt>Speaker</tt>s in the multipoint conference with the highest
      * current energy levels.
      */
-    private final ArrayList<Speaker> loudest = new ArrayList<Speaker>();
+    private final ArrayList<Speaker<T>> loudest = new ArrayList<>();
 
     private final Clock clock;
 
@@ -418,10 +419,10 @@ public class DominantSpeakerIdentification<T>
                 jsonObject.put("dominantSpeaker", Objects.toString(dominantSpeaker));
 
                 // speakers
-                Collection<Speaker> speakersCollection = this.speakers.values();
+                Collection<Speaker<T>> speakersCollection = this.speakers.values();
                 JSONArray speakersArray = new JSONArray();
 
-                for (Speaker speaker : speakersCollection)
+                for (Speaker<T> speaker : speakersCollection)
                 {
                     JSONObject speakerJSONObject = new JSONObject();
 
@@ -461,9 +462,9 @@ public class DominantSpeakerIdentification<T>
      * @return the <tt>Speaker</tt> in this multipoint conference identified by {@code id}.
      */
     @NotNull
-    private synchronized Speaker getOrCreateSpeaker(T id)
+    private synchronized Speaker<T> getOrCreateSpeaker(T id)
     {
-        Speaker speaker = speakers.get(id);
+        Speaker<T> speaker = speakers.get(id);
 
         if (speaker == null)
         {
@@ -485,7 +486,7 @@ public class DominantSpeakerIdentification<T>
      * @param now the current time
      * @return The current ranking statistics.
      */
-    private synchronized SpeakerRanking updateLoudestList(Speaker speaker, int level, long now)
+    private synchronized SpeakerRanking updateLoudestList(Speaker<T> speaker, int level, long now)
     {
         boolean isDominant = dominantId != null && dominantId.equals(speaker.id);
 
@@ -513,7 +514,7 @@ public class DominantSpeakerIdentification<T>
         int i = 0;
         while (i < loudest.size())
         {
-            Speaker cur = loudest.get(i);
+            Speaker<T> cur = loudest.get(i);
             if (cur.getLastLevelChangedTime() < oldestValid)
             {
                 logger.trace(() -> "Removing " + cur.id.toString() + ". old.");
@@ -532,7 +533,7 @@ public class DominantSpeakerIdentification<T>
         int rank = 0;
         while (rank < loudest.size())
         {
-            Speaker cur = loudest.get(rank);
+            Speaker<T> cur = loudest.get(rank);
             if (cur.energyScore < speaker.energyScore)
                 break;
             ++rank;
@@ -553,7 +554,7 @@ public class DominantSpeakerIdentification<T>
             i = 0;
             while (i < loudest.size())
             {
-                Speaker cur = loudest.get(i);
+                Speaker<T> cur = loudest.get(i);
                 logger.trace("New list: " + i + ": " + cur.id.toString() + ": " + cur.energyScore + ".");
                 ++i;
             }
@@ -576,7 +577,7 @@ public class DominantSpeakerIdentification<T>
     @Override
     public SpeakerRanking levelChanged(T id, int level)
     {
-        Speaker speaker;
+        Speaker<T> speaker;
         long now = clock.millis();
 
         synchronized (this)
@@ -634,7 +635,7 @@ public class DominantSpeakerIdentification<T>
         }
         else
         {
-            Speaker dominantSpeaker
+            Speaker<T> dominantSpeaker
                 = (dominantId == null)
                     ? null
                     : speakers.get(dominantId);
@@ -643,7 +644,7 @@ public class DominantSpeakerIdentification<T>
             // let the other speakers compete with the nominated one.
             if (dominantSpeaker == null)
             {
-                Map.Entry<T, Speaker> s = speakers.entrySet().iterator().next();
+                Map.Entry<T, Speaker<T>> s = speakers.entrySet().iterator().next();
 
                 dominantSpeaker = s.getValue();
                 newDominantId = s.getKey();
@@ -661,9 +662,9 @@ public class DominantSpeakerIdentification<T>
             // time-interval.
             double newDominantC2 = C2;
 
-            for (Map.Entry<T, Speaker> s : speakers.entrySet())
+            for (Map.Entry<T, Speaker<T>> s : speakers.entrySet())
             {
-                Speaker speaker = s.getValue();
+                Speaker<T> speaker = s.getValue();
 
                 // The dominant speaker does not compete with itself. In other
                 // words, there is no use detecting a speaker switch from the
@@ -856,11 +857,11 @@ public class DominantSpeakerIdentification<T>
      */
     private synchronized void timeoutIdleLevels(long now)
     {
-        Iterator<Map.Entry<T, Speaker>> i = speakers.entrySet().iterator();
+        Iterator<Map.Entry<T, Speaker<T>>> i = speakers.entrySet().iterator();
 
         while (i.hasNext())
         {
-            Speaker speaker = i.next().getValue();
+            Speaker<T> speaker = i.next().getValue();
             long idle = now - speaker.getLastLevelChangedTime();
 
             // Remove a non-dominant Speaker if he/she has been idle for far too
@@ -896,7 +897,7 @@ public class DominantSpeakerIdentification<T>
          * mulipoint conference has actually expired and that this background
          * <tt>Thread</tt> should perish.
          */
-        private final WeakReference<DominantSpeakerIdentification> algorithm;
+        private final WeakReference<DominantSpeakerIdentification<?>> algorithm;
 
         /**
          * Initializes a new <tt>DecisionMaker</tt> instance which is to
@@ -908,7 +909,7 @@ public class DominantSpeakerIdentification<T>
          * repeatedly run by the new instance in order to make the (global)
          * decision about speaker switches
          */
-        public DecisionMaker(DominantSpeakerIdentification algorithm)
+        public DecisionMaker(DominantSpeakerIdentification<?> algorithm)
         {
             this.algorithm = new WeakReference<>(algorithm);
         }
@@ -971,7 +972,7 @@ public class DominantSpeakerIdentification<T>
      *
      * @author Lyubomir Marinov
      */
-    private class Speaker<T>
+    private class Speaker<U>
     {
         private final byte[] immediates = new byte[LONG_COUNT * N3 * N2];
 
@@ -1046,7 +1047,7 @@ public class DominantSpeakerIdentification<T>
         /**
          * The identifier of this <tt>Speaker</tt> which is unique within this {@link DominantSpeakerIdentification}.
          */
-        public final T id;
+        public final U id;
 
         /**
          * Initializes a new <tt>Speaker</tt> instance with a specific identifier
@@ -1054,7 +1055,7 @@ public class DominantSpeakerIdentification<T>
          * @param id the object identifying this speaker.
          * instance
          */
-        public Speaker(T id)
+        public Speaker(U id)
         {
             this.id = id;
 
@@ -1107,7 +1108,7 @@ public class DominantSpeakerIdentification<T>
          */
         private void evaluateImmediateSpeechActivityScore()
         {
-            immediateSpeechActivityScore = computeSpeechActivityScore(immediates[0], N1, 0.5, 0.78);
+            immediateSpeechActivityScore = computeSpeechActivityScore(immediates[0], N1, 0.78);
         }
 
         /**
@@ -1116,7 +1117,7 @@ public class DominantSpeakerIdentification<T>
          */
         private void evaluateLongSpeechActivityScore()
         {
-            longSpeechActivityScore = computeSpeechActivityScore(longs[0], N3, 0.5, 47);
+            longSpeechActivityScore = computeSpeechActivityScore(longs[0], N3, 47);
         }
 
         /**
@@ -1125,7 +1126,7 @@ public class DominantSpeakerIdentification<T>
          */
         private void evaluateMediumSpeechActivityScore()
         {
-            mediumSpeechActivityScore = computeSpeechActivityScore(mediums[0], N2, 0.5, 24);
+            mediumSpeechActivityScore = computeSpeechActivityScore(mediums[0], N2, 24);
         }
 
         /**
@@ -1175,7 +1176,7 @@ public class DominantSpeakerIdentification<T>
             // with the first audio level received or measured for this Speaker.
             // Reverse the list and print them in the order they were received.
             byte[] src = this.levels;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append('[');
 
             for (int s = src.length - 1; s >= 0; --s)
