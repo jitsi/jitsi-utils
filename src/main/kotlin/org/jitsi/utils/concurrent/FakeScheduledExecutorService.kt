@@ -130,10 +130,9 @@ class FakeScheduledExecutorService(
         }
     }
 
-    /* Methods required by ScheduledExecutorService, but not needed by our unit tests. */
-
     override fun execute(command: Runnable) { schedule(command, 0, TimeUnit.MILLISECONDS) }
 
+    /* Methods required by ScheduledExecutorService, but not needed by our unit tests. */
     override fun shutdown() = TODO("Not yet implemented")
     override fun shutdownNow(): MutableList<Runnable> = TODO("Not yet implemented")
     override fun isShutdown(): Boolean = TODO("Not yet implemented")
