@@ -967,44 +967,6 @@ public class DominantSpeakerIdentification<T>
     }
 
     /**
-     * Facilitates this <tt>DominantSpeakerIdentification</tt> in the
-     * implementations of adding and removing <tt>PropertyChangeListener</tt>s
-     * and firing <tt>PropertyChangeEvent</tt>s to the added
-     * <tt>PropertyChangeListener</tt>s.
-     *
-     * @author Lyubomir Marinov
-     */
-    private class PropertyChangeNotifier
-        extends org.jitsi.utils.event.PropertyChangeNotifier
-    {
-        /**
-         * {@inheritDoc}
-         *
-         * Makes the super implementations (which is protected) public.
-         */
-        @Override
-        public void firePropertyChange(
-                String property,
-                Object oldValue, Object newValue)
-        {
-            super.firePropertyChange(property, oldValue, newValue);
-        }
-
-        /**
-         * {@inheritDoc}
-         *
-         * Always returns this <tt>DominantSpeakerIdentification</tt>.
-         */
-        @Override
-        protected Object getPropertyChangeSource(
-                String property,
-                Object oldValue, Object newValue)
-        {
-            return DominantSpeakerIdentification.this;
-        }
-    }
-
-    /**
      * Represents a speaker in a multipoint conference identified by an ID.
      *
      * @author Lyubomir Marinov
