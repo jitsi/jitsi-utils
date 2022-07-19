@@ -955,8 +955,8 @@ public class DominantSpeakerIdentification<T>
 
             if (exit)
             {
-                // Notify the algorithm that this DecisionMaker will no longer run. Subsequently, the algorithm may decide
-                // to create and schedule another one if and when it's needed.
+                // Notify the algorithm that this DecisionMaker will no longer run. Subsequently, the algorithm may
+                // decide to create and schedule another one if and when it's needed.
                 algorithm = this.algorithm.get();
 
                 if (algorithm != null)
