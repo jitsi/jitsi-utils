@@ -327,6 +327,22 @@ public class DominantSpeakerIdentification<T>
     private final ScheduledExecutorService executor;
 
     /**
+     * The number of current loudest speakers to keep track of.
+     */
+    private int numLoudestToTrack = 0;
+
+    /**
+     * Time in milliseconds after which speaker is removed from loudest list if
+     * no new audio packets have been received from that speaker.
+     */
+    private int energyExpireTimeMs = 150;
+
+    /**
+     * Alpha factor for exponential smoothing of energy values, multiplied by 100.
+     */
+    private int energyAlphaPct = 50;
+
+    /**
      * Initializes a new <tt>DominantSpeakerIdentification</tt> instance.
      */
     public DominantSpeakerIdentification()
@@ -339,22 +355,6 @@ public class DominantSpeakerIdentification<T>
         this.clock = clock;
         this.executor = executor;
     }
-
-    /**
-      * The number of current loudest speakers to keep track of.
-      */
-    private int numLoudestToTrack = 0;
-
-    /**
-      * Time in milliseconds after which speaker is removed from loudest list if
-      * no new audio packets have been received from that speaker.
-      */
-    private int energyExpireTimeMs = 150;
-
-    /**
-      * Alpha factor for exponential smoothing of energy values, multiplied by 100.
-      */
-    private int energyAlphaPct = 50;
 
     /**
      * Set energy ranking options
