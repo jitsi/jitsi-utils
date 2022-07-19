@@ -930,7 +930,16 @@ public class DominantSpeakerIdentification<T>
             }
             else
             {
-                long sleep = algorithm.runInDecisionMaker(this);
+                long sleep;
+                try
+                {
+                    sleep = algorithm.runInDecisionMaker(this);
+                }
+                catch (Exception e)
+                {
+                    // If an exception occurs we do not re-schedule.
+                    sleep = -1;
+                }
 
                 // A negative sleep value is contracted to mean that this DecisionMaker should not re-schedule itself.
                 if (sleep < 0)
