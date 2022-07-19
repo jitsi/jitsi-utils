@@ -932,29 +932,21 @@ public class DominantSpeakerIdentification<T>
             {
                 long sleep = algorithm.runInDecisionMaker(this);
 
-                // A negative sleep value is explicitly supported i.e.
-                // expected and is contracted to mean that this
-                // DecisionMaker is instructed by the algorithm to
-                // commit suicide.
+                // A negative sleep value is contracted to mean that this DecisionMaker should not re-schedule itself.
                 if (sleep < 0)
                 {
                     exit = true;
                 }
                 else
                 {
-                    // Before sleeping, make the currentThread release
-                    // its reference to the associated
-                    // DominantSpeakerIdentification instance.
                     algorithm.executor.schedule(this, sleep, TimeUnit.MILLISECONDS);
                 }
             }
 
             if (exit)
             {
-                // Notify the algorithm that this background thread will no
-                // longer run it in order to make the (global) decision about
-                // speaker switches. Subsequently, the algorithm may decide to
-                // spawn another background thread to run the same task.
+                // Notify the algorithm that this DecisionMaker no longer run. Subsequently, the algorithm may decide
+                // to create and schedule another one if and when it's needed.
                 algorithm = this.algorithm.get();
 
                 if (algorithm != null)
