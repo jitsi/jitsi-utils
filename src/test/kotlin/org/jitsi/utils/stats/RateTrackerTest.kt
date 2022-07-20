@@ -19,9 +19,9 @@ package org.jitsi.utils.stats
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import org.jitsi.utils.FakeClock
 import org.jitsi.utils.ms
 import org.jitsi.utils.secs
+import org.jitsi.utils.time.FakeClock
 import java.io.File
 import java.time.Instant
 

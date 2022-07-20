@@ -20,9 +20,9 @@ import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
-import org.jitsi.utils.FakeClock
 import org.jitsi.utils.mins
 import org.jitsi.utils.secs
+import org.jitsi.utils.time.FakeClock
 
 class MovingAverageTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf

@@ -20,9 +20,9 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.doubles.percent
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
-import org.jitsi.utils.FakeClock
 import org.jitsi.utils.ms
 import org.jitsi.utils.secs
+import org.jitsi.utils.time.FakeClock
 
 class RateStatisticsTest : ShouldSpec() {
     override fun isolationMode(): IsolationMode? = IsolationMode.InstancePerLeaf
