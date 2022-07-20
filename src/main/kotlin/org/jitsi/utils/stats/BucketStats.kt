@@ -149,8 +149,7 @@ class Buckets(private val thresholds: List<Long>) {
     private val thresholdCounts = Array(thresholds.size - 1) { LongAdder() }
     val snapshot: Snapshot
         get() {
-            val bucketCounts = Array(thresholdCounts.size) {
-                i ->
+            val bucketCounts = Array(thresholdCounts.size) { i ->
                 Pair(Pair(thresholds[i], thresholds[i + 1]), thresholdCounts[i].sum())
             }
 
