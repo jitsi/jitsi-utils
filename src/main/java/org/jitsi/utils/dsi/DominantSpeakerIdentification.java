@@ -81,7 +81,7 @@ public class DominantSpeakerIdentification<T>
     private static final long DECISION_MAKER_IDLE_TIMEOUT = 15 * 1000;
 
     /**
-     * The interval of time without a call to {@link Speaker#levelChanged(int)}
+     * The interval of time without a call to {@link Speaker#levelChanged(int,long)}
      * after which <tt>DominantSpeakerIdentification</tt> assumes that there
      * will be no report of a <tt>Speaker</tt>'s level within a certain
      * time-frame. The default value of <tt>40</tt> is chosen in order to allow
@@ -176,7 +176,7 @@ public class DominantSpeakerIdentification<T>
     private static final int N3 = 10;
 
     /**
-     * The interval of time without a call to {@link Speaker#levelChanged(int)}
+     * The interval of time without a call to {@link Speaker#levelChanged(int,long)}
      * after which <tt>DominantSpeakerIdentification</tt> assumes that a
      * non-dominant <tt>Speaker</tt> is to be automatically removed from
      * {@link #speakers}.
@@ -984,7 +984,7 @@ public class DominantSpeakerIdentification<T>
 
         /**
          * The time in milliseconds of the most recent invocation of
-         * {@link #levelChanged(int)} i.e. the last time at which an actual
+         * {@link #levelChanged(int,long)} i.e. the last time at which an actual
          * (audio) level was reported or measured for this <tt>Speaker</tt>. If
          * no level is reported or measured for this <tt>Speaker</tt> long
          * enough i.e. {@link #LEVEL_IDLE_TIMEOUT}, the associated
@@ -1212,19 +1212,6 @@ public class DominantSpeakerIdentification<T>
             default:
                 throw new IllegalArgumentException("interval " + interval);
             }
-        }
-
-        /**
-         * Notifies this <tt>Speaker</tt> that a new audio level has been
-         * received or measured.
-         *
-         * @param level the audio level which has been received or measured for
-         * this <tt>Speaker</tt>
-         */
-        @SuppressWarnings("unused")
-        public void levelChanged(int level)
-        {
-            levelChanged(level, clock.millis());
         }
 
         /**
