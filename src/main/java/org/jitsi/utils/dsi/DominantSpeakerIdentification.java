@@ -183,6 +183,11 @@ public class DominantSpeakerIdentification<T>
      */
     private static final long SPEAKER_IDLE_TIMEOUT = 60 * 60 * 1000;
 
+    /**
+     * The default interval of silence before switching to "silence" (if silence detection is enabled).
+     */
+    private static final long DEFAULT_TIMEOUT_TO_SILENCE_INTERVAL = 3000;
+
     private static final ScheduledExecutorService DEFAULT_EXECUTOR
             = Executors.newScheduledThreadPool(1, new CustomizableThreadFactory("dsi", true));
 
@@ -315,6 +320,19 @@ public class DominantSpeakerIdentification<T>
     private final Map<T, Speaker<T>> speakers = new HashMap<>();
 
     /**
+     * The special ID to use to indicate silence (no speakers).
+     *
+     * When set to null silence detection is disabled.
+     */
+    private T silenceId = null;
+
+    /**
+     * The interval (in milliseconds) of no activity before switching to {@link #silenceId} (if silence detection is
+     * enabled).
+     */
+    private long timeoutToSilenceInterval = DEFAULT_TIMEOUT_TO_SILENCE_INTERVAL;
+
+    /**
      * The <tt>Speaker</tt>s in the multipoint conference with the highest
      * current energy levels.
      */
@@ -371,6 +389,33 @@ public class DominantSpeakerIdentification<T>
 
         while (loudest.size() > numLoudestToTrack)
             loudest.remove(numLoudestToTrack);
+    }
+
+    /**
+     * Enable silence detection with the default interval. See {@link #enableSilenceDetection(Object, long)}.
+     * @param silenceId the special ID to use for silence.
+     */
+    public void enableSilenceDetection(@NotNull T silenceId)
+    {
+        enableSilenceDetection(silenceId, DEFAULT_TIMEOUT_TO_SILENCE_INTERVAL);
+    }
+
+    /**
+     * Enable silence detection. When enabled and the dominant speaker is silent for {@code timeout} ms, this DSI will
+     * fire a dominant speaker changed event with ID {@code silenceId}.
+     * @param silenceId the special ID to use for silence
+     * @param timeout the interval in milliseconds of no activity before switching to {@code silenceId}.
+     */
+    public synchronized void enableSilenceDetection(@NotNull T silenceId, long timeout)
+    {
+        if (this.silenceId != null)
+        {
+            throw new IllegalStateException("Silence detection already enabled");
+        }
+
+        logger.debug(() -> "Enabling silence detection with ID " + silenceId + " and timeout " + timeout + " ms.");
+        this.silenceId = silenceId;
+        timeoutToSilenceInterval = timeout;
     }
 
     /**
@@ -635,6 +680,7 @@ public class DominantSpeakerIdentification<T>
         }
         else
         {
+            boolean inSilence = silenceId != null && dominantId == silenceId;
             Speaker<T> dominantSpeaker
                 = (dominantId == null)
                     ? null
@@ -642,19 +688,27 @@ public class DominantSpeakerIdentification<T>
 
             // If there is no dominant speaker, nominate one at random and then
             // let the other speakers compete with the nominated one.
-            if (dominantSpeaker == null)
+            if (dominantSpeaker == null && !inSilence)
             {
                 Map.Entry<T, Speaker<T>> s = speakers.entrySet().iterator().next();
 
                 dominantSpeaker = s.getValue();
                 newDominantId = s.getKey();
             }
+            else if (inSilence)
+            {
+                newDominantId = silenceId;
+            }
             else
             {
                 newDominantId = null;
             }
+            // At this point dominantSpeaker==null iff inSilence==true.
 
-            dominantSpeaker.evaluateSpeechActivityScores();
+            if (dominantSpeaker != null)
+            {
+                dominantSpeaker.evaluateSpeechActivityScores();
+            }
 
             double[] relativeSpeechActivities = this.relativeSpeechActivities;
             // If multiple speakers cause speaker switches, they compete among
@@ -684,11 +738,11 @@ public class DominantSpeakerIdentification<T>
                         interval < relativeSpeechActivities.length;
                         ++interval)
                 {
+                    // When in a silence period we use MIN_SPEECH_ACTIVITY_SCORE as the scores to compete against.
+                    double dominantSpeakerScore = dominantSpeaker == null ? MIN_SPEECH_ACTIVITY_SCORE
+                            : dominantSpeaker.getSpeechActivityScore(interval);
                     relativeSpeechActivities[interval]
-                        = Math.log(
-                                speaker.getSpeechActivityScore(interval)
-                                    / dominantSpeaker.getSpeechActivityScore(
-                                            interval));
+                        = Math.log(speaker.getSpeechActivityScore(interval) / dominantSpeakerScore);
                 }
 
                 double c1 = relativeSpeechActivities[0];
@@ -702,6 +756,18 @@ public class DominantSpeakerIdentification<T>
                     // the middle time-interval.
                     newDominantC2 = c2;
                     newDominantId = s.getKey();
+                }
+            }
+
+            if (silenceId != null && !inSilence && newDominantId == null && dominantSpeaker != null)
+            {
+                // We're not in a silence period, and none of the non-dominant speakers won the challenge. Check if
+                // the current dominant speaker has been silent for the timeout period, and if so switch to "silence"
+                // mode.
+                long timeSinceNonSilence = clock.millis() - dominantSpeaker.lastNonSilence;
+                if (timeSinceNonSilence > timeoutToSilenceInterval)
+                {
+                    newDominantId = silenceId;
                 }
             }
         }
@@ -977,6 +1043,13 @@ public class DominantSpeakerIdentification<T>
         private final byte[] immediates = new byte[LONG_COUNT * N3 * N2];
 
         /**
+         * The last {@link #clock} time in millis at which this speaker was not silent. We consider it being silent if
+         * {@link #longSpeechActivityScore} == {@link #MIN_SPEECH_ACTIVITY_SCORE} to allow short bursts of activity
+         * to not interrupt a silence period.
+         */
+        private long lastNonSilence = -1;
+
+        /**
          * The speech activity score of this <tt>Speaker</tt> for the immediate
          * time-interval.
          */
@@ -1118,6 +1191,10 @@ public class DominantSpeakerIdentification<T>
         private void evaluateLongSpeechActivityScore()
         {
             longSpeechActivityScore = computeSpeechActivityScore(longs[0], N3, 47);
+            if (longSpeechActivityScore > MIN_SPEECH_ACTIVITY_SCORE)
+            {
+                lastNonSilence = clock.millis();
+            }
         }
 
         /**
