@@ -668,14 +668,14 @@ public class DominantSpeakerIdentification<T>
 
         if (speakerCount == 0)
         {
-            // If there are no Speakers in a multipoint conference, then there
-            // are no speaker switch events to detect.
+            // If there are no Speakers in a multipoint conference, then there are no speaker switch events to detect.
+            // We either have no dominant speaker, or we're in a silence period (if silence detection is enabled).
             newDominantId = silenceId;
         }
         else if (speakerCount == 1)
         {
-            // If there is a single Speaker in a multipoint conference, then
-            // his/her speech surely dominates.
+            // If there is a single Speaker in a multipoint conference, then it is either the dominant speaker, or
+            // we're in a silence period (if silence detection is enabled).
             Speaker<T> speaker = speakers.values().iterator().next();
             newDominantId = speaker.id;
 
