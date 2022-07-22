@@ -79,8 +79,9 @@ class DominantSpeakerIdentificationTest : ShouldSpec() {
                             speakerChanges.count { it.endpointId == silenceId } shouldBeGreaterThan 10
                         }
                     } else {
-                        should("Match the number of changes in the trace") {
-                            speakerChanges.size shouldBe speakerChangesTrace.size
+                        // This is to make sure the previous behavior is conserved without silence detection.
+                        should("Match the changes in the trace") {
+                            speakerChanges shouldBe speakerChangesTrace
                         }
                     }
                 }
