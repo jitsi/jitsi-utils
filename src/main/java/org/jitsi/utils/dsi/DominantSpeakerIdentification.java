@@ -654,7 +654,7 @@ public class DominantSpeakerIdentification<T>
      * there has been such an event, notifies the registered listeners that a
      * new speaker is dominating the multipoint conference.
      */
-    private void makeDecision()
+    private void makeDecision(long now)
     {
         // If we have to fire events to any registered listeners eventually, we
         // will want to do it outside the synchronized block.
@@ -707,7 +707,7 @@ public class DominantSpeakerIdentification<T>
 
             if (dominantSpeaker != null)
             {
-                dominantSpeaker.evaluateSpeechActivityScores();
+                dominantSpeaker.evaluateSpeechActivityScores(now);
             }
 
             double[] relativeSpeechActivities = this.relativeSpeechActivities;
@@ -730,7 +730,7 @@ public class DominantSpeakerIdentification<T>
                     continue;
                 }
 
-                speaker.evaluateSpeechActivityScores();
+                speaker.evaluateSpeechActivityScores(now);
 
                 // Compute the relative speech activities for the immediate,
                 // medium and long time-intervals.
@@ -764,7 +764,7 @@ public class DominantSpeakerIdentification<T>
                 // We're not in a silence period, and none of the non-dominant speakers won the challenge. Check if
                 // the current dominant speaker has been silent for the timeout period, and if so switch to "silence"
                 // mode.
-                long timeSinceNonSilence = clock.millis() - dominantSpeaker.lastNonSilence;
+                long timeSinceNonSilence = now - dominantSpeaker.lastNonSilence;
                 if (timeSinceNonSilence > timeoutToSilenceInterval)
                 {
                     newDominantId = silenceId;
@@ -855,7 +855,7 @@ public class DominantSpeakerIdentification<T>
             // time-consuming ordeal so the time of the last decision is the
             // time of the beginning of a decision iteration.
             lastDecisionTime = now;
-            makeDecision();
+            makeDecision(now);
             // The identification of the dominant active speaker may be a
             // time-consuming ordeal so the timeout to the next decision
             // iteration should be computed after the end of the decision
@@ -1188,12 +1188,12 @@ public class DominantSpeakerIdentification<T>
          * Computes/evaluates the speech activity score of this <tt>Speaker</tt>
          * for the long time-interval.
          */
-        private void evaluateLongSpeechActivityScore()
+        private void evaluateLongSpeechActivityScore(long now)
         {
             longSpeechActivityScore = computeSpeechActivityScore(longs[0], N3, 47);
             if (longSpeechActivityScore > MIN_SPEECH_ACTIVITY_SCORE)
             {
-                lastNonSilence = clock.millis();
+                lastNonSilence = now;
             }
         }
 
@@ -1211,7 +1211,7 @@ public class DominantSpeakerIdentification<T>
          * immediate, medium, and long time-intervals. Invoked when it is time
          * to decide whether there has been a speaker switch event.
          */
-        synchronized void evaluateSpeechActivityScores()
+        synchronized void evaluateSpeechActivityScores(long now)
         {
             if (computeImmediates())
             {
@@ -1221,7 +1221,7 @@ public class DominantSpeakerIdentification<T>
                     evaluateMediumSpeechActivityScore();
                     if (computeLongs())
                     {
-                        evaluateLongSpeechActivityScore();
+                        evaluateLongSpeechActivityScore(now);
                     }
                 }
             }
