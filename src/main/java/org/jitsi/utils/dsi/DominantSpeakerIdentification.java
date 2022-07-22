@@ -670,13 +670,23 @@ public class DominantSpeakerIdentification<T>
         {
             // If there are no Speakers in a multipoint conference, then there
             // are no speaker switch events to detect.
-            newDominantId = null;
+            newDominantId = silenceId;
         }
         else if (speakerCount == 1)
         {
             // If there is a single Speaker in a multipoint conference, then
             // his/her speech surely dominates.
-            newDominantId = speakers.keySet().iterator().next();
+            Speaker<T> speaker = speakers.values().iterator().next();
+            newDominantId = speaker.id;
+
+            if (silenceId != null)
+            {
+                long timeSinceNonSilence = now - speaker.lastNonSilence;
+                if (timeSinceNonSilence > timeoutToSilenceInterval)
+                {
+                    newDominantId = silenceId;
+                }
+            }
         }
         else
         {
