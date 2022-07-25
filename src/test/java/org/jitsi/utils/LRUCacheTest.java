@@ -37,6 +37,7 @@ public class LRUCacheTest
         assertEquals(2, cache.size());
         assertTrue(cache.containsKey(3));
         assertTrue(cache.containsKey(4));
+        assertEquals(3, cache.eldest().getKey());
     }
 
     @Test
@@ -53,7 +54,7 @@ public class LRUCacheTest
         assertEquals(2, cache.size());
         assertTrue(cache.containsKey(2));
         assertTrue(cache.containsKey(4));
-
+        assertEquals(2, cache.eldest().getKey());
     }
 
     @Test
@@ -70,7 +71,6 @@ public class LRUCacheTest
         assertEquals(2, cache.size());
         assertTrue(cache.contains("b"));
         assertTrue(cache.contains("d"));
-
     }
 
     @Test
@@ -87,6 +87,5 @@ public class LRUCacheTest
         assertEquals(2, cache.size());
         assertTrue(cache.contains("c"));
         assertTrue(cache.contains("d"));
-
     }
 }
