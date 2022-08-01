@@ -17,6 +17,7 @@ package org.jitsi.utils.dsi
 
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.jitsi.utils.concurrent.FakeScheduledExecutorService
 import org.jitsi.utils.time.FakeClock
@@ -49,20 +50,41 @@ class DominantSpeakerIdentificationTest : ShouldSpec() {
 
             val clock = FakeClock()
             val fakeExecutor = FakeScheduledExecutorService(clock)
-            val dsi = DominantSpeakerIdentification<String>(clock, fakeExecutor)
-            val speakerChanges = mutableListOf<SpeakerChange>()
-            dsi.addActiveSpeakerChangedListener {
-                speakerChanges.add(SpeakerChange(clock.instant().toEpochMilli(), it))
-            }
 
-            levels.forEach {
-                fakeExecutor.run()
-                clock.setTime(Instant.ofEpochMilli(it.timeMs))
-                dsi.levelChanged(it.endpointId, it.level)
-            }
+            listOf(true, false).forEach { detectSilence ->
+                context("${if (detectSilence) "With" else "Without"} silence detection") {
+                    val silenceId = "SILENCE"
+                    val dsi = DominantSpeakerIdentification<String>(clock, fakeExecutor)
+                    if (detectSilence) {
+                        dsi.enableSilenceDetection(silenceId)
+                    }
 
-            should("Match the number of changes in the trace") {
-                speakerChanges.size shouldBe speakerChangesTrace.size
+                    val speakerChanges = mutableListOf<SpeakerChange>()
+                    dsi.addActiveSpeakerChangedListener {
+                        speakerChanges.add(SpeakerChange(clock.instant().toEpochMilli(), it))
+                    }
+
+                    levels.forEach {
+                        fakeExecutor.run()
+                        clock.setTime(Instant.ofEpochMilli(it.timeMs))
+                        dsi.levelChanged(it.endpointId, it.level)
+                    }
+
+                    // Not much we can do, just sanity checks.
+                    if (detectSilence) {
+                        should("Have more changes than the trace") {
+                            speakerChanges.size shouldBeGreaterThan speakerChangesTrace.size
+                        }
+                        should("Contain silence intervals") {
+                            speakerChanges.count { it.endpointId == silenceId } shouldBeGreaterThan 10
+                        }
+                    } else {
+                        // This is to make sure the previous behavior is conserved without silence detection.
+                        should("Match the changes in the trace") {
+                            speakerChanges shouldBe speakerChangesTrace
+                        }
+                    }
+                }
             }
         }
     }

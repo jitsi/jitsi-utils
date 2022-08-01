@@ -81,7 +81,7 @@ public class DominantSpeakerIdentification<T>
     private static final long DECISION_MAKER_IDLE_TIMEOUT = 15 * 1000;
 
     /**
-     * The interval of time without a call to {@link Speaker#levelChanged(int)}
+     * The interval of time without a call to {@link Speaker#levelChanged(int,long)}
      * after which <tt>DominantSpeakerIdentification</tt> assumes that there
      * will be no report of a <tt>Speaker</tt>'s level within a certain
      * time-frame. The default value of <tt>40</tt> is chosen in order to allow
@@ -176,12 +176,17 @@ public class DominantSpeakerIdentification<T>
     private static final int N3 = 10;
 
     /**
-     * The interval of time without a call to {@link Speaker#levelChanged(int)}
+     * The interval of time without a call to {@link Speaker#levelChanged(int,long)}
      * after which <tt>DominantSpeakerIdentification</tt> assumes that a
      * non-dominant <tt>Speaker</tt> is to be automatically removed from
      * {@link #speakers}.
      */
     private static final long SPEAKER_IDLE_TIMEOUT = 60 * 60 * 1000;
+
+    /**
+     * The default interval of silence before switching to "silence" (if silence detection is enabled).
+     */
+    private static final long DEFAULT_TIMEOUT_TO_SILENCE_INTERVAL = 3000;
 
     private static final ScheduledExecutorService DEFAULT_EXECUTOR
             = Executors.newScheduledThreadPool(1, new CustomizableThreadFactory("dsi", true));
@@ -315,6 +320,19 @@ public class DominantSpeakerIdentification<T>
     private final Map<T, Speaker<T>> speakers = new HashMap<>();
 
     /**
+     * The special ID to use to indicate silence (no speakers).
+     *
+     * When set to null silence detection is disabled.
+     */
+    private T silenceId = null;
+
+    /**
+     * The interval (in milliseconds) of no activity before switching to {@link #silenceId} (if silence detection is
+     * enabled).
+     */
+    private long timeoutToSilenceInterval = DEFAULT_TIMEOUT_TO_SILENCE_INTERVAL;
+
+    /**
      * The <tt>Speaker</tt>s in the multipoint conference with the highest
      * current energy levels.
      */
@@ -371,6 +389,33 @@ public class DominantSpeakerIdentification<T>
 
         while (loudest.size() > numLoudestToTrack)
             loudest.remove(numLoudestToTrack);
+    }
+
+    /**
+     * Enable silence detection with the default interval. See {@link #enableSilenceDetection(Object, long)}.
+     * @param silenceId the special ID to use for silence.
+     */
+    public void enableSilenceDetection(@NotNull T silenceId)
+    {
+        enableSilenceDetection(silenceId, DEFAULT_TIMEOUT_TO_SILENCE_INTERVAL);
+    }
+
+    /**
+     * Enable silence detection. When enabled and the dominant speaker is silent for {@code timeout} ms, this DSI will
+     * fire a dominant speaker changed event with ID {@code silenceId}.
+     * @param silenceId the special ID to use for silence
+     * @param timeout the interval in milliseconds of no activity before switching to {@code silenceId}.
+     */
+    public synchronized void enableSilenceDetection(@NotNull T silenceId, long timeout)
+    {
+        if (this.silenceId != null)
+        {
+            throw new IllegalStateException("Silence detection already enabled");
+        }
+
+        logger.debug(() -> "Enabling silence detection with ID " + silenceId + " and timeout " + timeout + " ms.");
+        this.silenceId = silenceId;
+        timeoutToSilenceInterval = timeout;
     }
 
     /**
@@ -609,7 +654,7 @@ public class DominantSpeakerIdentification<T>
      * there has been such an event, notifies the registered listeners that a
      * new speaker is dominating the multipoint conference.
      */
-    private void makeDecision()
+    private void makeDecision(long now)
     {
         // If we have to fire events to any registered listeners eventually, we
         // will want to do it outside the synchronized block.
@@ -623,18 +668,29 @@ public class DominantSpeakerIdentification<T>
 
         if (speakerCount == 0)
         {
-            // If there are no Speakers in a multipoint conference, then there
-            // are no speaker switch events to detect.
-            newDominantId = null;
+            // If there are no Speakers in a multipoint conference, then there are no speaker switch events to detect.
+            // We either have no dominant speaker, or we're in a silence period (if silence detection is enabled).
+            newDominantId = silenceId;
         }
         else if (speakerCount == 1)
         {
-            // If there is a single Speaker in a multipoint conference, then
-            // his/her speech surely dominates.
-            newDominantId = speakers.keySet().iterator().next();
+            // If there is a single Speaker in a multipoint conference, then it is either the dominant speaker, or
+            // we're in a silence period (if silence detection is enabled).
+            Speaker<T> speaker = speakers.values().iterator().next();
+            newDominantId = speaker.id;
+
+            if (silenceId != null)
+            {
+                long timeSinceNonSilence = now - speaker.lastNonSilence;
+                if (timeSinceNonSilence > timeoutToSilenceInterval)
+                {
+                    newDominantId = silenceId;
+                }
+            }
         }
         else
         {
+            boolean inSilence = silenceId != null && dominantId == silenceId;
             Speaker<T> dominantSpeaker
                 = (dominantId == null)
                     ? null
@@ -642,19 +698,27 @@ public class DominantSpeakerIdentification<T>
 
             // If there is no dominant speaker, nominate one at random and then
             // let the other speakers compete with the nominated one.
-            if (dominantSpeaker == null)
+            if (dominantSpeaker == null && !inSilence)
             {
                 Map.Entry<T, Speaker<T>> s = speakers.entrySet().iterator().next();
 
                 dominantSpeaker = s.getValue();
                 newDominantId = s.getKey();
             }
+            else if (inSilence)
+            {
+                newDominantId = silenceId;
+            }
             else
             {
                 newDominantId = null;
             }
+            // At this point dominantSpeaker==null iff inSilence==true.
 
-            dominantSpeaker.evaluateSpeechActivityScores();
+            if (dominantSpeaker != null)
+            {
+                dominantSpeaker.evaluateSpeechActivityScores(now);
+            }
 
             double[] relativeSpeechActivities = this.relativeSpeechActivities;
             // If multiple speakers cause speaker switches, they compete among
@@ -676,7 +740,7 @@ public class DominantSpeakerIdentification<T>
                     continue;
                 }
 
-                speaker.evaluateSpeechActivityScores();
+                speaker.evaluateSpeechActivityScores(now);
 
                 // Compute the relative speech activities for the immediate,
                 // medium and long time-intervals.
@@ -684,11 +748,11 @@ public class DominantSpeakerIdentification<T>
                         interval < relativeSpeechActivities.length;
                         ++interval)
                 {
+                    // When in a silence period we use MIN_SPEECH_ACTIVITY_SCORE as the scores to compete against.
+                    double dominantSpeakerScore = dominantSpeaker == null ? MIN_SPEECH_ACTIVITY_SCORE
+                            : dominantSpeaker.getSpeechActivityScore(interval);
                     relativeSpeechActivities[interval]
-                        = Math.log(
-                                speaker.getSpeechActivityScore(interval)
-                                    / dominantSpeaker.getSpeechActivityScore(
-                                            interval));
+                        = Math.log(speaker.getSpeechActivityScore(interval) / dominantSpeakerScore);
                 }
 
                 double c1 = relativeSpeechActivities[0];
@@ -702,6 +766,18 @@ public class DominantSpeakerIdentification<T>
                     // the middle time-interval.
                     newDominantC2 = c2;
                     newDominantId = s.getKey();
+                }
+            }
+
+            if (silenceId != null && !inSilence && newDominantId == null && dominantSpeaker != null)
+            {
+                // We're not in a silence period, and none of the non-dominant speakers won the challenge. Check if
+                // the current dominant speaker has been silent for the timeout period, and if so switch to "silence"
+                // mode.
+                long timeSinceNonSilence = now - dominantSpeaker.lastNonSilence;
+                if (timeSinceNonSilence > timeoutToSilenceInterval)
+                {
+                    newDominantId = silenceId;
                 }
             }
         }
@@ -789,7 +865,7 @@ public class DominantSpeakerIdentification<T>
             // time-consuming ordeal so the time of the last decision is the
             // time of the beginning of a decision iteration.
             lastDecisionTime = now;
-            makeDecision();
+            makeDecision(now);
             // The identification of the dominant active speaker may be a
             // time-consuming ordeal so the timeout to the next decision
             // iteration should be computed after the end of the decision
@@ -977,6 +1053,13 @@ public class DominantSpeakerIdentification<T>
         private final byte[] immediates = new byte[LONG_COUNT * N3 * N2];
 
         /**
+         * The last {@link #clock} time in millis at which this speaker was not silent. We consider it being silent if
+         * {@link #longSpeechActivityScore} == {@link #MIN_SPEECH_ACTIVITY_SCORE} to allow short bursts of activity
+         * to not interrupt a silence period.
+         */
+        private long lastNonSilence = -1;
+
+        /**
          * The speech activity score of this <tt>Speaker</tt> for the immediate
          * time-interval.
          */
@@ -984,7 +1067,7 @@ public class DominantSpeakerIdentification<T>
 
         /**
          * The time in milliseconds of the most recent invocation of
-         * {@link #levelChanged(int)} i.e. the last time at which an actual
+         * {@link #levelChanged(int,long)} i.e. the last time at which an actual
          * (audio) level was reported or measured for this <tt>Speaker</tt>. If
          * no level is reported or measured for this <tt>Speaker</tt> long
          * enough i.e. {@link #LEVEL_IDLE_TIMEOUT}, the associated
@@ -1115,9 +1198,13 @@ public class DominantSpeakerIdentification<T>
          * Computes/evaluates the speech activity score of this <tt>Speaker</tt>
          * for the long time-interval.
          */
-        private void evaluateLongSpeechActivityScore()
+        private void evaluateLongSpeechActivityScore(long now)
         {
             longSpeechActivityScore = computeSpeechActivityScore(longs[0], N3, 47);
+            if (longSpeechActivityScore > MIN_SPEECH_ACTIVITY_SCORE)
+            {
+                lastNonSilence = now;
+            }
         }
 
         /**
@@ -1134,7 +1221,7 @@ public class DominantSpeakerIdentification<T>
          * immediate, medium, and long time-intervals. Invoked when it is time
          * to decide whether there has been a speaker switch event.
          */
-        synchronized void evaluateSpeechActivityScores()
+        synchronized void evaluateSpeechActivityScores(long now)
         {
             if (computeImmediates())
             {
@@ -1144,7 +1231,7 @@ public class DominantSpeakerIdentification<T>
                     evaluateMediumSpeechActivityScore();
                     if (computeLongs())
                     {
-                        evaluateLongSpeechActivityScore();
+                        evaluateLongSpeechActivityScore(now);
                     }
                 }
             }
@@ -1212,19 +1299,6 @@ public class DominantSpeakerIdentification<T>
             default:
                 throw new IllegalArgumentException("interval " + interval);
             }
-        }
-
-        /**
-         * Notifies this <tt>Speaker</tt> that a new audio level has been
-         * received or measured.
-         *
-         * @param level the audio level which has been received or measured for
-         * this <tt>Speaker</tt>
-         */
-        @SuppressWarnings("unused")
-        public void levelChanged(int level)
-        {
-            levelChanged(level, clock.millis());
         }
 
         /**
