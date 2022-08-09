@@ -17,7 +17,9 @@ package org.jitsi.utils.dsi
 
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.ints.shouldBeBetween
 import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import org.jitsi.utils.concurrent.FakeScheduledExecutorService
 import org.jitsi.utils.time.FakeClock
@@ -53,11 +55,11 @@ class DominantSpeakerIdentificationTest : ShouldSpec() {
 
             listOf(true, false).forEach { detectSilence ->
                 context("${if (detectSilence) "With" else "Without"} silence detection") {
-                    val silenceId = "SILENCE"
-                    val dsi = DominantSpeakerIdentification<String>(clock, fakeExecutor)
-                    if (detectSilence) {
-                        dsi.enableSilenceDetection(silenceId)
-                    }
+                    val dsi = DominantSpeakerIdentification<String>(
+                        clock,
+                        fakeExecutor,
+                        if (detectSilence) 3000 else -1
+                    )
 
                     val speakerChanges = mutableListOf<SpeakerChange>()
                     dsi.addActiveSpeakerChangedListener {
@@ -75,8 +77,11 @@ class DominantSpeakerIdentificationTest : ShouldSpec() {
                         should("Have more changes than the trace") {
                             speakerChanges.size shouldBeGreaterThan speakerChangesTrace.size
                         }
-                        should("Contain silence intervals") {
-                            speakerChanges.count { it.endpointId == silenceId } shouldBeGreaterThan 10
+                        should("Have a reasonable number of total changes") {
+                            speakerChanges.size shouldBeLessThan 300
+                        }
+                        should("Have a reasonable number of silence intervals") {
+                            speakerChanges.count { it.endpointId == null }.shouldBeBetween(10, 100)
                         }
                     } else {
                         // This is to make sure the previous behavior is conserved without silence detection.
@@ -103,7 +108,7 @@ private data class AudioLevel(
 }
 private data class SpeakerChange(
     val timeMs: Long,
-    val endpointId: String
+    val endpointId: String?
 ) {
     constructor(s: String) : this(
         s.split(",")[0].toLong(),

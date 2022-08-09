@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.dsi;
 
+import org.jetbrains.annotations.*;
+
 /**
  * Implementing classes can be notified about changes to the 'active' stream
  * (identified by its SSRC) using {@link #activeSpeakerChanged(Object)}.
@@ -26,7 +28,8 @@ public interface ActiveSpeakerChangedListener<T>
     /**
      * Notifies this listener that the active/dominant speaker has been changed to one identified by {@code id}.
      *
-     * @param id the ID of the latest/current active/dominant speaker.
+     * @param id the ID of the latest/current active/dominant speaker, or {@code null} indicating that we entered a
+     * period of silence (if silence detection is enabled).
      */
-    void activeSpeakerChanged(T id);
+    void activeSpeakerChanged(@Nullable T id);
 }
