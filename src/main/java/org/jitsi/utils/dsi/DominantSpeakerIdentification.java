@@ -669,6 +669,8 @@ public class DominantSpeakerIdentification<T>
 
             if (enableSilence)
             {
+                speaker.evaluateSpeechActivityScores(now);
+
                 long timeSinceNonSilence = now - speaker.lastNonSilence;
                 if (timeSinceNonSilence > timeoutToSilenceInterval)
                 {

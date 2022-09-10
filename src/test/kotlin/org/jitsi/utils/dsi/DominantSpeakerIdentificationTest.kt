@@ -16,6 +16,7 @@
 package org.jitsi.utils.dsi
 
 import io.kotest.assertions.fail
+import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.ints.shouldBeBetween
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -39,32 +40,49 @@ import java.time.Instant
  * previous behavior.
  */
 class DominantSpeakerIdentificationTest : ShouldSpec() {
+    override fun isolationMode(): IsolationMode = IsolationMode.InstancePerLeaf
+
+    private val levelsTraceCsv = javaClass.getResource("/dsi-trace.csv") ?: fail("Can not read dsi-trace.csv")
+    private val speakerChangesTraceCsv =
+        javaClass.getResource("/dsi-changes.csv") ?: fail("Can not read dsi-changes.csv")
+
+    private val levels = levelsTraceCsv.readText().split("\n").dropLast(1).map { AudioLevel(it) }.toList()
+    private val speakerChangesTrace = speakerChangesTraceCsv.readText().split("\n").dropLast(1).map {
+        SpeakerChange(it)
+    }.toList()
+    private val clock = FakeClock()
+    private val fakeExecutor = FakeScheduledExecutorService(clock)
+    private val speakerChanges = mutableListOf<SpeakerChange>()
+
     init {
-        context("Compare with trace") {
-            val levelsTraceCsv = javaClass.getResource("/dsi-trace.csv") ?: fail("Can not read dsi-trace.csv")
-            val speakerChangesTraceCsv =
-                javaClass.getResource("/dsi-changes.csv") ?: fail("Can not read dsi-changes.csv")
-
-            val levels = levelsTraceCsv.readText().split("\n").dropLast(1).map { AudioLevel(it) }.toList()
-            val speakerChangesTrace = speakerChangesTraceCsv.readText().split("\n").dropLast(1).map {
-                SpeakerChange(it)
-            }.toList()
-
-            val clock = FakeClock()
-            val fakeExecutor = FakeScheduledExecutorService(clock)
+        context("Single endpoint test") {
+            val endpointId = levels[0].endpointId
 
             listOf(true, false).forEach { detectSilence ->
                 context("${if (detectSilence) "With" else "Without"} silence detection") {
-                    val dsi = DominantSpeakerIdentification<String>(
-                        clock,
-                        fakeExecutor,
-                        if (detectSilence) 3000 else -1
-                    )
-
-                    val speakerChanges = mutableListOf<SpeakerChange>()
-                    dsi.addActiveSpeakerChangedListener {
-                        speakerChanges.add(SpeakerChange(clock.instant().toEpochMilli(), it))
+                    val dsi = createDsi(detectSilence)
+                    // Only feed levels from one endpoint.
+                    levels.filter { it.endpointId == endpointId }.forEach {
+                        fakeExecutor.run()
+                        clock.setTime(Instant.ofEpochMilli(it.timeMs))
+                        dsi.levelChanged(it.endpointId, it.level)
                     }
+
+                    if (detectSilence) {
+                        // Should change from the endpoint to silence and back multiple times
+                        speakerChanges.size shouldBeGreaterThan 10
+                        speakerChanges.map { it.endpointId }.toSet() shouldBe setOf(null, endpointId)
+                    } else {
+                        speakerChanges.size shouldBe 1
+                        speakerChanges[0].endpointId shouldBe endpointId
+                    }
+                }
+            }
+        }
+        context("Compare with trace") {
+            listOf(true, false).forEach { detectSilence ->
+                context("${if (detectSilence) "With" else "Without"} silence detection") {
+                    val dsi = createDsi(detectSilence)
 
                     levels.forEach {
                         fakeExecutor.run()
@@ -92,6 +110,14 @@ class DominantSpeakerIdentificationTest : ShouldSpec() {
                 }
             }
         }
+    }
+
+    private fun createDsi(detectSilence: Boolean) = DominantSpeakerIdentification<String>(
+        clock,
+        fakeExecutor,
+        if (detectSilence) 3000 else -1
+    ).apply {
+        addActiveSpeakerChangedListener { speakerChanges.add(SpeakerChange(clock.instant().toEpochMilli(), it)) }
     }
 }
 
