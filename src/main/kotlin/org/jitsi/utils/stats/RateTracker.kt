@@ -114,6 +114,7 @@ open class RateTracker @JvmOverloads constructor(
             val countInOldestBucket = buckets[oldestIndex]
             accumulatedCount -= countInOldestBucket
             buckets[oldestIndex] = 0L
+            bucketExpired(countInOldestBucket)
             if (++oldestIndex >= buckets.size) {
                 oldestIndex = 0
             }
@@ -166,6 +167,11 @@ open class RateTracker @JvmOverloads constructor(
         buckets[index] = buckets[index] + count
         accumulatedCount += count
     }
+
+    /** Method a subclass can override to find out when a bucket is expired.
+     * Default is a no-op.
+     */
+    protected open fun bucketExpired(count: Long) = Unit
 }
 
 /**
