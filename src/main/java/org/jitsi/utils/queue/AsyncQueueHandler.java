@@ -124,7 +124,8 @@ final class AsyncQueueHandler<T>
 
                     if (item == null)
                     {
-                        cancel(false);
+                        running = false;
+                        readerFuture = null;
                         return;
                     }
                 }
