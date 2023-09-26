@@ -34,7 +34,9 @@ class FakeScheduledExecutorServiceTest : ShouldSpec() {
                 {
                     numJobRuns++
                 },
-                5, 5, TimeUnit.SECONDS
+                5,
+                5,
+                TimeUnit.SECONDS
             )
             context("and then calling runOne") {
                 executor.runOne()
@@ -87,7 +89,9 @@ class FakeScheduledExecutorServiceTest : ShouldSpec() {
                     // Elapse time inside the job to simulate a long job
                     executor.clock.elapse(3.secs)
                 },
-                5, 5, TimeUnit.SECONDS
+                5,
+                5,
+                TimeUnit.SECONDS
             )
             should("run the job at a fixed rate") {
                 // Run the first job
@@ -107,7 +111,9 @@ class FakeScheduledExecutorServiceTest : ShouldSpec() {
                     // Elapse time inside the job to simulate a long job
                     executor.clock.elapse(3.secs)
                 },
-                5, 5, TimeUnit.SECONDS
+                5,
+                5,
+                TimeUnit.SECONDS
             )
             should("run the job with a fixed rate") {
                 // Run the first job

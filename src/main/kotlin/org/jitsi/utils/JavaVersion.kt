@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JavaVersion")
+
 package org.jitsi.utils
 
 fun getJavaVersion(): Int {

@@ -98,7 +98,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
         totalPacketsRemoved.increment()
         queueLengthStats.addValue(queueSize.toLong())
         if (waitTime != null) {
-            queueWaitStats?.addValue(waitTime.toMillis()) /* TODO: measure in nanos? */
+            queueWaitStats?.addValue(waitTime.toMillis()) // TODO: measure in nanos?
         }
     }
 
@@ -212,7 +212,7 @@ class QueueStatisticsObserver<T>(
      */
     override fun dropped(pkt: T) {
         queueSize.decrementAndGet()
-        insertionTime?.remove(pkt) /* TODO: track this time in stats? */
+        insertionTime?.remove(pkt) // TODO: track this time in stats?
 
         localStats?.dropped()
         globalStats.dropped()
