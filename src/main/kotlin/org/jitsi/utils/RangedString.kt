@@ -94,7 +94,14 @@ fun Iterable<Int>.joinToRangedString(
     postfix: CharSequence = "",
     rangeLimit: Int = -1,
     truncated: CharSequence = "..."
-): String = this.iterator().joinToRangedString(separator = separator, rangeSeparator = rangeSeparator, prefix = prefix, postfix = postfix, rangeLimit = rangeLimit, truncated = truncated)
+): String = this.iterator().joinToRangedString(
+    separator = separator,
+    rangeSeparator = rangeSeparator,
+    prefix = prefix,
+    postfix = postfix,
+    rangeLimit = rangeLimit,
+    truncated = truncated
+)
 
 fun Sequence<Int>.joinToRangedString(
     separator: CharSequence = ", ",
@@ -103,7 +110,14 @@ fun Sequence<Int>.joinToRangedString(
     postfix: CharSequence = "",
     rangeLimit: Int = -1,
     truncated: CharSequence = "..."
-): String = this.iterator().joinToRangedString(separator = separator, rangeSeparator = rangeSeparator, prefix = prefix, postfix = postfix, rangeLimit = rangeLimit, truncated = truncated)
+): String = this.iterator().joinToRangedString(
+    separator = separator,
+    rangeSeparator = rangeSeparator,
+    prefix = prefix,
+    postfix = postfix,
+    rangeLimit = rangeLimit,
+    truncated = truncated
+)
 
 fun Array<Int>.joinToRangedString(
     separator: CharSequence = ", ",
@@ -112,4 +126,11 @@ fun Array<Int>.joinToRangedString(
     postfix: CharSequence = "",
     rangeLimit: Int = -1,
     truncated: CharSequence = "..."
-): String = this.iterator().joinToRangedString(separator = separator, rangeSeparator = rangeSeparator, prefix = prefix, postfix = postfix, rangeLimit = rangeLimit, truncated = truncated)
+): String = this.iterator().joinToRangedString(
+    separator = separator,
+    rangeSeparator = rangeSeparator,
+    prefix = prefix,
+    postfix = postfix,
+    rangeLimit = rangeLimit,
+    truncated = truncated
+)

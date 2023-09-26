@@ -1,4 +1,6 @@
 [*.{kt,kts}]    
+max_line_length = 120
+
 # Comma-separated list of rules to disable (Since 0.34.0)   
 # Note that rules in any ruleset other than the standard ruleset will need to be prefixed   
 # by the ruleset identifier.    
@@ -10,3 +12,4 @@ ktlint_standard_trailing-comma-on-declaration-site = disabled
 [pom.xml]
 indent_style = space
 indent_size = 4
+max_line_length = 120
