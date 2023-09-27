@@ -48,8 +48,10 @@ open class BucketStats(
     private val totalCount = LongAdder()
     private val average: Double
         get() = totalValue.sum() / totalCount.sum().toDouble()
+
     /** The maximum value that has been added. */
     private val maxValue = AtomicLong(0)
+
     /** The minimum value that has been added. */
     private val minValue = AtomicLong(0)
     private val buckets = Buckets(thresholds)
@@ -137,8 +139,10 @@ open class BucketStats(
     enum class Format {
         /** Include individual buckets, e.g. [min, 0), [0, 10), [10, 20), [20, max] */
         Separate,
+
         /** Combine buckets summing from the left, e.g. [min, 0), [min, 10), [min, 20) */
         CumulativeLeft,
+
         /** Combine buckets summing from the right, e.g. [0, max], [10, max], [20, max] */
         CumulativeRight
     }

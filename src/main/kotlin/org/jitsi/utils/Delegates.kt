@@ -29,6 +29,7 @@ inline fun <T> observableWhenChanged(
     Delegates.observable(initialValue) { property, oldValue, newValue ->
         if (oldValue != newValue) onChange(property, oldValue, newValue)
     }
+
 /**
  * A delegate which runs a callback (with no arguments) whenever the setter is called and it results in the value
  * changing.

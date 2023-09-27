@@ -61,6 +61,7 @@ open class RateTracker @JvmOverloads constructor(
             )
         }
     }
+
     /**
      * Total count recorded in buckets.
      */
@@ -157,8 +158,10 @@ open class RateTracker @JvmOverloads constructor(
     @JvmOverloads
     fun update(count: Long = 1, nowMs: Long = clock.millis()) {
         val now = coerceMs(nowMs)
-        if (now < oldestTime) // Too old data is ignored.
+        if (now < oldestTime) {
+            // Too old data is ignored.
             return
+        }
         if (firstInsertTimeMs < 0) firstInsertTimeMs = nowMs
         eraseOld(now)
         val nowOffset = (now - oldestTime).toInt()

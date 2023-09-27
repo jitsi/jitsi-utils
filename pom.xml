@@ -43,10 +43,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spotbugs.version>4.6.0</spotbugs.version>
-        <org.junit.version>5.8.1</org.junit.version>
+        <org.junit.version>5.10.0</org.junit.version>
         <java.version>11</java.version>
-        <kotlin.version>1.6.21</kotlin.version>
-        <kotest.version>5.3.0</kotest.version>
+        <kotlin.version>1.9.10</kotlin.version>
+        <!-- Note: when this is updated to a non-dev version, remove the pluginDependencies with the Jetbrains dev repo below. -->
+        <dokka.version>1.9.10-dev-234</dokka.version>
+        <kotest.version>5.7.2</kotest.version>
+        <mockk.version>1.13.8</mockk.version>
     </properties>
 
     <dependencies>
@@ -115,6 +118,13 @@
             <version>${kotest.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.mockk</groupId>
+            <artifactId>mockk-jvm</artifactId>
+            <version>${mockk.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -218,7 +228,7 @@
             <plugin>
               <groupId>com.github.gantsign.maven</groupId>
               <artifactId>ktlint-maven-plugin</artifactId>
-              <version>1.13.1</version>
+              <version>2.0.0</version>
               <configuration>
                 <sourceRoots>
                   <sourceRoot>${project.basedir}/src/main/kotlin</sourceRoot>
@@ -351,7 +361,7 @@
             <plugin>
                 <groupId>org.jetbrains.dokka</groupId>
                 <artifactId>dokka-maven-plugin</artifactId>
-                <version>${kotlin.version}</version>
+                <version>${dokka.version}</version>
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
@@ -367,7 +377,7 @@
                         <plugin>
                             <groupId>org.jetbrains.dokka</groupId>
                             <artifactId>kotlin-as-java-plugin</artifactId>
-                            <version>${kotlin.version}</version>
+                            <version>${dokka.version}</version>
                         </plugin>
                     </dokkaPlugins>
                 </configuration>
@@ -379,6 +389,22 @@
             </plugin>
         </plugins>
     </build>
+
+
+    <pluginRepositories>
+      <pluginRepository>
+        <id>jetbrains-dev</id>
+        <name>Jetbrains development Repository</name>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+
+            <url>https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/</url>
+      </pluginRepository>
+    </pluginRepositories>
 
     <profiles>
         <profile>

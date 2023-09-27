@@ -55,8 +55,9 @@ class FakeClock(
     }
 
     override fun withZone(zone: ZoneId?): Clock {
-        if (zone_ == zone)
+        if (zone_ == zone) {
             return this
+        }
         return FakeClock(zone_ = zone!!)
     }
 }

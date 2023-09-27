@@ -98,7 +98,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
         totalPacketsRemoved.increment()
         queueLengthStats.addValue(queueSize.toLong())
         if (waitTime != null) {
-            queueWaitStats?.addValue(waitTime.toMillis()) /* TODO: measure in nanos? */
+            queueWaitStats?.addValue(waitTime.toMillis()) // TODO: measure in nanos?
         }
     }
 
@@ -127,7 +127,11 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
             QueueStatistics(queue.capacity(), clock)
         }
 
-        fun getStatistics() = OrderedJsonObject().apply { queueStatsById.entries.forEach { put(it.key, it.value.stats) } }
+        fun getStatistics() = OrderedJsonObject().apply {
+            queueStatsById.entries.forEach {
+                put(it.key, it.value.stats)
+            }
+        }
 
         /**
          * Calculate the capacity statistics buckets for a given queue capacity.
@@ -175,7 +179,11 @@ class QueueStatisticsObserver<T>(
     /**
      * A map of the time when objects were put in the queue
      */
-    private val insertionTime = if (QueueStatistics.TRACK_TIMES) Collections.synchronizedMap(IdentityHashMap<Any, Instant>()) else null
+    private val insertionTime = if (QueueStatistics.TRACK_TIMES) {
+        Collections.synchronizedMap(IdentityHashMap<Any, Instant>())
+    } else {
+        null
+    }
 
     private val localStats = if (QueueStatistics.DEBUG) QueueStatistics(queue.capacity(), clock) else null
     private val globalStats = QueueStatistics.globalStatsFor(queue, clock)
@@ -212,7 +220,7 @@ class QueueStatisticsObserver<T>(
      */
     override fun dropped(pkt: T) {
         queueSize.decrementAndGet()
-        insertionTime?.remove(pkt) /* TODO: track this time in stats? */
+        insertionTime?.remove(pkt) // TODO: track this time in stats?
 
         localStats?.dropped()
         globalStats.dropped()
