@@ -71,10 +71,13 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
             stats["dropped_packets"] = totalPacketsDropped.sum()
             if (firstPacketAdded != null) {
                 val duration = Duration.between(firstPacketAdded, now)
-                val duration_s = duration.toNanos() / 1e9
-                stats["duration_s"] = duration_s
+
+                @Suppress("ktlint:standard:property-naming")
+                val durationSecs = duration.toNanos() / 1e9
+
+                stats["duration_s"] = durationSecs
                 val packetsRemoved = totalPacketsRemoved.sum().toDouble()
-                stats["average_remove_rate_pps"] = packetsRemoved / duration_s
+                stats["average_remove_rate_pps"] = packetsRemoved / durationSecs
             }
             stats["queue_size_at_remove"] = queueLengthStats.toJson()
             queueWaitStats?.let { stats["queue_wait_time"] = it.toJson() }
@@ -113,11 +116,13 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
         /** Whether specific per-queue statistics should be kept. */
         @JvmField
         @field:SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+        @field:Suppress("ktlint:standard:property-naming")
         var DEBUG = false
 
         /** Whether queue dwell times should be tracked. */
         @JvmField
         @field:SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+        @field:Suppress("ktlint:standard:property-naming")
         var TRACK_TIMES = false
 
         private val queueStatsById = ConcurrentHashMap<String, QueueStatistics>()

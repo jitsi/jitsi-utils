@@ -25,19 +25,16 @@ import kotlin.reflect.KProperty
 inline fun <T> observableWhenChanged(
     initialValue: T,
     crossinline onChange: (property: KProperty<*>, oldValue: T, newValue: T) -> Unit
-): ReadWriteProperty<Any?, T> =
-    Delegates.observable(initialValue) { property, oldValue, newValue ->
-        if (oldValue != newValue) onChange(property, oldValue, newValue)
-    }
+): ReadWriteProperty<Any?, T> = Delegates.observable(initialValue) { property, oldValue, newValue ->
+    if (oldValue != newValue) onChange(property, oldValue, newValue)
+}
 
 /**
  * A delegate which runs a callback (with no arguments) whenever the setter is called and it results in the value
  * changing.
  */
-inline fun <T> observableWhenChanged(
-    initialValue: T,
-    crossinline onChange: () -> Unit
-): ReadWriteProperty<Any?, T> = observableWhenChanged(initialValue) { _, _, _ -> onChange() }
+inline fun <T> observableWhenChanged(initialValue: T, crossinline onChange: () -> Unit): ReadWriteProperty<Any?, T> =
+    observableWhenChanged(initialValue) { _, _, _ -> onChange() }
 
 class ResettableLazy<T>(private val initializer: () -> T) {
     private var lazyHolder = lazy { initializer() }
