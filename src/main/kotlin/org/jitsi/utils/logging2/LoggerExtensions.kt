@@ -38,10 +38,8 @@ fun <T : Any> T.createLogger(minLogLevel: Level = Level.ALL, logContext: LogCont
  * using the fully-qualified name of the *actual* class (i.e. the instance's
  * class, not the class that happens to be calling this method).
  */
-fun <T : Any> T.createChildLogger(
-    parentLogger: Logger,
-    childContext: Map<String, String> = emptyMap()
-): Logger = parentLogger.createChildLogger(getClassForLogging(this.javaClass).name, childContext)
+fun <T : Any> T.createChildLogger(parentLogger: Logger, childContext: Map<String, String> = emptyMap()): Logger =
+    parentLogger.createChildLogger(getClassForLogging(this.javaClass).name, childContext)
 
 /**
  * Given a [Class], get the proper class to be used for the name of a logger
