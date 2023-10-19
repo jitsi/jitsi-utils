@@ -46,8 +46,7 @@
         <org.junit.version>5.10.0</org.junit.version>
         <java.version>11</java.version>
         <kotlin.version>1.9.10</kotlin.version>
-        <!-- Note: when this is updated to a non-dev version, remove the pluginDependencies with the Jetbrains dev repo below. -->
-        <dokka.version>1.9.10-dev-234</dokka.version>
+        <dokka.version>1.9.10</dokka.version>
         <kotest.version>5.7.2</kotest.version>
         <mockk.version>1.13.8</mockk.version>
     </properties>
@@ -389,22 +388,6 @@
             </plugin>
         </plugins>
     </build>
-
-
-    <pluginRepositories>
-      <pluginRepository>
-        <id>jetbrains-dev</id>
-        <name>Jetbrains development Repository</name>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-
-            <url>https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/</url>
-      </pluginRepository>
-    </pluginRepositories>
 
     <profiles>
         <profile>
