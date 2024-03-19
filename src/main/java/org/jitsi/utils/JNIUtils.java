@@ -139,7 +139,14 @@ public final class JNIUtils
         }
         catch (Exception e)
         {
-            System.loadLibrary(lib);
+            if (isAbsolute)
+            {
+                System.load(lib);
+            }
+            else
+            {
+                System.loadLibrary(lib);
+            }
         }
     }
 
