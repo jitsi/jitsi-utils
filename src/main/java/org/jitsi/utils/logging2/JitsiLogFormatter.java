@@ -17,8 +17,9 @@
 package org.jitsi.utils.logging2;
 
 import java.io.*;
-import java.text.*;
-import java.util.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.*;
 import java.util.logging.Formatter;
 
@@ -38,17 +39,7 @@ public class JitsiLogFormatter extends Formatter
     /**
      * Line separator used by current platform
      */
-    private static String lineSeparator = System.getProperty("line.separator");
-
-    /**
-     * Two digit <tt>DecimalFormat</tt> instance, used to format datetime
-     */
-    private static DecimalFormat twoDigFmt = new DecimalFormat("00");
-
-    /**
-     * Three digit <tt>DecimalFormat</tt> instance, used to format datetime
-     */
-    private static DecimalFormat threeDigFmt = new DecimalFormat("000");
+    private static final String lineSeparator = System.lineSeparator();
 
     /**
      * The application name used to generate this log
@@ -59,6 +50,12 @@ public class JitsiLogFormatter extends Formatter
      * Whether logger will add date to the logs, enabled by default.
      */
     private static boolean timestampDisabled = false;
+
+    /**
+     * The formatter to use for timestamps.
+     */
+    private static final DateTimeFormatter timestampFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS ");
 
     /**
      * The default constructor for <tt>JitsiLogFormatter</tt> which loads
@@ -77,7 +74,7 @@ public class JitsiLogFormatter extends Formatter
     @Override
     public synchronized String format(LogRecord record)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         if (programName != null)
         {
@@ -89,23 +86,7 @@ public class JitsiLogFormatter extends Formatter
 
         if (!timestampDisabled)
         {
-            //current time
-            Calendar cal = Calendar.getInstance();
-            int year = cal.get(Calendar.YEAR);
-            int month = cal.get(Calendar.MONTH) + 1;
-            int day = cal.get(Calendar.DAY_OF_MONTH);
-            int hour = cal.get(Calendar.HOUR_OF_DAY);
-            int minutes = cal.get(Calendar.MINUTE);
-            int seconds = cal.get(Calendar.SECOND);
-            int millis = cal.get(Calendar.MILLISECOND);
-
-            sb.append(year).append('-');
-            sb.append(twoDigFmt.format(month)).append('-');
-            sb.append(twoDigFmt.format(day)).append(' ');
-            sb.append(twoDigFmt.format(hour)).append(':');
-            sb.append(twoDigFmt.format(minutes)).append(':');
-            sb.append(twoDigFmt.format(seconds)).append('.');
-            sb.append(threeDigFmt.format(millis)).append(' ');
+            sb.append(timestampFormatter.format(ZonedDateTime.ofInstant(record.getInstant(), ZoneId.systemDefault())));
         }
 
         //log level
@@ -151,9 +132,9 @@ public class JitsiLogFormatter extends Formatter
                 PrintWriter pw = new PrintWriter(sw);
                 record.getThrown().printStackTrace(pw);
                 pw.close();
-                sb.append(sw.toString());
+                sb.append(sw);
             }
-            catch (RuntimeException ex)
+            catch (RuntimeException ignored)
             {
             }
         }
