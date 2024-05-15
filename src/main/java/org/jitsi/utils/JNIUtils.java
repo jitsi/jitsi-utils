@@ -31,6 +31,12 @@ import java.util.regex.*;
  */
 public final class JNIUtils
 {
+    /** Set this property to get JNIUtils to always delete the libraries when the JVM exits,
+     * rather than immediately.  Useful for debugging.
+     */
+    private static final String DELETE_ON_EXIT_PROPERTY =
+            "org.jitsi.utils.JniUtils.AlwaysDeleteOnExit";
+
     private static final Logger logger = Logger.getLogger(JNIUtils.class);
 
     public static void loadLibrary(String libname, ClassLoader classLoader)
@@ -105,7 +111,7 @@ public final class JNIUtils
                 if (embedded.getName().startsWith("jna"))
                 {
                     // Native.deleteLibrary(String) is (package) internal.
-                    if (!embedded.delete())
+                    if (System.getProperty(DELETE_ON_EXIT_PROPERTY) != null || !embedded.delete())
                         embedded.deleteOnExit();
                 }
             }
