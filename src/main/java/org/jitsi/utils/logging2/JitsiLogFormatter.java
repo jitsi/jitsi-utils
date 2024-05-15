@@ -17,11 +17,9 @@
 package org.jitsi.utils.logging2;
 
 import java.io.*;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.*;
-import java.util.logging.Formatter;
 
 public class JitsiLogFormatter extends Formatter
 {
