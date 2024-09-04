@@ -35,6 +35,18 @@ class DurationTest : ShouldSpec() {
             2 * 4.hours shouldBe Duration.ofHours(8)
             10.days / 2.days shouldBe 5.0
             5.hours / 2.hours shouldBe 2.5
+
+            4.ms.toMicros() shouldBe 4000
+            2200.nanos.toMicros() shouldBe 2
+            2900.nanos.toMicros() shouldBe 2
+
+            2200.nanos.toRoundedMicros() shouldBe 2
+            2500.nanos.toRoundedMicros() shouldBe 3
+            2900.nanos.toRoundedMicros() shouldBe 3
+
+            2200.micros.toRoundedMillis() shouldBe 2
+            2500.micros.toRoundedMillis() shouldBe 3
+            2900.micros.toRoundedMillis() shouldBe 3
         }
     }
 }

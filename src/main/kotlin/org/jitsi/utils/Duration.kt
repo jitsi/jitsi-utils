@@ -48,3 +48,55 @@ operator fun Duration.times(x: Number): Duration = this.multipliedBy(x.toLong())
 operator fun Number.times(x: Duration): Duration = x.multipliedBy(this.toLong())
 
 operator fun Duration.div(other: Duration): Double = toNanos().toDouble() / other.toNanos()
+
+/** Converts this duration to the total length in milliseconds, rounded to nearest. */
+fun Duration.toRoundedMillis(): Long {
+    var millis = this.toMillis()
+    val remainder = nano % NANOS_PER_MILLI
+    if (remainder > 499_999) {
+        millis++
+    }
+    return millis
+}
+
+/**
+ * Converts this duration to the total length in microseconds.
+ *
+ * If this duration is too large to fit in a `long` microseconds, then an
+ * exception is thrown.
+ *
+ * If this duration has greater than microseconds precision, then the conversion
+ * will drop any excess precision information as though the amount in nanoseconds
+ * was subject to integer division by one thousand.
+ *
+ * @return the total length of the duration in microseconds
+ * @throws ArithmeticException if numeric overflow occurs
+ */
+fun Duration.toMicros(): Long {
+    var tempSeconds: Long = seconds
+    var tempNanos: Long = nano.toLong()
+    if (tempSeconds < 0) {
+        // change the seconds and nano value to
+        // handle Long.MIN_VALUE case
+        tempSeconds += 1
+        tempNanos -= NANOS_PER_SECOND
+    }
+    var micros = Math.multiplyExact(tempSeconds, MICROS_PER_SECOND)
+    micros = Math.addExact(micros, tempNanos / NANOS_PER_MICRO)
+    return micros
+}
+
+/** Converts this duration to the total length in microseconds, rounded to nearest. */
+fun Duration.toRoundedMicros(): Long {
+    var micros = this.toMicros()
+    val remainder = nano % NANOS_PER_MICRO
+    if (remainder > 499) {
+        micros++
+    }
+    return micros
+}
+
+private const val NANOS_PER_MICRO = 1_000
+private const val NANOS_PER_MILLI = 1_000_000
+private const val MICROS_PER_SECOND = 1_000_000
+private const val NANOS_PER_SECOND = 1_000_000_000
