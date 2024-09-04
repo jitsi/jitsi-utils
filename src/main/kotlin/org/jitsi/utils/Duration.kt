@@ -17,13 +17,17 @@
 package org.jitsi.utils
 
 import java.time.Duration
+import java.time.temporal.ChronoUnit
 
 /**
- * Helpers to create instance of [Duration] more easily
+ * Helpers to create instances of [Duration] more easily, and Kotlin operators for it
  */
 
 val Number.nanos: Duration
     get() = Duration.ofNanos(this.toLong())
+
+val Number.micros: Duration
+    get() = Duration.of(this.toLong(), ChronoUnit.MICROS)
 
 val Number.ms: Duration
     get() = Duration.ofMillis(this.toLong())
@@ -40,5 +44,7 @@ val Number.mins: Duration
 val Number.days: Duration
     get() = Duration.ofDays(this.toLong())
 
-operator fun Duration.times(x: Int): Duration = Duration.ofNanos(toNanos() * x)
+operator fun Duration.times(x: Number): Duration = this.multipliedBy(x.toLong())
+operator fun Number.times(x: Duration): Duration = x.multipliedBy(this.toLong())
+
 operator fun Duration.div(other: Duration): Double = toNanos().toDouble() / other.toNanos()
