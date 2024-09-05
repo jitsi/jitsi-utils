@@ -23,29 +23,53 @@ import java.time.temporal.ChronoUnit
  * Helpers to create instances of [Duration] more easily, and Kotlin operators for it
  */
 
-val Number.nanos: Duration
+val Int.nanos: Duration
     get() = Duration.ofNanos(this.toLong())
 
-val Number.micros: Duration
+val Int.micros: Duration
     get() = Duration.of(this.toLong(), ChronoUnit.MICROS)
 
-val Number.ms: Duration
+val Int.ms: Duration
     get() = Duration.ofMillis(this.toLong())
 
-val Number.secs: Duration
+val Int.secs: Duration
     get() = Duration.ofSeconds(this.toLong())
 
-val Number.hours: Duration
+val Int.hours: Duration
     get() = Duration.ofHours(this.toLong())
 
-val Number.mins: Duration
+val Int.mins: Duration
     get() = Duration.ofMinutes(this.toLong())
 
-val Number.days: Duration
+val Int.days: Duration
     get() = Duration.ofDays(this.toLong())
 
-operator fun Duration.times(x: Number): Duration = this.multipliedBy(x.toLong())
-operator fun Number.times(x: Duration): Duration = x.multipliedBy(this.toLong())
+val Long.nanos: Duration
+    get() = Duration.ofNanos(this)
+
+val Long.micros: Duration
+    get() = Duration.of(this, ChronoUnit.MICROS)
+
+val Long.ms: Duration
+    get() = Duration.ofMillis(this)
+
+val Long.secs: Duration
+    get() = Duration.ofSeconds(this)
+
+val Long.hours: Duration
+    get() = Duration.ofHours(this)
+
+val Long.mins: Duration
+    get() = Duration.ofMinutes(this)
+
+val Long.days: Duration
+    get() = Duration.ofDays(this)
+
+operator fun Duration.times(x: Int): Duration = this.multipliedBy(x.toLong())
+operator fun Duration.times(x: Long): Duration = this.multipliedBy(x)
+
+operator fun Int.times(x: Duration): Duration = x.multipliedBy(this.toLong())
+operator fun Long.times(x: Duration): Duration = x.multipliedBy(this)
 
 operator fun Duration.div(other: Duration): Double = toNanos().toDouble() / other.toNanos()
 
