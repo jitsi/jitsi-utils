@@ -24,6 +24,7 @@ class DurationTest : ShouldSpec() {
     init {
         context("the duration helpers should work") {
             5.nanos shouldBe Duration.ofNanos(5)
+            5.micros shouldBe Duration.ofNanos(5_000)
             5.ms shouldBe Duration.ofMillis(5)
             5.secs shouldBe Duration.ofSeconds(5)
             5.mins shouldBe Duration.ofMinutes(5)
@@ -31,7 +32,21 @@ class DurationTest : ShouldSpec() {
             5.days shouldBe Duration.ofDays(5)
 
             1.days * 2 shouldBe Duration.ofDays(2)
+            2 * 4.hours shouldBe Duration.ofHours(8)
             10.days / 2.days shouldBe 5.0
+            5.hours / 2.hours shouldBe 2.5
+
+            4.ms.toMicros() shouldBe 4000
+            2200.nanos.toMicros() shouldBe 2
+            2900.nanos.toMicros() shouldBe 2
+
+            2200.nanos.toRoundedMicros() shouldBe 2
+            2500.nanos.toRoundedMicros() shouldBe 3
+            2900.nanos.toRoundedMicros() shouldBe 3
+
+            2200.micros.toRoundedMillis() shouldBe 2
+            2500.micros.toRoundedMillis() shouldBe 3
+            2900.micros.toRoundedMillis() shouldBe 3
         }
     }
 }
