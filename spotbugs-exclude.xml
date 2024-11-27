@@ -22,7 +22,12 @@
   <Bug pattern="SE_BAD_FIELD_STORE"/>
 </Match>
 
-<Match>
+  <Match>
+    <!-- We throw from constructors on illegal arguments, i.e. programming errors. -->
+    <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+  </Match>
+
+  <Match>
   <!-- This seems to get triggered by certain kotlin constructs though they look safe -->
   <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
   <Source name="~.*\.kt" />
