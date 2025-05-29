@@ -48,5 +48,78 @@ class DurationTest : ShouldSpec() {
             2500.micros.toRoundedMillis() shouldBe 3
             2900.micros.toRoundedMillis() shouldBe 3
         }
+        context("roundUpTo") {
+            should("return same value when duration is already a multiple of resolution") {
+                val duration = Duration.ofMillis(100)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundUpTo(resolution) shouldBe duration
+            }
+
+            should("round up to next multiple when not already aligned") {
+                val duration = Duration.ofMillis(101)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundUpTo(resolution) shouldBe Duration.ofMillis(120)
+            }
+
+            should("round up to next multiple when just below target") {
+                val duration = Duration.ofMillis(99)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundUpTo(resolution) shouldBe Duration.ofMillis(100)
+            }
+
+            should("handle zero duration") {
+                val duration = Duration.ZERO
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundUpTo(resolution) shouldBe Duration.ZERO
+            }
+
+            should("handle different resolution units") {
+                val duration = Duration.ofNanos(1_500_000) // 1.5ms
+                val resolution = Duration.ofMillis(1)
+
+                duration.roundUpTo(resolution) shouldBe Duration.ofMillis(2)
+            }
+        }
+
+        context("roundDownTo") {
+            should("return same value when duration is already a multiple of resolution") {
+                val duration = Duration.ofMillis(100)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundDownTo(resolution) shouldBe duration
+            }
+
+            should("round down to previous multiple when not already aligned") {
+                val duration = Duration.ofMillis(101)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundDownTo(resolution) shouldBe Duration.ofMillis(100)
+            }
+
+            should("round down to previous multiple when just above target + resolution") {
+                val duration = Duration.ofMillis(119)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundDownTo(resolution) shouldBe Duration.ofMillis(100)
+            }
+
+            should("handle zero duration") {
+                val duration = Duration.ZERO
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundDownTo(resolution) shouldBe Duration.ZERO
+            }
+
+            should("handle different resolution units") {
+                val duration = Duration.ofNanos(1_500_000) // 1.5ms
+                val resolution = Duration.ofMillis(1)
+
+                duration.roundDownTo(resolution) shouldBe Duration.ofMillis(1)
+            }
+        }
     }
 }
