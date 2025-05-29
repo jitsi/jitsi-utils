@@ -124,3 +124,13 @@ private const val NANOS_PER_MICRO = 1_000
 private const val NANOS_PER_MILLI = 1_000_000
 private const val MICROS_PER_SECOND = 1_000_000
 private const val NANOS_PER_SECOND = 1_000_000_000
+
+fun Duration.roundUpTo(resolution: Duration): Duration {
+    assert(resolution > Duration.ZERO)
+    return Duration.ofNanos((toNanos() + resolution.toNanos() - 1) / resolution.toNanos()) * resolution.toNanos()
+}
+
+fun Duration.roundDownTo(resolution: Duration): Duration {
+    assert(resolution > Duration.ZERO)
+    return Duration.ofNanos(toNanos() / resolution.toNanos()) * resolution.toNanos()
+}
