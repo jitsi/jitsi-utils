@@ -17,6 +17,7 @@
 package org.jitsi.utils
 
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import java.time.Duration
 
@@ -36,6 +37,15 @@ class DurationTest : ShouldSpec() {
             10.days / 2.days shouldBe 5.0
             5.hours / 2.hours shouldBe 2.5
 
+            10.secs / 2 shouldBe 5.secs
+            5.secs / 2 shouldBe 2500.ms
+
+            10.secs / 2.0 shouldBe 5.secs
+            5.secs / 2.0 shouldBe 2500.ms
+
+            -(2200.ms) shouldBe (-2200).ms
+            -(0.ms) shouldBe 0.ms
+
             4.ms.toMicros() shouldBe 4000
             2200.nanos.toMicros() shouldBe 2
             2900.nanos.toMicros() shouldBe 2
@@ -47,6 +57,39 @@ class DurationTest : ShouldSpec() {
             2200.micros.toRoundedMillis() shouldBe 2
             2500.micros.toRoundedMillis() shouldBe 3
             2900.micros.toRoundedMillis() shouldBe 3
+
+            2200.ms.toDouble() shouldBe 2.2
+            0.ms.toDouble() shouldBe 0.0
+            (-(2200.ms)).toDouble() shouldBe -2.2
+
+            2500.micros.toDoubleMillis() shouldBe 2.5
+            0.micros.toDoubleMillis() shouldBe 0.0
+            (-(2500.micros)).toDoubleMillis() shouldBe -2.5
+
+            2200.micros.toDoubleMillis() shouldBe (2.2 plusOrMinus 1e-9)
+            (-(2200.micros)).toDoubleMillis() shouldBe (-2.2 plusOrMinus 1e-9)
+
+            durationOfDoubleSeconds(2.2) shouldBe 2200.ms
+
+            2200.micros.isFinite() shouldBe true
+            MAX_DURATION.isFinite() shouldBe false
+            MIN_DURATION.isFinite() shouldBe false
+
+            max(2200.ms, 3000.ms) shouldBe 3000.ms
+            max(2200.ms, MAX_DURATION) shouldBe MAX_DURATION
+            max(2200.ms, MIN_DURATION) shouldBe 2200.ms
+
+            min(2200.ms, 3000.ms) shouldBe 2200.ms
+            min(2200.ms, MAX_DURATION) shouldBe 2200.ms
+            min(2200.ms, MIN_DURATION) shouldBe MIN_DURATION
+
+            listOf(1, 2, 3).sumOf { it.ms } shouldBe 6.ms
+
+            0.ms.coerceIn(1.ms, 10.ms) shouldBe 1.ms
+            5.ms.coerceIn(1.ms, 10.ms) shouldBe 5.ms
+            50.ms.coerceIn(1.ms, 10.ms) shouldBe 10.ms
+
+            2501.micros.formatMilli() shouldBe "2.501"
         }
         context("roundUpTo") {
             should("return same value when duration is already a multiple of resolution") {
