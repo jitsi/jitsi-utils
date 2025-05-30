@@ -16,6 +16,7 @@
 
 package org.jitsi.utils
 
+import java.time.Clock
 import java.time.Instant
 
 /**
@@ -62,4 +63,44 @@ fun instantOfEpochMicro(epochMicro: Long): Instant {
     val secs = Math.floorDiv(epochMicro, 1_000_000)
     val mos = Math.floorMod(epochMicro, 1_000_000).toLong()
     return Instant.ofEpochSecond(secs, mos * 1000)
+}
+
+@JvmField
+val NEVER: Instant = Instant.MIN
+fun Instant.formatMilli(): String = TimeUtils.formatTimeAsFullMillis(this.epochSecond, this.nano)
+
+/**
+ * Like [Instant.toEpochMilli], but rounded to nearest rather than rounded to zero.
+ *
+ * This is needed to be bit-exact with WebRTC unit tests, since libwebrtc clocks round this way
+ */
+fun Instant.toRoundedEpochMilli(): Long {
+    var ret = toEpochMilli()
+    val remainder = Math.floorMod(nano, 1_000_000)
+    if (remainder > 499_999) {
+        ret++
+    }
+    return ret
+}
+
+fun Instant.isInfinite(): Boolean = (this == Instant.MAX || this == Instant.MIN)
+fun Instant.isFinite(): Boolean = !this.isInfinite()
+
+/**
+ * Like [Clock.millis], but rounded to nearest rather than rounded to zero.
+ */
+fun Clock.roundedMillis() = this.instant().toRoundedEpochMilli()
+
+/**
+ * Returns the maximum of two [Instant]s
+ */
+fun max(a: Instant, b: Instant): Instant {
+    return if (a >= b) a else b
+}
+
+/**
+ * Returns the minimum of two [Instant]s
+ */
+fun min(a: Instant, b: Instant): Instant {
+    return if (a <= b) a else b
 }

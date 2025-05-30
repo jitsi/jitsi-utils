@@ -18,6 +18,8 @@ package org.jitsi.utils
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
+import kotlin.math.floor
+import kotlin.math.round
 
 /**
  * Helpers to create instances of [Duration] more easily, and Kotlin operators for it
@@ -125,12 +127,92 @@ private const val NANOS_PER_MILLI = 1_000_000
 private const val MICROS_PER_SECOND = 1_000_000
 private const val NANOS_PER_SECOND = 1_000_000_000
 
+fun Duration.toDouble(): Double {
+    return this.seconds.toDouble() + this.nano.toDouble() * 1e-9
+}
+
+fun Duration.toDoubleMillis(): Double {
+    val sec = this.seconds
+    val nano = this.nano
+    return sec * 1e3 + nano * 1e-6
+}
+
+fun durationOfDoubleSeconds(duration: Double): Duration {
+    val secs = floor(duration)
+    val ns = round((duration - secs) * 1e9)
+    require(secs >= Long.MIN_VALUE.toDouble() && secs <= Long.MAX_VALUE.toDouble())
+    /* For reasons I don't understand, the basic Duration(secs, ns) constructor is private. */
+    return Duration.ofSeconds(secs.toLong()).plusNanos(ns.toLong())
+}
+
+val MIN_DURATION: Duration = Duration.ofSeconds(Long.MIN_VALUE, 0)
+
+val MAX_DURATION: Duration = Duration.ofSeconds(Long.MAX_VALUE, 999_999_999)
+
+fun Duration.isFinite() = this != MIN_DURATION && this != MAX_DURATION
+
+operator fun Duration.times(other: Double): Duration = durationOfDoubleSeconds((toDouble() * other))
+operator fun Double.times(other: Duration): Duration = durationOfDoubleSeconds(other.toDouble() * this)
+
+operator fun Duration.div(other: Double): Duration = durationOfDoubleSeconds(toDouble() / other)
+
+operator fun Duration.div(other: Long): Duration = this.dividedBy(other)
+
+operator fun Duration.unaryMinus(): Duration = this.negated()
+
+fun <T> Iterable<T>.sumOf(selector: (T) -> Duration): Duration {
+    var sum: Duration = Duration.ZERO
+    for (element in this) {
+        sum += selector(element)
+    }
+    return sum
+}
+
+/**
+ * Returns the maximum of two [Duration]s
+ */
+fun max(a: Duration, b: Duration): Duration {
+    return if (a >= b) a else b
+}
+
+/**
+ * Returns the minimum of two [Duration]s
+ */
+fun min(a: Duration, b: Duration): Duration {
+    return if (a <= b) a else b
+}
+
+/**
+ * Ensures that this value lies in the specified range [minimumValue]..[maximumValue].
+ *
+ * @return this value if it's in the range, or [minimumValue] if this value is less than [minimumValue],
+ * or [maximumValue] if this value is greater than [maximumValue].
+ *
+ * @sample samples.comparisons.ComparableOps.coerceIn
+ */
+fun Duration.coerceIn(minimumValue: Duration, maximumValue: Duration): Duration {
+    if (minimumValue > maximumValue) {
+        throw IllegalArgumentException(
+            "Cannot coerce value to an empty range:  maximum $maximumValue is less than minimum $minimumValue."
+        )
+    }
+    if (this < minimumValue) {
+        return minimumValue
+    }
+    if (this > maximumValue) {
+        return maximumValue
+    }
+    return this
+}
+
 fun Duration.roundUpTo(resolution: Duration): Duration {
-    assert(resolution > Duration.ZERO)
+    require(resolution > Duration.ZERO)
     return Duration.ofNanos((toNanos() + resolution.toNanos() - 1) / resolution.toNanos()) * resolution.toNanos()
 }
 
 fun Duration.roundDownTo(resolution: Duration): Duration {
-    assert(resolution > Duration.ZERO)
+    require(resolution > Duration.ZERO)
     return Duration.ofNanos(toNanos() / resolution.toNanos()) * resolution.toNanos()
 }
+
+fun Duration.formatMilli(): String = TimeUtils.formatTimeAsFullMillis(this.seconds, this.nano)
