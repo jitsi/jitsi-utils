@@ -137,7 +137,7 @@ fun Duration.toDoubleMillis(): Double {
 }
 
 fun durationOfDoubleSeconds(duration: Double): Duration {
-    check(duration >= Long.MIN_VALUE.toDouble() && duration < Long.MAX_VALUE.toDouble() + 0.999_999_999_5)
+    require(duration >= Long.MIN_VALUE.toDouble() && duration < Long.MAX_VALUE.toDouble() + 0.999_999_999_5)
     return Duration.ofNanos(round(duration * 1e9).toLong())
 }
 
@@ -202,12 +202,12 @@ fun Duration.coerceIn(minimumValue: Duration, maximumValue: Duration): Duration 
 }
 
 fun Duration.roundUpTo(resolution: Duration): Duration {
-    assert(resolution > Duration.ZERO)
+    require(resolution > Duration.ZERO)
     return Duration.ofNanos((toNanos() + resolution.toNanos() - 1) / resolution.toNanos()) * resolution.toNanos()
 }
 
 fun Duration.roundDownTo(resolution: Duration): Duration {
-    assert(resolution > Duration.ZERO)
+    require(resolution > Duration.ZERO)
     return Duration.ofNanos(toNanos() / resolution.toNanos()) * resolution.toNanos()
 }
 

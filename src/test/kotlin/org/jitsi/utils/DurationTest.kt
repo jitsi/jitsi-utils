@@ -34,6 +34,10 @@ class DurationTest : ShouldSpec() {
 
             1.days * 2 shouldBe Duration.ofDays(2)
             2 * 4.hours shouldBe Duration.ofHours(8)
+
+            1.days * 2.5 shouldBe Duration.ofHours(60)
+            2.5 * 1.hours shouldBe Duration.ofMinutes(150)
+
             10.days / 2.days shouldBe 5.0
             5.hours / 2.hours shouldBe 2.5
 
