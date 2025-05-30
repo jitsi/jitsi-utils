@@ -18,6 +18,7 @@ package org.jitsi.utils
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
+import kotlin.math.floor
 import kotlin.math.round
 
 /**
@@ -137,8 +138,11 @@ fun Duration.toDoubleMillis(): Double {
 }
 
 fun durationOfDoubleSeconds(duration: Double): Duration {
-    require(duration >= Long.MIN_VALUE.toDouble() && duration < Long.MAX_VALUE.toDouble() + 0.999_999_999_5)
-    return Duration.ofNanos(round(duration * 1e9).toLong())
+    val secs = floor(duration)
+    val ns = (duration - secs) * 1e9
+    require(secs >= Long.MIN_VALUE.toDouble() && secs <= Long.MAX_VALUE.toDouble())
+    /* For reasons I don't understand, the basic Duration(secs, ns) constructor is private. */
+    return Duration.ofSeconds(secs.toLong()).plusNanos(ns.toLong())
 }
 
 val MIN_DURATION: Duration = Duration.ofSeconds(Long.MIN_VALUE, 0)
