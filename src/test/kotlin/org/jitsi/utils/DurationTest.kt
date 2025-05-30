@@ -79,6 +79,9 @@ class DurationTest : ShouldSpec() {
 
             durationOfDoubleSeconds(-2.5) shouldBe (-2500).ms
 
+            durationOfDoubleSeconds(2.999_999_999) shouldBe 2_999_999_999.nanos
+            durationOfDoubleSeconds(2.999_999_999_5) shouldBe 3.secs
+
             2200.micros.isFinite() shouldBe true
             MAX_DURATION.isFinite() shouldBe false
             MIN_DURATION.isFinite() shouldBe false

@@ -139,7 +139,7 @@ fun Duration.toDoubleMillis(): Double {
 
 fun durationOfDoubleSeconds(duration: Double): Duration {
     val secs = floor(duration)
-    val ns = (duration - secs) * 1e9
+    val ns = round((duration - secs) * 1e9)
     require(secs >= Long.MIN_VALUE.toDouble() && secs <= Long.MAX_VALUE.toDouble())
     /* For reasons I don't understand, the basic Duration(secs, ns) constructor is private. */
     return Duration.ofSeconds(secs.toLong()).plusNanos(ns.toLong())
