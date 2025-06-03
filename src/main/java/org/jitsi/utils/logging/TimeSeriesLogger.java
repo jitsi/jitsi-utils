@@ -19,6 +19,7 @@ package org.jitsi.utils.logging;
 import org.json.simple.*;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author George Politis
@@ -104,6 +105,17 @@ public class TimeSeriesLogger
     }
 
     /**
+     * Traces a {@link DiagnosticContext.TimeSeriesPoint} supplied by the supplier if
+     * tracing is enabled by this logger
+     */
+    public void trace(Supplier<Map<String, Object>> supplier)
+    {
+        if (isTraceEnabled()) {
+            trace(supplier.get());
+        }
+    }
+
+    /**
      * Logs a {@link DiagnosticContext.TimeSeriesPoint} in WARNING level.
      *
      * @param point the point to log.
@@ -117,6 +129,17 @@ public class TimeSeriesLogger
     }
 
     /**
+     * Logs a {@link DiagnosticContext.TimeSeriesPoint} supplied by the supplier
+     * in WARNING level if warnings are enabled by this logger
+     */
+    public void warn(Supplier<Map<String, Object>> supplier)
+    {
+        if (isWarnEnabled()) {
+            warn(supplier.get());
+        }
+    }
+
+    /**
      * Logs a {@link DiagnosticContext.TimeSeriesPoint} in INFO level.
      *
      * @param point the point to log.
@@ -126,6 +149,17 @@ public class TimeSeriesLogger
         if (point != null && !point.isEmpty())
         {
             logger.info(new JSONObject(point).toJSONString());
+        }
+    }
+
+    /**
+     * Traces a {@link DiagnosticContext.TimeSeriesPoint} supplied by the supplier
+     * in INFO level if info is enabled by this logger
+     */
+    public void info(Supplier<Map<String, Object>> supplier)
+    {
+        if (isInfoEnabled()) {
+            info(supplier.get());
         }
     }
 }
