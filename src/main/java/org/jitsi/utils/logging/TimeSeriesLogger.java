@@ -155,7 +155,7 @@ public class TimeSeriesLogger
     }
 
     /**
-     * Traces a {@link DiagnosticContext.TimeSeriesPoint} supplied by the supplier
+     * Logs a {@link DiagnosticContext.TimeSeriesPoint} supplied by the supplier
      * in INFO level if info is enabled by this logger
      */
     public void info(Supplier<Map<String, Object>> supplier)
