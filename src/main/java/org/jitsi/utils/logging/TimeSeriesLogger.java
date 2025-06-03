@@ -110,7 +110,8 @@ public class TimeSeriesLogger
      */
     public void trace(Supplier<Map<String, Object>> supplier)
     {
-        if (isTraceEnabled()) {
+        if (isTraceEnabled())
+        {
             trace(supplier.get());
         }
     }
@@ -134,7 +135,8 @@ public class TimeSeriesLogger
      */
     public void warn(Supplier<Map<String, Object>> supplier)
     {
-        if (isWarnEnabled()) {
+        if (isWarnEnabled())
+        {
             warn(supplier.get());
         }
     }
@@ -158,7 +160,8 @@ public class TimeSeriesLogger
      */
     public void info(Supplier<Map<String, Object>> supplier)
     {
-        if (isInfoEnabled()) {
+        if (isInfoEnabled())
+        {
             info(supplier.get());
         }
     }
