@@ -73,6 +73,11 @@ class DurationTest : ShouldSpec() {
             2200.micros.toDoubleMillis() shouldBe (2.2 plusOrMinus 1e-9)
             (-(2200.micros)).toDoubleMillis() shouldBe (-2.2 plusOrMinus 1e-9)
 
+            abs(2200.micros) shouldBe 2200.micros
+            abs(-(2200.micros)) shouldBe 2200.micros
+            abs((-2200).micros) shouldBe 2200.micros
+            abs(Duration.ZERO) shouldBe Duration.ZERO
+
             durationOfDoubleSeconds(2.2) shouldBe 2200.ms
 
             durationOfDoubleSeconds(Long.MAX_VALUE.toDouble()).seconds shouldBe Long.MAX_VALUE
@@ -85,6 +90,10 @@ class DurationTest : ShouldSpec() {
             2200.micros.isFinite() shouldBe true
             MAX_DURATION.isFinite() shouldBe false
             MIN_DURATION.isFinite() shouldBe false
+
+            2200.micros.isInfinite() shouldBe false
+            MAX_DURATION.isInfinite() shouldBe true
+            MIN_DURATION.isInfinite() shouldBe true
 
             max(2200.ms, 3000.ms) shouldBe 3000.ms
             max(2200.ms, MAX_DURATION) shouldBe MAX_DURATION
