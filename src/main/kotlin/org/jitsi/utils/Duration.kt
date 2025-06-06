@@ -141,8 +141,7 @@ fun durationOfDoubleSeconds(duration: Double): Duration {
     val secs = floor(duration)
     val ns = round((duration - secs) * 1e9)
     require(secs >= Long.MIN_VALUE.toDouble() && secs <= Long.MAX_VALUE.toDouble())
-    /* For reasons I don't understand, the basic Duration(secs, ns) constructor is private. */
-    return Duration.ofSeconds(secs.toLong()).plusNanos(ns.toLong())
+    return Duration.ofSeconds(secs.toLong(), ns.toLong())
 }
 
 val MIN_DURATION: Duration = Duration.ofSeconds(Long.MIN_VALUE, 0)
@@ -150,6 +149,7 @@ val MIN_DURATION: Duration = Duration.ofSeconds(Long.MIN_VALUE, 0)
 val MAX_DURATION: Duration = Duration.ofSeconds(Long.MAX_VALUE, 999_999_999)
 
 fun Duration.isFinite() = this != MIN_DURATION && this != MAX_DURATION
+fun Duration.isInfinite() = !isFinite()
 
 operator fun Duration.times(other: Double): Duration = durationOfDoubleSeconds((toDouble() * other))
 operator fun Double.times(other: Duration): Duration = durationOfDoubleSeconds(other.toDouble() * this)
@@ -159,6 +159,8 @@ operator fun Duration.div(other: Double): Duration = durationOfDoubleSeconds(toD
 operator fun Duration.div(other: Long): Duration = this.dividedBy(other)
 
 operator fun Duration.unaryMinus(): Duration = this.negated()
+
+fun abs(duration: Duration) = if (duration >= Duration.ZERO) duration else -duration
 
 fun <T> Iterable<T>.sumOf(selector: (T) -> Duration): Duration {
     var sum: Duration = Duration.ZERO
