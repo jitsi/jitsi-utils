@@ -41,7 +41,7 @@ class TemplatedUrlTest : ShouldSpec({
             templatedUrl.resolve() shouldBe URI("wss://example.com/api/resource?param=value")
         }
 
-        should("resolve a template with multiple keys when they are not set()") {
+        should("resolve a template with multiple keys when they are set()") {
             val template = "wss://{{host}}/{{path}}?param={{param}}"
             val templatedUrl = TemplatedUrl(template)
             templatedUrl.set("host", "example.com")
@@ -52,32 +52,45 @@ class TemplatedUrlTest : ShouldSpec({
                 mapOf("host" to "example2.com", "path" to "api/resource2", "param" to "value2")
             ) shouldBe URI("wss://example2.com/api/resource2?param=value2")
         }
+        should("resolve a template with keys set in the constructor, with set() and in resolve()") {
+            val template = "wss://{{host}}/{{path}}?param={{param}}"
+            val templatedUrl = TemplatedUrl(template, mapOf("host" to "example.com"))
+            templatedUrl.set("path", "api/resource")
+            templatedUrl.set("param", "value")
+
+            templatedUrl.resolve(
+                mapOf("param" to "value2")
+            ) shouldBe URI("wss://example.com/api/resource?param=value2")
+        }
 
         should("resolve with a new key-value pair without saving it") {
             val template = "https://example.com/{{path}}?param={{param}}"
             val templatedUrl = TemplatedUrl(template)
             templatedUrl.set("path", "api")
+            templatedUrl.set("param", "permanent")
 
             // Resolve with temporary param value
             templatedUrl.resolve("param", "temp") shouldBe URI("https://example.com/api?param=temp")
 
-            // Original template should not have the param saved
-            templatedUrl.set("param", "permanent")
             templatedUrl.resolve() shouldBe URI("https://example.com/api?param=permanent")
         }
 
         should("throw an exception when not all requiredKeys are set") {
             val template = "https://example.com/{{path}}?param={{param}}"
-            val templatedUrl = TemplatedUrl(template, requiredKeys = setOf("param"))
+            val templatedUrl = TemplatedUrl(template, requiredKeys = setOf("param", "required"))
             templatedUrl.set("path", "api")
 
             shouldThrow<IllegalArgumentException> {
                 templatedUrl.resolve()
             }
+            shouldThrow<IllegalArgumentException> {
+                // "required" is still not set
+                templatedUrl.resolve("param", "value")
+            }
         }
 
         should("fail to resolve when some requiredKeys are not set") {
-            val template = "https://{{host}}/{{path}}?optional={{optional}}"
+            val template = "https://{{host}}/{{path}}"
             val templatedUrl = TemplatedUrl(template, requiredKeys = setOf("host", "path"))
 
             templatedUrl.set("host", "example.com")
