@@ -19,9 +19,10 @@ import java.net.URI
 
 class TemplatedUrl(
     private val template: String,
-    private val map: MutableMap<String, String> = mutableMapOf(),
+    inMap: Map<String, String> = emptyMap(),
     private val requiredKeys: Set<String> = emptySet(),
 ) {
+    private val map = inMap.toMutableMap()
 
     /** Saves the given key:value pair in the map. */
     fun set(key: String, value: String) {

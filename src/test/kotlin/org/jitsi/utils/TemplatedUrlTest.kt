@@ -49,8 +49,8 @@ class TemplatedUrlTest : ShouldSpec({
             templatedUrl.set("param", "value")
 
             templatedUrl.resolve(
-                mapOf("host" to "example.com", "path" to "api/resource", "param" to "value")
-            ) shouldBe URI("wss://example.com/api/resource?param=value")
+                mapOf("host" to "example2.com", "path" to "api/resource2", "param" to "value2")
+            ) shouldBe URI("wss://example2.com/api/resource2?param=value2")
         }
 
         should("resolve with a new key-value pair without saving it") {
@@ -75,11 +75,30 @@ class TemplatedUrlTest : ShouldSpec({
                 templatedUrl.resolve()
             }
         }
+
+        should("fail to resolve when some requiredKeys are not set") {
+            val template = "https://{{host}}/{{path}}?optional={{optional}}"
+            val templatedUrl = TemplatedUrl(template, requiredKeys = setOf("host", "path"))
+
+            templatedUrl.set("host", "example.com")
+
+            shouldThrow<IllegalArgumentException> {
+                templatedUrl.resolve()
+            }
+        }
+
         should("throw an exception when the URI is invalid") {
             val templatedUrl = TemplatedUrl("https://example.com/{{}}")
 
             shouldThrow<URISyntaxException> {
                 templatedUrl.resolve()
+            }
+        }
+        should("throw an exception when the values lead to an invalid URI ") {
+            val templatedUrl = TemplatedUrl("https://example.com/{{path}}")
+
+            shouldThrow<URISyntaxException> {
+                templatedUrl.resolve("path", "}")
             }
         }
 
@@ -90,6 +109,13 @@ class TemplatedUrlTest : ShouldSpec({
             templatedUrl.set("path", "resource")
 
             templatedUrl.resolve() shouldBe URI("https://example.com/resource/resource")
+        }
+        should("not modify the map passed as a constructor parameter") {
+            val m = mutableMapOf("key1" to "value1", "key2" to "value2")
+            val templatedUrl = TemplatedUrl("https://example.com/{{key1}}/{{key2}}", m)
+            templatedUrl.set("key1", "newValue1")
+            templatedUrl.set("key2", "newValue2")
+            m shouldBe mapOf("key1" to "value1", "key2" to "value2")
         }
     }
 })
