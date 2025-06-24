@@ -69,6 +69,12 @@ class LogContext private constructor(
     fun addContext(key: String, value: String) = addContext(mapOf(key to value))
 
     @Synchronized
+    fun removeContext(key: String) {
+        context = context - key
+        updateFormattedContext()
+    }
+
+    @Synchronized
     fun addContext(addedContext: Map<String, String>) {
         context = context + addedContext
         updateFormattedContext()

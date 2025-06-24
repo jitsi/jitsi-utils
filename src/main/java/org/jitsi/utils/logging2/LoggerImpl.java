@@ -100,7 +100,7 @@ public class LoggerImpl implements Logger
     {
         loggerDelegate.removeHandler(handler);
     }
-    
+
     private boolean isLoggable(Level level)
     {
         return level.intValue() >= minLogLevel.intValue() && loggerDelegate.isLoggable(level);
@@ -307,6 +307,12 @@ public class LoggerImpl implements Logger
     public void addContext(String key, String value)
     {
         logContext.addContext(key, value);
+    }
+
+    @Override
+    public void removeContext(String key)
+    {
+        logContext.removeContext(key);
     }
 
     static Function<String, java.util.logging.Logger> loggerFactory = java.util.logging.Logger::getLogger;
