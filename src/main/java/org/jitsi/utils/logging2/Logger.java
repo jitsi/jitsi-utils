@@ -262,4 +262,10 @@ public interface Logger
      * @param value the context value
      */
     void addContext(String key, String value);
+
+    /**
+     * Remove a context key/value pair from this logger.
+     * @param key the key to remove.
+     */
+    void removeContext(String key);
 }

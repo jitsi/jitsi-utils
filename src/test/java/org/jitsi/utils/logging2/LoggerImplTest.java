@@ -140,6 +140,24 @@ public class LoggerImplTest
         assertTrue(containsData(contextTokens, "keyOne=value1"));
         assertTrue(containsData(contextTokens, "keyTwo=value2"));
     }
+    @Test
+    public void testRemovingContext()
+    {
+        Map<String, String> ctxData = new HashMap<>();
+        ctxData.put("keyOne", "value1");
+        ctxData.put("keyTwo", "value2");
+        LogContext ctx = new LogContext(ctxData);
+
+        LoggerImpl logger = new LoggerImpl("test", ctx);
+        logger.removeContext("keyOne");
+
+        logger.info("hello, world!");
+
+        String[] contextTokens = fakeLogger.getLastLineContextTokens();
+        assertTrue(containsData(contextTokens, "keyTwo=value2"));
+        assertTrue(Arrays.stream(contextTokens)
+            .noneMatch(token -> token.contains("keyOne")));
+    }
 
     @Test
     public void testChildLoggerInheritsContext()
