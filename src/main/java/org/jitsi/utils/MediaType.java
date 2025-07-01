@@ -32,6 +32,11 @@ public enum MediaType
     AUDIO("audio"),
 
     /**
+     * Represents a DESKTOP media type.
+     */
+    DESKTOP("desktop"),
+
+    /**
      * Represents a VIDEO media type.
      */
     VIDEO("video"),
