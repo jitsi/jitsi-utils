@@ -207,12 +207,23 @@ fun Duration.coerceIn(minimumValue: Duration, maximumValue: Duration): Duration 
     return this
 }
 
+fun Duration.roundTo(resolution: Duration): Duration {
+    require(this.isFinite())
+    require(resolution.isFinite())
+    require(resolution > Duration.ZERO)
+    return Duration.ofNanos((toNanos() + resolution.toNanos() / 2) / resolution.toNanos()) * resolution.toNanos()
+}
+
 fun Duration.roundUpTo(resolution: Duration): Duration {
+    require(this.isFinite())
+    require(resolution.isFinite())
     require(resolution > Duration.ZERO)
     return Duration.ofNanos((toNanos() + resolution.toNanos() - 1) / resolution.toNanos()) * resolution.toNanos()
 }
 
 fun Duration.roundDownTo(resolution: Duration): Duration {
+    require(this.isFinite())
+    require(resolution.isFinite())
     require(resolution > Duration.ZERO)
     return Duration.ofNanos(toNanos() / resolution.toNanos()) * resolution.toNanos()
 }

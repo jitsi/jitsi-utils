@@ -111,6 +111,57 @@ class DurationTest : ShouldSpec() {
 
             2501.micros.formatMilli() shouldBe "2.501"
         }
+        context("roundTo") {
+            should("return same value when duration is already a multiple of resolution") {
+                val duration = Duration.ofMillis(100)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundTo(resolution) shouldBe duration
+            }
+
+            should("round down to previous multiple when just above target") {
+                val duration = Duration.ofMillis(101)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundTo(resolution) shouldBe Duration.ofMillis(100)
+            }
+
+            should("round up to next multiple when just below target") {
+                val duration = Duration.ofMillis(99)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundTo(resolution) shouldBe Duration.ofMillis(100)
+            }
+
+            should("round up to next multiple when halfway between targets") {
+                val duration = Duration.ofMillis(110)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundTo(resolution) shouldBe Duration.ofMillis(120)
+            }
+
+            should("round down to previous multiple when just below halfway between targets") {
+                val duration = Duration.ofMillis(110) - Duration.ofNanos(1)
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundTo(resolution) shouldBe Duration.ofMillis(100)
+            }
+
+            should("handle zero duration") {
+                val duration = Duration.ZERO
+                val resolution = Duration.ofMillis(20)
+
+                duration.roundTo(resolution) shouldBe Duration.ZERO
+            }
+
+            should("handle different resolution units") {
+                val duration = Duration.ofNanos(1_500_000) // 1.5ms
+                val resolution = Duration.ofMillis(1)
+
+                duration.roundTo(resolution) shouldBe Duration.ofMillis(2)
+            }
+        }
+
         context("roundUpTo") {
             should("return same value when duration is already a multiple of resolution") {
                 val duration = Duration.ofMillis(100)
