@@ -41,8 +41,8 @@ class RateLimit(
     private val requests: Deque<Instant> = LinkedList()
 
     /** Return true if the request should be accepted and false otherwise. */
-    fun accept(): Boolean {
-        val now = clock.instant()
+    @JvmOverloads
+    fun accept(now: Instant = clock.instant()): Boolean {
         val previousRequest = requests.peekLast()
         if (previousRequest == null) {
             requests.add(now)

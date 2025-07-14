@@ -72,6 +72,12 @@ class RateLimitTest : ShouldSpec() {
             should("allow the 5th request in 71st second") {
                 rateLimit.accept() shouldBe true
             }
+            val then = clock.instant()
+            clock.elapse(10.secs)
+            should("determine result by passed-in time if present") {
+                rateLimit.accept(then) shouldBe false
+                rateLimit.accept() shouldBe true
+            }
         }
     }
 }
