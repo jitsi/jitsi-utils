@@ -25,12 +25,12 @@ import java.util.LinkedList
 
 /**
  * Rate limiting which works as follows:
- * - must be at least [minInterval] gap between the requests
+ * - must be at least [defaultMinInterval] gap between the requests
  * - no more than [maxRequests] requests within the [interval]
  */
 class RateLimit(
-    /** Never accept a request unless at least [minInterval] has passed since the last request */
-    private val minInterval: Duration = 10.secs,
+    /** Never accept a request unless at least [defaultMinInterval] has passed since the last request */
+    private val defaultMinInterval: Duration = 10.secs,
     /** Accept at most [maxRequests] per [interval]. */
     private val maxRequests: Int = 3,
     /** Accept at most [maxRequests] per [interval]. */
@@ -40,9 +40,13 @@ class RateLimit(
     /** Stores the timestamps of requests that have been received. */
     private val requests: Deque<Instant> = LinkedList()
 
-    /** Return true if the request should be accepted and false otherwise. */
+    /** Return true if the request should be accepted and false otherwise.
+     * [now] is the current time, if not provided [clock].instant() is used.
+     * [minInterval] can be specified per [accept] call to support varying minimum intervals
+     *  (e.g., based on round-trip times).
+     *  */
     @JvmOverloads
-    fun accept(now: Instant = clock.instant()): Boolean {
+    fun accept(now: Instant = clock.instant(), minInterval: Duration = defaultMinInterval): Boolean {
         val previousRequest = requests.peekLast()
         if (previousRequest == null) {
             requests.add(now)
