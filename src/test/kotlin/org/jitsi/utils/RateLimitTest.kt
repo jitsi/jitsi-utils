@@ -74,8 +74,82 @@ class RateLimitTest : ShouldSpec() {
             }
             val then = clock.instant()
             clock.elapse(10.secs)
-            should("determine result by passed-in time if present") {
+            should("allow a passed-in time to override the current clock time") {
                 rateLimit.accept(then) shouldBe false
+            }
+            should("still read the current clock time afterwards") {
+                rateLimit.accept() shouldBe true
+            }
+        }
+
+        context("A RateLimit with parameters") {
+            val clock = FakeClock()
+            val rateLimit = RateLimit(
+                clock = clock,
+                defaultMinInterval = 10.ms,
+                maxRequests = 3,
+                interval = 500.ms
+            )
+            should("allow 1st request") {
+                rateLimit.accept() shouldBe true
+            }
+            should("not allow next request immediately") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(5.ms)
+            should("not allow next request after 5 ms") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(6.ms)
+            should("allow 2nd request after 11 ms") {
+                rateLimit.accept() shouldBe true
+            }
+            should("not allow 3rd request after 11 ms") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(10.ms)
+            should("allow 3rd request after 21 ms") {
+                rateLimit.accept() shouldBe true
+            }
+            clock.elapse(11.ms)
+            should("not allow more than 3 request within the last 500 ms (31 ms)") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(100.ms)
+            should("not allow more than 3 request within the last 500 ms (131 ms)") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(300.ms)
+            should("not allow more than 3 request within the last 500 ms (431 ms)") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(70.ms)
+            should("allow the 4th request after 500 ms have passed since the 1st (501 ms)") {
+                rateLimit.accept() shouldBe true
+            }
+            clock.elapse(5.ms)
+            should("not allow the 5th request in 506th ms") {
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(5.ms)
+            should("allow the 5th request in 511st ms") {
+                rateLimit.accept() shouldBe true
+            }
+            val then = clock.instant()
+            clock.elapse(500.ms)
+            should("allow a passed-in time to override the current clock time") {
+                rateLimit.accept(then) shouldBe false
+            }
+            should("still read the current clock time afterwards") {
+                rateLimit.accept() shouldBe true
+            }
+            clock.elapse(15.ms)
+            should("allow a passed-in minimum interval to override the default minimum interval") {
+                rateLimit.accept(minInterval = 20.ms) shouldBe false
+                rateLimit.accept(minInterval = 10.ms) shouldBe true
+            }
+            clock.elapse(10.ms)
+            should("still use the defaultMinTime afterwards") {
                 rateLimit.accept() shouldBe true
             }
         }
