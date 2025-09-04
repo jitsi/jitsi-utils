@@ -63,6 +63,7 @@ class LogContext private constructor(
         ancestorsContext + context,
         childContextData
     ).also {
+        childContexts.removeIf { r -> r.get() == null }
         childContexts.add(WeakReference(it))
     }
 
