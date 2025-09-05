@@ -15,6 +15,7 @@
  */
 package org.jitsi.utils.logging2
 
+import java.lang.ref.Cleaner
 import java.lang.ref.WeakReference
 
 /**
@@ -48,9 +49,6 @@ class LogContext private constructor(
     var formattedContext: String = formatContext(ancestorsContext + context)
         private set
 
-    /** Child [LogContext]s of this [LogContext] (which will be notified anytime this context changes) */
-    private val childContexts: MutableList<WeakReference<LogContext>> = ArrayList()
-
     @Synchronized
     private fun updateFormattedContext() {
         val combined = ancestorsContext + context
@@ -58,13 +56,23 @@ class LogContext private constructor(
         updateChildren(combined)
     }
 
+    /** Child [LogContext]s of this [LogContext] (which will be notified anytime this context changes) */
+    private val childContexts = mutableMapOf<Long, WeakReference<LogContext>>()
+
+    private var childCounter = 0L
+
     @Synchronized
     fun createSubContext(childContextData: Map<String, String>) = LogContext(
         ancestorsContext + context,
         childContextData
     ).also {
-        childContexts.removeIf { r -> r.get() == null }
-        childContexts.add(WeakReference(it))
+        val count = childCounter++
+        childContexts[count] = WeakReference(it)
+        CLEANER.register(it) {
+            synchronized(this@LogContext) {
+                childContexts.remove(count)
+            }
+        }
     }
 
     fun addContext(key: String, value: String) = addContext(mapOf(key to value))
@@ -83,9 +91,8 @@ class LogContext private constructor(
 
     /** Notify children of changes in this context */
     @Synchronized
-    private fun updateChildren(newAncestorContext: Map<String, String>) = childContexts.apply {
-        removeIf { it.get() == null }
-        forEach { it.get()?.ancestorsContext = newAncestorContext }
+    private fun updateChildren(newAncestorContext: Map<String, String>) = childContexts.values.forEach {
+        it.get()?.ancestorsContext = newAncestorContext
     }
 
     override fun toString() = formattedContext
@@ -93,6 +100,8 @@ class LogContext private constructor(
     companion object {
         const val CONTEXT_START_TOKEN = "["
         const val CONTEXT_END_TOKEN = "]"
+
+        private val CLEANER = Cleaner.create()
 
         private fun formatContext(context: Map<String, String>): String {
             val s = context.entries.joinToString(separator = " ") { "${it.key}=${it.value}" }
