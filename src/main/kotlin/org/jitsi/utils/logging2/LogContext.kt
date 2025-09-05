@@ -59,18 +59,18 @@ class LogContext private constructor(
     /** Child [LogContext]s of this [LogContext] (which will be notified anytime this context changes) */
     private val childContexts = mutableMapOf<Long, WeakReference<LogContext>>()
 
-    private var childCounter = 0L
+    private var nextKey = 0L
 
     @Synchronized
     fun createSubContext(childContextData: Map<String, String>) = LogContext(
         ancestorsContext + context,
         childContextData
     ).also {
-        val count = childCounter++
-        childContexts[count] = WeakReference(it)
+        val key = nextKey++
+        childContexts[key] = WeakReference(it)
         CLEANER.register(it) {
             synchronized(this@LogContext) {
-                childContexts.remove(count)
+                childContexts.remove(key)
             }
         }
     }
