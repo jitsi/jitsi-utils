@@ -153,11 +153,30 @@ public class LoggerImpl implements Logger
     @Override
     public Level getLevel()
     {
+        Level level = loggerDelegate.getLevel();
+        if (level != null && minLogLevel != null)
+        {
+            if (level.intValue() < minLogLevel.intValue())
+            {
+                return minLogLevel;
+            }
+            else
+            {
+                return level;
+            }
+        }
+        if (level != null)
+        {
+            return level;
+        }
+        if (minLogLevel != null)
+        {
+            return minLogLevel;
+        }
         // OpenJDK's Logger implementation initializes its effective level value
         // with Level.INFO.intValue(), but DOESN'T initialize the Level object.
         // So, if it hasn't been explicitly set, assume INFO.
-        Level level = loggerDelegate.getLevel();
-        return level != null ? level : Level.INFO;
+        return Level.INFO;
     }
 
     @Override
