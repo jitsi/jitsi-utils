@@ -86,7 +86,7 @@ public class LoggerImpl implements Logger
     @Override
     public void setUseParentHandlers(boolean useParentHandlers)
     {
-        loggerDelegate.setUseParentHandlers(false);
+        loggerDelegate.setUseParentHandlers(useParentHandlers);
     }
 
     @Override
