@@ -15,8 +15,9 @@
  */
 package org.jitsi.utils.queue;
 
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.node.*;
 import org.jitsi.utils.logging.*;
-import org.json.simple.*;
 import org.jetbrains.annotations.*;
 
 import java.lang.*;
@@ -303,21 +304,26 @@ public class PacketQueue<T>
         return id;
     }
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     /**
      * Gets a JSON representation of the parts of this object's state that
      * are deemed useful for debugging.
      */
-    @SuppressWarnings("unchecked")
-    public JSONObject getDebugState()
+    public JsonNode getDebugState()
     {
-        JSONObject debugState = new JSONObject();
+        ObjectNode debugState = MAPPER.createObjectNode();
         debugState.put("id", id);
         debugState.put("capacity", capacity);
         debugState.put("closed", closed);
-        debugState.put(
-                "statistics",
-                observer == null
-                        ? null : observer.getStats());
+        if (observer == null)
+        {
+            debugState.putNull("statistics");
+        }
+        else
+        {
+            debugState.set("statistics", observer.getStats());
+        }
 
         return debugState;
     }
@@ -376,7 +382,7 @@ public class PacketQueue<T>
         void dropped(T pkt);
 
         /** Get statistics gathered by this observer. */
-        Map<?, ?> getStats();
+        JsonNode getStats();
     }
 
     /**

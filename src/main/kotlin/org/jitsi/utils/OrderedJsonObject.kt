@@ -16,22 +16,18 @@
 
 package org.jitsi.utils
 
-import org.json.simple.JSONAware
-import org.json.simple.JSONObject
-import org.json.simple.JSONStreamAware
-import java.io.Writer
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
+
+private val _mapper = ObjectMapper()
 
 /**
- * Functions just like [JSONObject], but preserves the order
- * in which keys were added (which is useful for things like
- * stats where we want to group similar values and preserve
- * the pipeline stats order).
+ * An [ObjectNode] factory that preserves insertion order (Jackson's [ObjectNode]
+ * is backed by [java.util.LinkedHashMap] by default).
+ *
+ * Use [OrderedJsonObject] as a drop-in replacement for the old json-simple–based
+ * class of the same name.  Callers that previously used bracket-assignment syntax
+ * (`obj["key"] = value`) should migrate to [ObjectNode.put] / [ObjectNode.set].
  */
-class OrderedJsonObject :
-    MutableMap<Any, Any> by LinkedHashMap(),
-    JSONAware,
-    JSONStreamAware {
-
-    override fun toJSONString(): String = JSONObject.toJSONString(this)
-    override fun writeJSONString(writer: Writer) = JSONObject.writeJSONString(this, writer)
-}
+@Suppress("FunctionName")
+fun OrderedJsonObject(): ObjectNode = _mapper.createObjectNode()

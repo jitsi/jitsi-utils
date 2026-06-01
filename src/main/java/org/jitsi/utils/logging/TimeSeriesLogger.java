@@ -16,7 +16,7 @@
 
 package org.jitsi.utils.logging;
 
-import org.json.simple.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -26,6 +26,8 @@ import java.util.function.Supplier;
  */
 public class TimeSeriesLogger
 {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     /**
      * The Java logger that's going to output the time series points.
      */
@@ -100,7 +102,7 @@ public class TimeSeriesLogger
     {
         if (point != null && !point.isEmpty())
         {
-            logger.trace(new JSONObject(point).toJSONString());
+            logger.trace(MAPPER.valueToTree(point).toString());
         }
     }
 
@@ -125,7 +127,7 @@ public class TimeSeriesLogger
     {
         if (point != null && !point.isEmpty())
         {
-            logger.warn(new JSONObject(point).toJSONString());
+            logger.warn(MAPPER.valueToTree(point).toString());
         }
     }
 
@@ -150,7 +152,7 @@ public class TimeSeriesLogger
     {
         if (point != null && !point.isEmpty())
         {
-            logger.info(new JSONObject(point).toJSONString());
+            logger.info(MAPPER.valueToTree(point).toString());
         }
     }
 

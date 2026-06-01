@@ -16,6 +16,7 @@
 
 package org.jitsi.utils
 
+import com.fasterxml.jackson.databind.node.ObjectNode
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -25,34 +26,36 @@ class OrderedJsonObjectTest : ShouldSpec() {
     init {
         context("an ordered json object") {
             val ojo = OrderedJsonObject()
-            ojo["one"] = 1
-            ojo["two"] = 2
-            ojo["three"] = 3
-            ojo["four"] = 4
-            ojo["five"] = 5
-            ojo["six"] = 6
+            ojo.put("one", 1)
+            ojo.put("two", 2)
+            ojo.put("three", 3)
+            ojo.put("four", 4)
+            ojo.put("five", 5)
+            ojo.put("six", 6)
 
             should("print items in the order they were added") {
-                ojo.toJSONString() shouldBe "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6}"
+                ojo.toString() shouldBe """{"one":1,"two":2,"three":3,"four":4,"five":5,"six":6}"""
             }
 
             should("iterate in the order they were added") {
-                ojo.keys shouldContainExactly mutableSetOf("one", "two", "three", "four", "five", "six")
-                ojo.values shouldContainExactly mutableSetOf(1, 2, 3, 4, 5, 6)
+                ojo.fieldNames().asSequence().toList() shouldContainExactly
+                    listOf("one", "two", "three", "four", "five", "six")
+                ojo.elements().asSequence().map { it.intValue() }.toList() shouldContainExactly
+                    listOf(1, 2, 3, 4, 5, 6)
             }
 
             should("print recursive objects properly") {
                 val subOjo = OrderedJsonObject()
-                subOjo["Washington"] = 1
-                subOjo["Adams"] = 2
-                subOjo["Jefferson"] = 3
-                subOjo["Madison"] = 4
+                subOjo.put("Washington", 1)
+                subOjo.put("Adams", 2)
+                subOjo.put("Jefferson", 3)
+                subOjo.put("Madison", 4)
 
-                ojo["presidents"] = subOjo
+                ojo.set<ObjectNode>("presidents", subOjo)
 
-                ojo.toJSONString() shouldBe """
-                    {"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,"presidents":{"Washington":1,"Adams":2,"Jefferson":3,"Madison":4}}
-                """.trimIndent()
+                val expected = """{"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,""" +
+                    """"presidents":{"Washington":1,"Adams":2,"Jefferson":3,"Madison":4}}"""
+                ojo.toString() shouldBe expected
             }
         }
     }

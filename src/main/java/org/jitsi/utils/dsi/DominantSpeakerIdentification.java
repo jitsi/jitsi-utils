@@ -20,10 +20,11 @@ import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.node.*;
 import org.jetbrains.annotations.*;
 import org.jitsi.utils.concurrent.*;
 import org.jitsi.utils.logging2.*;
-import org.json.simple.*;
 
 /**
  * Implements {@link ActiveSpeakerDetector} with inspiration from the paper
@@ -424,6 +425,8 @@ public class DominantSpeakerIdentification<T>
         }
     }
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     /**
      * Retrieves a JSON representation of this instance for the purposes of the
      * REST API of Videobridge.
@@ -432,50 +435,45 @@ public class DominantSpeakerIdentification<T>
      * HTTP GET request.
      * </p>
      *
-     * @return a <tt>JSONObject</tt> which represents this instance of the
-     * purposes of the REST API of Videobridge
+     * @return a {@link JsonNode} which represents this instance for the
+     * purposes of the REST API of Videobridge, or {@code null} if DEBUG is off.
      */
-    @SuppressWarnings("unchecked")
-    public JSONObject doGetJSON()
+    public JsonNode doGetJSON()
     {
-        JSONObject jsonObject;
-
-        if (DEBUG)
-        {
-            synchronized (this)
-            {
-                jsonObject = new JSONObject();
-
-                // dominantSpeaker
-                T dominantSpeaker = getDominantSpeaker();
-
-                jsonObject.put("dominantSpeaker", Objects.toString(dominantSpeaker));
-
-                // speakers
-                Collection<Speaker<T>> speakersCollection = this.speakers.values();
-                JSONArray speakersArray = new JSONArray();
-
-                for (Speaker<T> speaker : speakersCollection)
-                {
-                    JSONObject speakerJSONObject = new JSONObject();
-
-                    // id
-                    speakerJSONObject.put("id", speaker.id.toString());
-                    // levels
-                    speakerJSONObject.put("levels", speaker.getLevels());
-                    speakersArray.add(speakerJSONObject);
-                }
-                jsonObject.put("speakers", speakersArray);
-            }
-        }
-        else
+        if (!DEBUG)
         {
             // Retrieving a JSON representation of a
             // DominantSpeakerIdentification has been implemented for the
             // purposes of debugging only.
-            jsonObject = null;
+            return null;
         }
-        return jsonObject;
+
+        synchronized (this)
+        {
+            ObjectNode jsonObject = MAPPER.createObjectNode();
+
+            // dominantSpeaker
+            T dominantSpeaker = getDominantSpeaker();
+            jsonObject.put("dominantSpeaker", Objects.toString(dominantSpeaker));
+
+            // speakers
+            Collection<Speaker<T>> speakersCollection = this.speakers.values();
+            ArrayNode speakersArray = MAPPER.createArrayNode();
+
+            for (Speaker<T> speaker : speakersCollection)
+            {
+                ObjectNode speakerJSONObject = MAPPER.createObjectNode();
+
+                // id
+                speakerJSONObject.put("id", speaker.id.toString());
+                // levels
+                speakerJSONObject.set("levels", MAPPER.valueToTree(speaker.getLevels()));
+                speakersArray.add(speakerJSONObject);
+            }
+            jsonObject.set("speakers", speakersArray);
+
+            return jsonObject;
+        }
     }
 
     /**
