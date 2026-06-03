@@ -47,9 +47,4 @@
   </Or>
 </Match>
 
-<Match>
-  <!-- OrderedJsonObject is a factory function named to match the old class name for backward compatibility. -->
-  <Bug pattern="NM_METHOD_NAMING_CONVENTION"/>
-  <Class name="org.jitsi.utils.OrderedJsonObjectKt"/>
-</Match>
 </FindBugsFilter>
