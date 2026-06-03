@@ -438,6 +438,7 @@ public class DominantSpeakerIdentification<T>
      * @return a {@link JsonNode} which represents this instance for the
      * purposes of the REST API of Videobridge, or {@code null} if DEBUG is off.
      */
+    @Nullable
     public JsonNode doGetJSON()
     {
         if (!DEBUG)
