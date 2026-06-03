@@ -16,10 +16,8 @@
 
 package org.jitsi.utils
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-
-private val _mapper = ObjectMapper()
 
 /**
  * An [ObjectNode] factory that preserves insertion order (Jackson's [ObjectNode]
@@ -30,4 +28,4 @@ private val _mapper = ObjectMapper()
  * (`obj["key"] = value`) should migrate to [ObjectNode.put] / [ObjectNode.set].
  */
 @Suppress("FunctionName")
-fun OrderedJsonObject(): ObjectNode = _mapper.createObjectNode()
+fun OrderedJsonObject(): ObjectNode = JsonNodeFactory.instance.objectNode()

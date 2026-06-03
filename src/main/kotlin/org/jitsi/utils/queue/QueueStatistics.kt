@@ -15,7 +15,7 @@
  */
 package org.jitsi.utils.queue
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.jitsi.utils.stats.BucketStats
@@ -28,8 +28,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
 import kotlin.collections.ArrayList
-
-private val jsonMapper = ObjectMapper()
 
 class QueueStatistics(queueSize: Int, val clock: Clock) {
     /**
@@ -67,7 +65,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
      */
     val stats: ObjectNode
         get() {
-            val stats = jsonMapper.createObjectNode()
+            val stats = JsonNodeFactory.instance.objectNode()
             val now = clock.instant()
             stats.put("added_packets", totalPacketsAdded.sum())
             stats.put("removed_packets", totalPacketsRemoved.sum())
@@ -135,7 +133,7 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
             QueueStatistics(queue.capacity(), clock)
         }
 
-        fun getStatistics(): ObjectNode = jsonMapper.createObjectNode().apply {
+        fun getStatistics(): ObjectNode = JsonNodeFactory.instance.objectNode().apply {
             queueStatsById.entries.forEach {
                 set<ObjectNode>(it.key, it.value.stats)
             }

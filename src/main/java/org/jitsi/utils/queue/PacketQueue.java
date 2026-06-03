@@ -15,7 +15,7 @@
  */
 package org.jitsi.utils.queue;
 
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import org.jitsi.utils.logging.*;
 import org.jetbrains.annotations.*;
@@ -304,15 +304,13 @@ public class PacketQueue<T>
         return id;
     }
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
     /**
      * Gets a JSON representation of the parts of this object's state that
      * are deemed useful for debugging.
      */
     public JsonNode getDebugState()
     {
-        ObjectNode debugState = MAPPER.createObjectNode();
+        ObjectNode debugState = JsonNodeFactory.instance.objectNode();
         debugState.put("id", id);
         debugState.put("capacity", capacity);
         debugState.put("closed", closed);

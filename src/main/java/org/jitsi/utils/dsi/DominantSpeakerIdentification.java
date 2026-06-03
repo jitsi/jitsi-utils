@@ -451,7 +451,7 @@ public class DominantSpeakerIdentification<T>
 
         synchronized (this)
         {
-            ObjectNode jsonObject = MAPPER.createObjectNode();
+            ObjectNode jsonObject = JsonNodeFactory.instance.objectNode();
 
             // dominantSpeaker
             T dominantSpeaker = getDominantSpeaker();
@@ -459,11 +459,11 @@ public class DominantSpeakerIdentification<T>
 
             // speakers
             Collection<Speaker<T>> speakersCollection = this.speakers.values();
-            ArrayNode speakersArray = MAPPER.createArrayNode();
+            ArrayNode speakersArray = JsonNodeFactory.instance.arrayNode();
 
             for (Speaker<T> speaker : speakersCollection)
             {
-                ObjectNode speakerJSONObject = MAPPER.createObjectNode();
+                ObjectNode speakerJSONObject = JsonNodeFactory.instance.objectNode();
 
                 // id
                 speakerJSONObject.put("id", speaker.id.toString());

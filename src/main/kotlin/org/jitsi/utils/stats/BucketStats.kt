@@ -16,7 +16,7 @@
 
 package org.jitsi.utils.stats
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.jitsi.utils.maxAssign
@@ -24,8 +24,6 @@ import org.jitsi.utils.minAssign
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.LongAdder
 import kotlin.IllegalArgumentException
-
-private val jsonMapper = ObjectMapper()
 
 @SuppressFBWarnings(value = ["SF_SWITCH_NO_DEFAULT"], justification = "False positive with kotlin's 'when'.")
 open class BucketStats(
@@ -69,7 +67,7 @@ open class BucketStats(
     }
 
     @JvmOverloads
-    open fun toJson(format: Format = Format.Separate): ObjectNode = jsonMapper.createObjectNode().apply {
+    open fun toJson(format: Format = Format.Separate): ObjectNode = JsonNodeFactory.instance.objectNode().apply {
         val snapshot = snapshot
         put("average$averageMaxMinLabel", snapshot.average)
         put("max$averageMaxMinLabel", snapshot.maxValue)
@@ -100,43 +98,44 @@ open class BucketStats(
         val buckets: Buckets.Snapshot
     )
 
-    open fun getBucketsJson(b: Buckets.Snapshot, format: Format): ObjectNode = jsonMapper.createObjectNode().apply {
-        when (format) {
-            Format.Separate -> b.buckets.forEach {
-                val f = if (it.first.first == Long.MIN_VALUE) "min" else "${it.first.first}"
-                val s = if (it.first.second == Long.MAX_VALUE) "max" else "${it.first.second}"
-                val key = "${f}_to_$s"
-                put("$key$bucketLabel", it.second)
-            }
-            Format.CumulativeLeft -> {
-                var sum = 0L
-                val f = b.buckets.first().first.first.let { if (it == Long.MIN_VALUE) "min" else "$it" }
-                b.buckets.forEach {
-                    if (it.first.second != Long.MAX_VALUE) {
-                        sum += it.second
-                        val s = "${it.first.second}"
-                        val key = "${f}_to_$s"
-                        put("$key$bucketLabel", sum)
+    open fun getBucketsJson(b: Buckets.Snapshot, format: Format): ObjectNode =
+        JsonNodeFactory.instance.objectNode().apply {
+            when (format) {
+                Format.Separate -> b.buckets.forEach {
+                    val f = if (it.first.first == Long.MIN_VALUE) "min" else "${it.first.first}"
+                    val s = if (it.first.second == Long.MAX_VALUE) "max" else "${it.first.second}"
+                    val key = "${f}_to_$s"
+                    put("$key$bucketLabel", it.second)
+                }
+                Format.CumulativeLeft -> {
+                    var sum = 0L
+                    val f = b.buckets.first().first.first.let { if (it == Long.MIN_VALUE) "min" else "$it" }
+                    b.buckets.forEach {
+                        if (it.first.second != Long.MAX_VALUE) {
+                            sum += it.second
+                            val s = "${it.first.second}"
+                            val key = "${f}_to_$s"
+                            put("$key$bucketLabel", sum)
+                        }
+                    }
+                }
+                Format.CumulativeRight -> {
+                    var sum = 0L
+                    val s = b.buckets.last().first.second.let { if (it == Long.MAX_VALUE) "max" else "$it" }
+                    b.buckets.reversed().forEach {
+                        if (it.first.first != Long.MIN_VALUE) {
+                            sum += it.second
+                            val f = "${it.first.first}"
+                            val key = "${f}_to_$s"
+                            put("$key$bucketLabel", sum)
+                        }
                     }
                 }
             }
-            Format.CumulativeRight -> {
-                var sum = 0L
-                val s = b.buckets.last().first.second.let { if (it == Long.MAX_VALUE) "max" else "$it" }
-                b.buckets.reversed().forEach {
-                    if (it.first.first != Long.MIN_VALUE) {
-                        sum += it.second
-                        val f = "${it.first.first}"
-                        val key = "${f}_to_$s"
-                        put("$key$bucketLabel", sum)
-                    }
-                }
-            }
-        }
 
-        put("p99_upper_bound", b.p99bound)
-        put("p999_upper_bound", b.p999bound)
-    }
+            put("p99_upper_bound", b.p99bound)
+            put("p999_upper_bound", b.p999bound)
+        }
 
     /** How to format the JSON output. */
     enum class Format {
