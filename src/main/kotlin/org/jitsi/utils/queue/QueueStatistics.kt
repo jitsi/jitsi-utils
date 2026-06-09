@@ -15,8 +15,9 @@
  */
 package org.jitsi.utils.queue
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.jitsi.utils.OrderedJsonObject
 import org.jitsi.utils.stats.BucketStats
 import java.time.Clock
 import java.time.Duration
@@ -62,25 +63,25 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
     /**
      * Gets a snapshot of the stats in JSON format.
      */
-    val stats: OrderedJsonObject
+    val stats: ObjectNode
         get() {
-            val stats = OrderedJsonObject()
+            val stats = JsonNodeFactory.instance.objectNode()
             val now = clock.instant()
-            stats["added_packets"] = totalPacketsAdded.sum()
-            stats["removed_packets"] = totalPacketsRemoved.sum()
-            stats["dropped_packets"] = totalPacketsDropped.sum()
+            stats.put("added_packets", totalPacketsAdded.sum())
+            stats.put("removed_packets", totalPacketsRemoved.sum())
+            stats.put("dropped_packets", totalPacketsDropped.sum())
             if (firstPacketAdded != null) {
                 val duration = Duration.between(firstPacketAdded, now)
 
                 @Suppress("ktlint:standard:property-naming")
                 val durationSecs = duration.toNanos() / 1e9
 
-                stats["duration_s"] = durationSecs
+                stats.put("duration_s", durationSecs)
                 val packetsRemoved = totalPacketsRemoved.sum().toDouble()
-                stats["average_remove_rate_pps"] = packetsRemoved / durationSecs
+                stats.put("average_remove_rate_pps", packetsRemoved / durationSecs)
             }
-            stats["queue_size_at_remove"] = queueLengthStats.toJson()
-            queueWaitStats?.let { stats["queue_wait_time"] = it.toJson() }
+            stats.set<ObjectNode>("queue_size_at_remove", queueLengthStats.toJson())
+            queueWaitStats?.let { stats.set<ObjectNode>("queue_wait_time", it.toJson()) }
             return stats
         }
 
@@ -132,9 +133,9 @@ class QueueStatistics(queueSize: Int, val clock: Clock) {
             QueueStatistics(queue.capacity(), clock)
         }
 
-        fun getStatistics() = OrderedJsonObject().apply {
+        fun getStatistics(): ObjectNode = JsonNodeFactory.instance.objectNode().apply {
             queueStatsById.entries.forEach {
-                put(it.key, it.value.stats)
+                set<ObjectNode>(it.key, it.value.stats)
             }
         }
 
@@ -234,5 +235,5 @@ class QueueStatisticsObserver<T>(
     /**
      * Gets a snapshot of the stats in JSON format.
      */
-    override fun getStats(): OrderedJsonObject? = localStats?.stats
+    override fun getStats(): ObjectNode? = localStats?.stats
 }

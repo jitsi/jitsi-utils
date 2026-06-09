@@ -274,7 +274,7 @@ public class PacketQueueBenchmarkTests
     @AfterAll
     public static void printStats()
     {
-        System.out.println("Statistics: " + QueueStatistics.Companion.getStatistics().toJSONString());
+        System.out.println("Statistics: " + QueueStatistics.Companion.getStatistics().toString());
     }
 
     private Duration runBenchmark(

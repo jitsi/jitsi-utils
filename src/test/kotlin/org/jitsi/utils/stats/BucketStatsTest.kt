@@ -15,13 +15,13 @@
  */
 package org.jitsi.utils.stats
 
+import com.fasterxml.jackson.databind.node.ObjectNode
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import org.jitsi.utils.OrderedJsonObject
 import java.lang.IllegalArgumentException
 
 @SuppressFBWarnings(
@@ -51,7 +51,7 @@ class BucketStatsTest : ShouldSpec() {
                 repeat(100) { bucketStats.addValue(1) }
                 repeat(100) { bucketStats.addValue(5) }
                 bucketStats.snapshot.average shouldBe 3.0
-                bucketStats.toJson()["average_delay_ms"] shouldBe 3.0
+                bucketStats.toJson()["average_delay_ms"].asDouble() shouldBe 3.0
             }
 
             should("calculate the max correctly") {
@@ -59,7 +59,7 @@ class BucketStatsTest : ShouldSpec() {
                 repeat(100) { bucketStats.addValue(5) }
                 bucketStats.addValue(100)
                 bucketStats.snapshot.maxValue shouldBe 100
-                bucketStats.toJson()["max_delay_ms"] shouldBe 100
+                bucketStats.toJson()["max_delay_ms"].asLong() shouldBe 100
             }
 
             context("export the buckets correctly to json") {
@@ -72,37 +72,37 @@ class BucketStatsTest : ShouldSpec() {
 
                 context("In separate buckets (default)") {
                     val bucketsJson = bucketStats.toJson()["buckets"]
-                    bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
+                    bucketsJson.shouldBeInstanceOf<ObjectNode>()
 
-                    bucketsJson["0_to_1_ms"] shouldBe 5
-                    bucketsJson["1_to_2_ms"] shouldBe 100
-                    bucketsJson["2_to_3_ms"] shouldBe 0
-                    bucketsJson["3_to_5_ms"] shouldBe 200
-                    bucketsJson["5_to_200_ms"] shouldBe 1
-                    bucketsJson["200_to_999_ms"] shouldBe 0
-                    bucketsJson["999_to_max_ms"] shouldBe 1
+                    bucketsJson["0_to_1_ms"].asLong() shouldBe 5
+                    bucketsJson["1_to_2_ms"].asLong() shouldBe 100
+                    bucketsJson["2_to_3_ms"].asLong() shouldBe 0
+                    bucketsJson["3_to_5_ms"].asLong() shouldBe 200
+                    bucketsJson["5_to_200_ms"].asLong() shouldBe 1
+                    bucketsJson["200_to_999_ms"].asLong() shouldBe 0
+                    bucketsJson["999_to_max_ms"].asLong() shouldBe 1
                 }
                 context("Cumulative from the left") {
                     val bucketsJson = bucketStats.toJson(format = BucketStats.Format.CumulativeLeft)["buckets"]
-                    bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
+                    bucketsJson.shouldBeInstanceOf<ObjectNode>()
 
-                    bucketsJson["0_to_1_ms"] shouldBe 5
-                    bucketsJson["0_to_2_ms"] shouldBe 105
-                    bucketsJson["0_to_3_ms"] shouldBe 105
-                    bucketsJson["0_to_5_ms"] shouldBe 305
-                    bucketsJson["0_to_200_ms"] shouldBe 306
-                    bucketsJson["0_to_999_ms"] shouldBe 306
+                    bucketsJson["0_to_1_ms"].asLong() shouldBe 5
+                    bucketsJson["0_to_2_ms"].asLong() shouldBe 105
+                    bucketsJson["0_to_3_ms"].asLong() shouldBe 105
+                    bucketsJson["0_to_5_ms"].asLong() shouldBe 305
+                    bucketsJson["0_to_200_ms"].asLong() shouldBe 306
+                    bucketsJson["0_to_999_ms"].asLong() shouldBe 306
                 }
                 context("Cumulative from the right") {
                     val bucketsJson = bucketStats.toJson(format = BucketStats.Format.CumulativeRight)["buckets"]
-                    bucketsJson.shouldBeInstanceOf<OrderedJsonObject>()
+                    bucketsJson.shouldBeInstanceOf<ObjectNode>()
 
-                    bucketsJson["1_to_max_ms"] shouldBe 302
-                    bucketsJson["2_to_max_ms"] shouldBe 202
-                    bucketsJson["3_to_max_ms"] shouldBe 202
-                    bucketsJson["5_to_max_ms"] shouldBe 2
-                    bucketsJson["200_to_max_ms"] shouldBe 1
-                    bucketsJson["999_to_max_ms"] shouldBe 1
+                    bucketsJson["1_to_max_ms"].asLong() shouldBe 302
+                    bucketsJson["2_to_max_ms"].asLong() shouldBe 202
+                    bucketsJson["3_to_max_ms"].asLong() shouldBe 202
+                    bucketsJson["5_to_max_ms"].asLong() shouldBe 2
+                    bucketsJson["200_to_max_ms"].asLong() shouldBe 1
+                    bucketsJson["999_to_max_ms"].asLong() shouldBe 1
                 }
             }
 
