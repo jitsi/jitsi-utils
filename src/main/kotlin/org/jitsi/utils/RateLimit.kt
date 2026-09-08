@@ -40,29 +40,50 @@ class RateLimit(
     /** Stores the timestamps of requests that have been received. */
     private val requests: Deque<Instant> = LinkedList()
 
-    /** Return true if the request should be accepted and false otherwise.
+    /**
+     * Return true if a request at [now] would be accepted, without recording it. Use this together with [record]
+     * when a request has to pass more than one [RateLimit], so that a request rejected by one limit does not
+     * count against the others.
      * [now] is the current time, if not provided [clock].instant() is used.
-     * [minInterval] can be specified per [accept] call to support varying minimum intervals
-     *  (e.g., based on round-trip times).
-     *  */
+     * [minInterval] can be specified per call to support varying minimum intervals (e.g., based on round-trip
+     * times).
+     */
     @JvmOverloads
-    fun accept(now: Instant = clock.instant(), minInterval: Duration = defaultMinInterval): Boolean {
-        val previousRequest = requests.peekLast()
-        if (previousRequest == null) {
-            requests.add(now)
-            return true
-        }
+    fun wouldAccept(now: Instant = clock.instant(), minInterval: Duration = defaultMinInterval): Boolean {
+        val previousRequest = requests.peekLast() ?: return true
 
         if (Duration.between(previousRequest, now) < minInterval) {
             return false
         }
 
         // Allow only [maxRequests] requests within the last [interval]
+        return requests.count { Duration.between(it, now) <= interval } < maxRequests
+    }
+
+    /**
+     * Record that a request was made at [now], so that it counts towards subsequent [wouldAccept] and [accept]
+     * calls. This does not check whether the request would have been accepted; call [wouldAccept] first.
+     * [now] is the current time, if not provided [clock].instant() is used.
+     */
+    @JvmOverloads
+    fun record(now: Instant = clock.instant()) {
         requests.removeIf { Duration.between(it, now) > interval }
-        if (requests.size >= maxRequests) {
+        requests.add(now)
+    }
+
+    /**
+     * Return true if the request should be accepted and false otherwise. An accepted request is recorded, a
+     * rejected one is not. Equivalent to [wouldAccept] followed by [record] when it returns true.
+     * [now] is the current time, if not provided [clock].instant() is used.
+     * [minInterval] can be specified per [accept] call to support varying minimum intervals
+     *  (e.g., based on round-trip times).
+     */
+    @JvmOverloads
+    fun accept(now: Instant = clock.instant(), minInterval: Duration = defaultMinInterval): Boolean {
+        if (!wouldAccept(now, minInterval)) {
             return false
         }
-        requests.add(now)
+        record(now)
         return true
     }
 }
