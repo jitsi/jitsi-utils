@@ -153,5 +153,60 @@ class RateLimitTest : ShouldSpec() {
                 rateLimit.accept() shouldBe true
             }
         }
+
+        context("Checking without recording") {
+            val clock = FakeClock()
+            val rateLimit = RateLimit(
+                clock = clock,
+                defaultMinInterval = 10.ms,
+                maxRequests = 2,
+                interval = 100.ms
+            )
+            should("allow the 1st request") {
+                rateLimit.wouldAccept() shouldBe true
+            }
+            should("not change state when only checking") {
+                rateLimit.wouldAccept() shouldBe true
+                rateLimit.wouldAccept() shouldBe true
+                rateLimit.accept() shouldBe true
+            }
+            should("not allow the next request immediately after one is recorded") {
+                rateLimit.wouldAccept() shouldBe false
+            }
+            clock.elapse(10.ms)
+            should("allow the 2nd request after the minimum interval") {
+                rateLimit.wouldAccept() shouldBe true
+            }
+            should("honor a passed-in minimum interval") {
+                rateLimit.wouldAccept(minInterval = 20.ms) shouldBe false
+            }
+            should("count a recorded request even if it would not have been accepted") {
+                rateLimit.wouldAccept(minInterval = 20.ms) shouldBe false
+                rateLimit.record()
+                rateLimit.wouldAccept() shouldBe false
+            }
+            clock.elapse(10.ms)
+            should("not allow more than maxRequests within the interval (20 ms)") {
+                rateLimit.wouldAccept() shouldBe false
+                rateLimit.accept() shouldBe false
+            }
+            clock.elapse(81.ms)
+            should("allow a request once the 1st has left the interval (101 ms)") {
+                rateLimit.wouldAccept() shouldBe true
+            }
+            val then = clock.instant()
+            clock.elapse(50.ms)
+            should("allow a passed-in time to override the current clock time") {
+                rateLimit.wouldAccept(then.minusMillis(5)) shouldBe false
+                rateLimit.wouldAccept(then) shouldBe true
+                rateLimit.record(then)
+                rateLimit.wouldAccept(then) shouldBe false
+            }
+            should("still read the current clock time afterwards") {
+                rateLimit.wouldAccept() shouldBe true
+                rateLimit.accept() shouldBe true
+                rateLimit.wouldAccept() shouldBe false
+            }
+        }
     }
 }
