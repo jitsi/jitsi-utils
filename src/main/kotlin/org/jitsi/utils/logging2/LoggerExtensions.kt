@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/**
+/*
  * This file defines additional functions for a lib which is used elsewhere.
  */
 @file:Suppress("unused")

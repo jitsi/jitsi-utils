@@ -127,9 +127,7 @@ private const val NANOS_PER_MILLI = 1_000_000
 private const val MICROS_PER_SECOND = 1_000_000
 private const val NANOS_PER_SECOND = 1_000_000_000
 
-fun Duration.toDouble(): Double {
-    return this.seconds.toDouble() + this.nano.toDouble() * 1e-9
-}
+fun Duration.toDouble(): Double = this.seconds.toDouble() + this.nano.toDouble() * 1e-9
 
 fun Duration.toDoubleMillis(): Double {
     val sec = this.seconds
@@ -173,16 +171,12 @@ fun <T> Iterable<T>.sumOf(selector: (T) -> Duration): Duration {
 /**
  * Returns the maximum of two [Duration]s
  */
-fun max(a: Duration, b: Duration): Duration {
-    return if (a >= b) a else b
-}
+fun max(a: Duration, b: Duration): Duration = if (a >= b) a else b
 
 /**
  * Returns the minimum of two [Duration]s
  */
-fun min(a: Duration, b: Duration): Duration {
-    return if (a <= b) a else b
-}
+fun min(a: Duration, b: Duration): Duration = if (a <= b) a else b
 
 /**
  * Ensures that this value lies in the specified range [minimumValue]..[maximumValue].

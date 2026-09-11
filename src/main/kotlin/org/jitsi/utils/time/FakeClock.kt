@@ -36,9 +36,7 @@ class FakeClock(
         }
     }
 
-    override fun instant(): Instant {
-        return now
-    }
+    override fun instant(): Instant = now
 
     fun elapse(duration: Duration) {
         log("elapsing $duration")
@@ -50,9 +48,7 @@ class FakeClock(
         now = instant
     }
 
-    override fun getZone(): ZoneId {
-        return zone_
-    }
+    override fun getZone(): ZoneId = zone_
 
     override fun withZone(zone: ZoneId?): Clock {
         if (zone_ == zone) {
