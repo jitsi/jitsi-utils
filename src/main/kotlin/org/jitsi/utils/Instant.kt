@@ -40,11 +40,11 @@ import java.time.Instant
  */
 fun Instant.toEpochMicro(): Long {
     if (epochSecond < 0 && nano > 0) {
-        val millis = Math.multiplyExact(epochSecond + 1, 1_000_000).toLong()
+        val millis = Math.multiplyExact(epochSecond + 1, 1_000_000)
         val adjustment: Long = (nano / 1_000 - 1).toLong()
         return Math.addExact(millis, adjustment)
     } else {
-        val millis = Math.multiplyExact(epochSecond, 1_000_000).toLong()
+        val millis = Math.multiplyExact(epochSecond, 1_000_000)
         return Math.addExact(millis, (nano / 1000).toLong())
     }
 }
