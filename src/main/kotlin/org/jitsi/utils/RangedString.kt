@@ -45,12 +45,10 @@ fun Iterator<Int>.joinToRangedString(
     }
 
     var rangeCount = 0
-    fun canAddElement(): Boolean {
-        return when {
-            rangeLimit < 0 -> true
-            rangeCount < rangeLimit -> true
-            else -> false
-        }
+    fun canAddElement(): Boolean = when {
+        rangeLimit < 0 -> true
+        rangeCount < rangeLimit -> true
+        else -> false
     }
 
     var inRange = false
@@ -61,6 +59,7 @@ fun Iterator<Int>.joinToRangedString(
         val element = next()
         when (element) {
             previous + 1 -> inRange = true
+
             else -> {
                 if (inRange) {
                     append(rangeSeparator).append(previous)

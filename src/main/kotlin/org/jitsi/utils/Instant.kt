@@ -19,7 +19,7 @@ package org.jitsi.utils
 import java.time.Clock
 import java.time.Instant
 
-/**
+/*
  * Helpers to create instances of [Instant] more easily, and Kotlin operators for it
  */
 
@@ -94,13 +94,9 @@ fun Clock.roundedMillis() = this.instant().toRoundedEpochMilli()
 /**
  * Returns the maximum of two [Instant]s
  */
-fun max(a: Instant, b: Instant): Instant {
-    return if (a >= b) a else b
-}
+fun max(a: Instant, b: Instant): Instant = if (a >= b) a else b
 
 /**
  * Returns the minimum of two [Instant]s
  */
-fun min(a: Instant, b: Instant): Instant {
-    return if (a <= b) a else b
-}
+fun min(a: Instant, b: Instant): Instant = if (a <= b) a else b

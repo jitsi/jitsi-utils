@@ -107,6 +107,7 @@ open class BucketStats(
                     val key = "${f}_to_$s"
                     put("$key$bucketLabel", it.second)
                 }
+
                 Format.CumulativeLeft -> {
                     var sum = 0L
                     val f = b.buckets.first().first.first.let { if (it == Long.MIN_VALUE) "min" else "$it" }
@@ -119,6 +120,7 @@ open class BucketStats(
                         }
                     }
                 }
+
                 Format.CumulativeRight -> {
                     var sum = 0L
                     val s = b.buckets.last().first.second.let { if (it == Long.MAX_VALUE) "max" else "$it" }
@@ -215,9 +217,7 @@ class Buckets(private val thresholds: List<Long>) {
             return true
         }
 
-        override fun hashCode(): Int {
-            return buckets.contentHashCode()
-        }
+        override fun hashCode(): Int = buckets.contentHashCode()
     }
 }
 

@@ -43,14 +43,14 @@ class MovingAverageTest : ShouldSpec() {
                 (4..7).forEach {
                     average.add(it)
                 }
-                average.get() shouldBe (5.5 plusOrMinus(.1))
+                average.get() shouldBe (5.5 plusOrMinus (.1))
             }
             should("not include values outside the window even if no adds have been done") {
                 (0..3).forEach {
                     average.add(it)
                 }
                 fakeClock.elapse(1.mins)
-                average.get() shouldBe(0.0)
+                average.get() shouldBe (0.0)
             }
         }
     }
