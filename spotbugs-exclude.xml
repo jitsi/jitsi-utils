@@ -28,8 +28,14 @@
   </Match>
 
   <Match>
-  <!-- This seems to get triggered by certain kotlin constructs though they look safe -->
-  <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+  <Or>
+    <!-- This seems to get triggered by certain kotlin constructs though they look safe -->
+    <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    <!-- Triggered by class-level @SuppressFBWarnings on kotlin classes -->
+    <Bug pattern="US_USELESS_SUPPRESSION_ON_CLASS"/>
+    <!-- Reported on kotlin-generated classes (coroutine state machines, companion objects) -->
+    <Bug pattern="MS_EXPOSE_REP"/>
+  </Or>
   <Source name="~.*\.kt" />
 </Match>
 
