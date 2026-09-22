@@ -15,6 +15,8 @@
  */
 package org.jitsi.utils.concurrent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import org.jitsi.utils.concurrent.*;
 
 /**
@@ -30,13 +32,13 @@ public abstract class PeriodicRunnable
     /**
      * The last time in milliseconds at which {@link #run} was invoked.
      */
-    private long _lastProcessTime;
+    private volatile long _lastProcessTime;
 
     /**
      * The interval/period in milliseconds at which {@link #run} is to be
      * invoked.
      */
-    private long _period;
+    private volatile long _period;
 
     /**
      * Initializes a new {@code PeriodicRunnable} instance which is to have
@@ -125,6 +127,10 @@ public abstract class PeriodicRunnable
      * Updates {@link #_lastProcessTime}.
      */
     @Override
+    @SuppressFBWarnings(
+        value = "AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE",
+        justification = "run() is only invoked by the executor thread; "
+            + "_lastProcessTime is only written here.")
     public void run()
     {
         if (_lastProcessTime < 0)

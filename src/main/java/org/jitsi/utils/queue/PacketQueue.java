@@ -43,7 +43,7 @@ public class PacketQueue<T>
     /**
      * The default value for the {@code enableStatistics} constructor argument.
      */
-    private static boolean enableStatisticsDefault = false;
+    private static volatile boolean enableStatisticsDefault = false;
 
     /**
      * Sets the default value for the {@code enableStatistics} constructor

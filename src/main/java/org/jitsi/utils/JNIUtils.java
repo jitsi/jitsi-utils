@@ -16,11 +16,9 @@
 package org.jitsi.utils;
 
 import com.sun.jna.*;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jitsi.utils.logging.*;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.util.regex.*;
 
 /**
@@ -39,40 +37,24 @@ public final class JNIUtils
 
     private static final Logger logger = Logger.getLogger(JNIUtils.class);
 
+    /**
+     * Loads a native library, preferring {@code java.library.path} and
+     * falling back to a copy bundled as a resource of {@code classLoader}.
+     *
+     * @param libname the name of the library to load.
+     * @param classLoader the ClassLoader used to locate the bundled library.
+     */
     public static void loadLibrary(String libname, ClassLoader classLoader)
-    {
-        loadLibrary(libname, null, classLoader);
-    }
-
-    public static <T> void loadLibrary(String libname, Class<T> clazz)
-    {
-        loadLibrary(libname, clazz, clazz.getClassLoader());
-    }
-
-    private static <T> void loadLibrary(String libname, Class<T> clazz,
-        ClassLoader classLoader)
     {
         try
         {
-            try
-            {
-                // Always prefer libraries from java.library.path over those unpacked from the jar.
-                // This allows the end user to manually unpack native libraries and store them
-                // in java.library.path to later load via System.loadLibrary.
-                // This allows end-users to preserve native libraries on disk,
-                // which is necessary for debuggers like gdb to load symbols.
-                System.loadLibrary(libname);
-                logger.info("Loading library " + libname + " from java.library.path rather than bundled version");
-                return;
-            }
-            catch (UnsatisfiedLinkError e)
-            {
-                if (clazz == null)
-                {
-                    throw e;
-                }
-            }
-            loadNativeInClassloader(libname, clazz, false);
+            // Always prefer libraries from java.library.path over those unpacked from the jar.
+            // This allows the end user to manually unpack native libraries and store them
+            // in java.library.path to later load via System.loadLibrary.
+            // This allows end-users to preserve native libraries on disk,
+            // which is necessary for debuggers like gdb to load symbols.
+            System.loadLibrary(libname);
+            logger.info("Loading library " + libname + " from java.library.path rather than bundled version");
         }
         catch (UnsatisfiedLinkError ulerr)
         {
@@ -95,15 +77,7 @@ public final class JNIUtils
             }
             try
             {
-                if (clazz != null)
-                {
-                    loadNativeInClassloader(
-                        embedded.getAbsolutePath(), clazz, true);
-                }
-                else
-                {
-                    System.load(embedded.getAbsolutePath());
-                }
+                System.load(embedded.getAbsolutePath());
             }
             finally
             {
@@ -119,41 +93,24 @@ public final class JNIUtils
     }
 
     /**
-     * Hack so that the native library is loaded into the ClassLoader
-     * that called this method, and not into the ClassLoader where
-     * this code resides. This is necessary for true OSGi environments.
+     * Loads a native library, preferring {@code java.library.path} and
+     * falling back to a copy bundled as a resource of {@code clazz}'s
+     * ClassLoader.
      *
-     * @param lib The library to load, name or path.
-     * @param clazz The class where to load it.
-     * @param isAbsolute Whether the library is name or path.
+     * <p>The {@code clazz} parameter is retained because this API used to
+     * support loading the library on behalf of the caller's OSGi bundle
+     * ClassLoader. Libraries are now bound to jitsi-utils' ClassLoader; in a
+     * true OSGi environment, where the caller's bundle has its own
+     * ClassLoader, the caller's native methods will not be bound to the
+     * library loaded here.
+     *
+     * @param libname the name of the library to load.
+     * @param clazz the class whose ClassLoader is used to locate the bundled
+     * library.
      */
-    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
-    private static <T> void loadNativeInClassloader(
-        String lib, Class<T> clazz, boolean isAbsolute)
+    public static <T> void loadLibrary(String libname, Class<T> clazz)
     {
-        try
-        {
-            Method loadLibrary0 = Runtime
-                .getRuntime()
-                .getClass()
-                .getDeclaredMethod(
-                    isAbsolute ? "load0" : "loadLibrary0",
-                    Class.class,
-                    String.class);
-            loadLibrary0.setAccessible(true);
-            loadLibrary0.invoke(Runtime.getRuntime(), clazz, lib);
-        }
-        catch (Exception e)
-        {
-            if (isAbsolute)
-            {
-                System.load(lib);
-            }
-            else
-            {
-                System.loadLibrary(lib);
-            }
-        }
+        loadLibrary(libname, clazz.getClassLoader());
     }
 
     /**
