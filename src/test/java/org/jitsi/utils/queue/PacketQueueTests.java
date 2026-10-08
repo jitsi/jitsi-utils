@@ -364,4 +364,57 @@ public class PacketQueueTests
 
         blockedExecutor.shutdown();
     }
+    @Test
+    public void testCloseReleasesQueuedItems()
+    {
+        final BlockedExecutor blockedExecutor = new BlockedExecutor();
+        final List<DummyQueue.Dummy> released = new ArrayList<>();
+        final DummyQueue dummyQueue = new DummyQueue(10, pkt -> true, blockedExecutor)
+        {
+            @Override
+            protected void releasePacket(Dummy pkt)
+            {
+                released.add(pkt);
+            }
+        };
+
+        final List<DummyQueue.Dummy> added = new ArrayList<>();
+        for (int i = 0; i < 3; i++)
+        {
+            DummyQueue.Dummy dummy = new DummyQueue.Dummy();
+            Assertions.assertTrue(dummyQueue.add(dummy));
+            added.add(dummy);
+        }
+        Assertions.assertTrue(released.isEmpty());
+
+        /* The executor never ran, so all items are still queued and must be released by close(). */
+        dummyQueue.close();
+        Assertions.assertEquals(added, released);
+
+        blockedExecutor.shutdown();
+    }
+
+    @Test
+    public void testAddAfterCloseIsRejected()
+    {
+        final BlockedExecutor blockedExecutor = new BlockedExecutor();
+        final List<DummyQueue.Dummy> released = new ArrayList<>();
+        final DummyQueue dummyQueue = new DummyQueue(10, pkt -> true, blockedExecutor)
+        {
+            @Override
+            protected void releasePacket(Dummy pkt)
+            {
+                released.add(pkt);
+            }
+        };
+
+        dummyQueue.close();
+
+        /* The caller keeps ownership of a rejected item: it is neither queued nor released. */
+        Assertions.assertFalse(dummyQueue.add(new DummyQueue.Dummy()));
+        Assertions.assertEquals(0, dummyQueue.size());
+        Assertions.assertTrue(released.isEmpty());
+
+        blockedExecutor.shutdown();
+    }
 }
