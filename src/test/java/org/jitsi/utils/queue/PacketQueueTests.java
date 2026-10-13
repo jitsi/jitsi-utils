@@ -455,8 +455,11 @@ public class PacketQueueTests
 
             final ConcurrentHashMap<DummyQueue.Dummy, Boolean> accepted = new ConcurrentHashMap<>();
             final CountDownLatch start = new CountDownLatch(1);
-            // Tripped by a producer part way through, so that close() runs while items are still being added.
+            // Tripped by a producer part way through, so that close() runs while items are still being added. That
+            // producer then waits for close() to complete before continuing, so its remaining adds are guaranteed
+            // to be rejected (the other producers keep racing with close()).
             final CountDownLatch closeNow = new CountDownLatch(1);
+            final CountDownLatch closeDone = new CountDownLatch(1);
             final int closeAfterItems = 1 + (iteration * 97) % (itemsPerProducer / 2);
             final List<Thread> threads = new ArrayList<>();
             for (int p = 0; p < producers; p++)
@@ -477,6 +480,14 @@ public class PacketQueueTests
                         if (i == closeAfterItems)
                         {
                             closeNow.countDown();
+                            try
+                            {
+                                closeDone.await(10, TimeUnit.SECONDS);
+                            }
+                            catch (InterruptedException e)
+                            {
+                                return;
+                            }
                         }
                     }
                     // In case this producer never reached closeAfterItems (it must not block the closer).
@@ -495,6 +506,7 @@ public class PacketQueueTests
                     return;
                 }
                 dummyQueue.close();
+                closeDone.countDown();
             });
             threads.add(closer);
             closer.start();

@@ -25,6 +25,7 @@ import java.lang.SuppressWarnings;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * An abstract queue of packets.
@@ -88,7 +89,7 @@ public class PacketQueue<T>
      * Whether this queue has been closed. Field is denoted as volatile,
      * because it is set in one thread and could be read in while loop in other.
      */
-    private volatile boolean closed = false;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
      * The maximum number of items the queue can contain before it starts
@@ -242,7 +243,7 @@ public class PacketQueue<T>
      */
     public boolean tryAdd(@NotNull T pkt)
     {
-        if (closed)
+        if (closed.get())
             return false;
 
         // Report the add before offering, so that the observer always sees it before the matching removed/dropped
@@ -270,7 +271,7 @@ public class PacketQueue<T>
             }
         }
 
-        if (closed)
+        if (closed.get())
         {
             // close() ran concurrently and may have drained the queue before our offer landed. Drain again so that
             // pkt (and anything else offered in the same window) is released rather than stranded. Either way the
@@ -291,16 +292,11 @@ public class PacketQueue<T>
      */
     public void close()
     {
-        // Only the flag flip is synchronized, so that concurrent callers can not both run the shutdown sequence.
-        // The drain runs outside the lock: releasePacket() and the observer are overridable/application code and
-        // must not run while holding a PacketQueue lock.
-        synchronized (this)
+        // Compare-and-set so that concurrent callers can not both run the shutdown sequence. No lock is held while
+        // draining: releasePacket() and the observer are overridable/application code.
+        if (!closed.compareAndSet(false, true))
         {
-            if (closed)
-            {
-                return;
-            }
-            closed = true;
+            return;
         }
 
         asyncQueueHandler.cancel();
@@ -331,7 +327,7 @@ public class PacketQueue<T>
      */
     protected boolean isClosed()
     {
-        return closed;
+        return closed.get();
     }
 
     /**
@@ -372,7 +368,7 @@ public class PacketQueue<T>
         ObjectNode debugState = JsonNodeFactory.instance.objectNode();
         debugState.put("id", id);
         debugState.put("capacity", capacity);
-        debugState.put("closed", closed);
+        debugState.put("closed", closed.get());
         if (observer == null)
         {
             debugState.putNull("statistics");
