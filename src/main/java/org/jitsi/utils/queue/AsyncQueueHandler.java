@@ -79,6 +79,13 @@ final class AsyncQueueHandler<T>
     private boolean running = true;
 
     /**
+     * Whether {@link #cancel()} has been called. Once cancelled, {@link #reader} is never scheduled again, so that
+     * an {@link #handleQueueItemsUntilEmpty()} racing with {@link #cancel()} can not restart processing of a queue
+     * which is being closed.
+     */
+    private boolean cancelled = false;
+
+    /**
      * Synchronization object of current instance state, in particular
      * used to resolve races between {@link #handleQueueItemsUntilEmpty()}
      * and {@link #reader} exit. In particular synchronization object used to
@@ -220,6 +227,7 @@ final class AsyncQueueHandler<T>
         synchronized (syncRoot)
         {
             running = false;
+            cancelled = true;
 
             if (readerFuture != null)
             {
@@ -236,6 +244,10 @@ final class AsyncQueueHandler<T>
     {
         synchronized (syncRoot)
         {
+            if (cancelled)
+            {
+                return;
+            }
             running = true;
             readerFuture = executor.submit(reader);
         }

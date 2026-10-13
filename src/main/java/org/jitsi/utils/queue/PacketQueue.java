@@ -91,12 +91,6 @@ public class PacketQueue<T>
     private volatile boolean closed = false;
 
     /**
-     * Serializes {@link #add(Object)} with {@link #close()}, so that no item can be added after {@link #close()}
-     * has drained the queue (such an item would never be handled or released).
-     */
-    private final Object closeLock = new Object();
-
-    /**
      * The maximum number of items the queue can contain before it starts
      * dropping items.
      */
@@ -226,45 +220,63 @@ public class PacketQueue<T>
     }
 
     /**
+     * Adds a specific packet ({@code T}) instance to the queue. Equivalent to {@link #tryAdd(Object)}, ignoring the
+     * result: if the queue is closed the packet is silently not added, and the caller remains responsible for it.
+     * @param pkt the packet to add.
+     */
+    public void add(T pkt)
+    {
+        tryAdd(pkt);
+    }
+
+    /**
      * Adds a specific packet ({@code T}) instance to the queue.
      * <p>
-     * If this returns {@code true} the queue has taken ownership of the packet: it will either be passed to the
+     * If this returns {@code true} the queue has taken ownership of the packet: it will be passed either to the
      * packet handler, or to {@link #releasePacket(Object)} if it is dropped because the queue is full or closed.
-     * If it returns {@code false} the queue was already closed, the packet was not added, and the caller remains
-     * responsible for it.
+     * If it returns {@code false} the queue is closed, the packet was not added, and the caller remains responsible
+     * for it.
      *
      * @param pkt the packet to add.
-     * @return {@code true} if the packet was added, {@code false} if the queue is closed.
+     * @return {@code true} if the queue took ownership of the packet, {@code false} if the queue is closed.
      */
-    public boolean add(T pkt)
+    public boolean tryAdd(T pkt)
     {
-        synchronized (closeLock)
-        {
-            if (closed)
-                return false;
+        if (closed)
+            return false;
 
-            while (!queue.offer(pkt))
-            {
-                // Drop from the head of the queue.
-                T p = queue.poll();
-                if (p != null)
-                {
-                    if (observer != null)
-                    {
-                        observer.dropped(p);
-                    }
-                    errorHandler.packetDropped();
-
-                    // Call release on dropped packet to allow proper implementation
-                    // of object pooling by PacketQueue users
-                    releasePacket(p);
-                }
-            }
-        }
-
+        // Report the add before offering, so that the observer always sees it before the matching removed/dropped
+        // (which could otherwise come from a concurrent close() before we get here).
         if (observer != null)
         {
             observer.added(pkt);
+        }
+
+        while (!queue.offer(pkt))
+        {
+            // Drop from the head of the queue.
+            T p = queue.poll();
+            if (p != null)
+            {
+                if (observer != null)
+                {
+                    observer.dropped(p);
+                }
+                errorHandler.packetDropped();
+
+                // Call release on dropped packet to allow proper implementation
+                // of object pooling by PacketQueue users
+                releasePacket(p);
+            }
+        }
+
+        if (closed)
+        {
+            // close() ran concurrently and may have drained the queue before our offer landed. Drain again so that
+            // pkt (and anything else offered in the same window) is released rather than stranded. Either way the
+            // queue has taken ownership of pkt, and the reader must not be rescheduled.
+            drain();
+            return true;
         }
 
         asyncQueueHandler.handleQueueItemsUntilEmpty();
@@ -279,25 +291,43 @@ public class PacketQueue<T>
      */
     public void close()
     {
-        synchronized (closeLock)
+        if (!closed)
         {
-            if (closed)
-                return;
             closed = true;
+
+            asyncQueueHandler.cancel();
+
+            drain();
         }
+    }
 
-        asyncQueueHandler.cancel();
-
+    /**
+     * Removes all items from the queue, reporting them as dropped and releasing them.
+     */
+    private void drain()
+    {
         T item;
-        while ((item = queue.poll()) != null) {
+        while ((item = queue.poll()) != null)
+        {
+            if (observer != null)
+            {
+                observer.dropped(item);
+            }
             releasePacket(item);
         }
     }
 
     /**
-     * Releases packet when it is handled by provided packet handler.
-     * This method is not called when <tt>PacketQueue</tt> was created without
-     * handler and hence no automatic queue processing is done.
+     * @return whether {@link #close()} has been called.
+     */
+    protected boolean isClosed()
+    {
+        return closed;
+    }
+
+    /**
+     * Releases a packet which was accepted by {@link #tryAdd(Object)} but will not be passed to the packet handler:
+     * either because it was dropped from a full queue, or because it was still queued when the queue was closed.
      * Default implementation is empty, but it might be used to implement
      * packet pooling to re-use them.
      * @param pkt packet to release
