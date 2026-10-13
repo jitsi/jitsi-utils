@@ -289,16 +289,23 @@ public class PacketQueue<T>
      * {@link #asyncQueueHandler} is stopped. Any items still in the queue are
      * passed to {@link #releasePacket(Object)}.
      */
-    public synchronized void close()
+    public void close()
     {
-        if (!closed)
+        // Only the flag flip is synchronized, so that concurrent callers can not both run the shutdown sequence.
+        // The drain runs outside the lock: releasePacket() and the observer are overridable/application code and
+        // must not run while holding a PacketQueue lock.
+        synchronized (this)
         {
+            if (closed)
+            {
+                return;
+            }
             closed = true;
-
-            asyncQueueHandler.cancel();
-
-            drain();
         }
+
+        asyncQueueHandler.cancel();
+
+        drain();
     }
 
     /**
