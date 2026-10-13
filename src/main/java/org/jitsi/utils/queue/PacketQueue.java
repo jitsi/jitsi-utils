@@ -224,7 +224,7 @@ public class PacketQueue<T>
      * result: if the queue is closed the packet is silently not added, and the caller remains responsible for it.
      * @param pkt the packet to add.
      */
-    public void add(T pkt)
+    public void add(@NotNull T pkt)
     {
         tryAdd(pkt);
     }
@@ -240,7 +240,7 @@ public class PacketQueue<T>
      * @param pkt the packet to add.
      * @return {@code true} if the queue took ownership of the packet, {@code false} if the queue is closed.
      */
-    public boolean tryAdd(T pkt)
+    public boolean tryAdd(@NotNull T pkt)
     {
         if (closed)
             return false;
@@ -289,7 +289,7 @@ public class PacketQueue<T>
      * {@link #asyncQueueHandler} is stopped. Any items still in the queue are
      * passed to {@link #releasePacket(Object)}.
      */
-    public void close()
+    public synchronized void close()
     {
         if (!closed)
         {
@@ -302,7 +302,9 @@ public class PacketQueue<T>
     }
 
     /**
-     * Removes all items from the queue, reporting them as dropped and releasing them.
+     * Removes all items from the queue and releases them. They are reported to the observer as removed rather
+     * than dropped: the queue is closing, which is normal lifecycle rather than loss to overload, and dropped
+     * counts are what operators watch for the latter.
      */
     private void drain()
     {
@@ -311,7 +313,7 @@ public class PacketQueue<T>
         {
             if (observer != null)
             {
-                observer.dropped(item);
+                observer.removed(item);
             }
             releasePacket(item);
         }

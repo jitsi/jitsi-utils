@@ -127,7 +127,9 @@ final class AsyncQueueHandler<T>
 
                 synchronized (syncRoot)
                 {
-                    item = queue.poll();
+                    // Check running under the lock, atomically with the poll, so that no item is taken out of the
+                    // queue after cancel() (which would otherwise race with the owner draining the queue).
+                    item = running ? queue.poll() : null;
 
                     if (item == null)
                     {

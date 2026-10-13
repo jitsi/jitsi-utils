@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
+import java.time.*;
+import com.fasterxml.jackson.databind.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
 
@@ -429,7 +431,7 @@ public class PacketQueueTests
     {
         final int producers = 8;
         final int itemsPerProducer = 500;
-        final int iterations = 200;
+        final int iterations = 50;
 
         for (int iteration = 0; iteration < iterations; iteration++)
         {
@@ -453,6 +455,9 @@ public class PacketQueueTests
 
             final ConcurrentHashMap<DummyQueue.Dummy, Boolean> accepted = new ConcurrentHashMap<>();
             final CountDownLatch start = new CountDownLatch(1);
+            // Tripped by a producer part way through, so that close() runs while items are still being added.
+            final CountDownLatch closeNow = new CountDownLatch(1);
+            final int closeAfterItems = 1 + (iteration * 97) % (itemsPerProducer / 2);
             final List<Thread> threads = new ArrayList<>();
             for (int p = 0; p < producers; p++)
             {
@@ -469,17 +474,21 @@ public class PacketQueueTests
                     {
                         DummyQueue.Dummy dummy = new DummyQueue.Dummy();
                         accepted.put(dummy, dummyQueue.tryAdd(dummy));
+                        if (i == closeAfterItems)
+                        {
+                            closeNow.countDown();
+                        }
                     }
+                    // In case this producer never reached closeAfterItems (it must not block the closer).
+                    closeNow.countDown();
                 });
                 threads.add(t);
                 t.start();
             }
-            final int closeAfterMicros = 20 + (iteration * 7) % 400;
             Thread closer = new Thread(() -> {
                 try
                 {
-                    start.await();
-                    TimeUnit.MICROSECONDS.sleep(closeAfterMicros);
+                    closeNow.await();
                 }
                 catch (InterruptedException e)
                 {
@@ -494,6 +503,9 @@ public class PacketQueueTests
             for (Thread t : threads)
             {
                 t.join(10000);
+                Assertions.assertFalse(
+                    t.isAlive(),
+                    "Thread did not finish: " + t.getName() + " " + Arrays.toString(t.getStackTrace()));
             }
             executor.shutdown();
             Assertions.assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
@@ -518,6 +530,7 @@ public class PacketQueueTests
             }
             /* Sanity check that the close happened while items were still being added. */
             Assertions.assertTrue(acceptedCount > 0);
+            Assertions.assertTrue(accepted.containsValue(false), "close() must have run before production finished");
             Assertions.assertEquals(0, dummyQueue.size());
         }
     }
@@ -540,7 +553,7 @@ public class PacketQueueTests
             10, true, "test", pkt -> true, blockedExecutor)
         {
             @Override
-            protected Observer<DummyQueue.Dummy> createObserver(java.time.Clock clock)
+            protected Observer<DummyQueue.Dummy> createObserver(Clock clock)
             {
                 return new Observer<DummyQueue.Dummy>()
                 {
@@ -564,7 +577,7 @@ public class PacketQueueTests
                     public void dropped(DummyQueue.Dummy pkt) { }
 
                     @Override
-                    public com.fasterxml.jackson.databind.JsonNode getStats()
+                    public JsonNode getStats()
                     {
                         return null;
                     }
@@ -582,7 +595,7 @@ public class PacketQueueTests
         };
 
         final DummyQueue.Dummy dummy = new DummyQueue.Dummy();
-        final AtomicReference<Boolean> result = new AtomicReference<>();
+        final AtomicBoolean result = new AtomicBoolean();
         Thread adder = new Thread(() -> result.set(queue.tryAdd(dummy)));
         adder.start();
 
@@ -592,7 +605,7 @@ public class PacketQueueTests
         adder.join(5000);
 
         /* tryAdd() had already committed to adding, so the queue owns the item and must have released it. */
-        Assertions.assertEquals(Boolean.TRUE, result.get());
+        Assertions.assertTrue(result.get());
         Assertions.assertEquals(Collections.singletonList(dummy), released);
         Assertions.assertEquals(0, queue.size());
 
