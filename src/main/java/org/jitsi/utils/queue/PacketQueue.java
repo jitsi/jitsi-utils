@@ -25,6 +25,7 @@ import java.lang.SuppressWarnings;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * An abstract queue of packets.
@@ -85,10 +86,10 @@ public class PacketQueue<T>
     @NotNull private final String id;
 
     /**
-     * Whether this queue has been closed. Field is denoted as volatile,
-     * because it is set in one thread and could be read in while loop in other.
+     * Whether this queue has been closed. Set once, with compare-and-set, by {@link #close()}; read without a lock
+     * by {@link #tryAdd(Object)}.
      */
-    private volatile boolean closed = false;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
      * The maximum number of items the queue can contain before it starts
@@ -220,13 +221,37 @@ public class PacketQueue<T>
     }
 
     /**
-     * Adds a specific packet ({@code T}) instance to the queue.
+     * Adds a specific packet ({@code T}) instance to the queue. Equivalent to {@link #tryAdd(Object)}, ignoring the
+     * result: if the queue is closed the packet is silently not added, and the caller remains responsible for it.
      * @param pkt the packet to add.
      */
-    public void add(T pkt)
+    public void add(@NotNull T pkt)
     {
-        if (closed)
-            return;
+        tryAdd(pkt);
+    }
+
+    /**
+     * Adds a specific packet ({@code T}) instance to the queue.
+     * <p>
+     * If this returns {@code true} the queue has taken ownership of the packet: it will be passed either to the
+     * packet handler, or to {@link #releasePacket(Object)} if it is dropped because the queue is full or closed.
+     * If it returns {@code false} the queue is closed, the packet was not added, and the caller remains responsible
+     * for it.
+     *
+     * @param pkt the packet to add.
+     * @return {@code true} if the queue took ownership of the packet, {@code false} if the queue is closed.
+     */
+    public boolean tryAdd(@NotNull T pkt)
+    {
+        if (closed.get())
+            return false;
+
+        // Report the add before offering, so that the observer always sees it before the matching removed/dropped
+        // (which could otherwise come from a concurrent close() before we get here).
+        if (observer != null)
+        {
+            observer.added(pkt);
+        }
 
         while (!queue.offer(pkt))
         {
@@ -246,38 +271,68 @@ public class PacketQueue<T>
             }
         }
 
-        if (observer != null)
+        if (closed.get())
         {
-            observer.added(pkt);
+            // close() ran concurrently and may have drained the queue before our offer landed. Drain again so that
+            // pkt (and anything else offered in the same window) is released rather than stranded. Either way the
+            // queue has taken ownership of pkt, and the reader must not be rescheduled.
+            drain();
+            return true;
         }
 
         asyncQueueHandler.handleQueueItemsUntilEmpty();
+        return true;
     }
 
     /**
      * Closes current <tt>PacketQueue</tt> instance. No items will be added
      * to queue when it's closed.  Asynchronous queue processing by
-     * {@link #asyncQueueHandler} is stopped.
+     * {@link #asyncQueueHandler} is stopped. Any items still in the queue are
+     * passed to {@link #releasePacket(Object)}.
      */
     public void close()
     {
-        if (!closed)
+        // Compare-and-set so that concurrent callers can not both run the shutdown sequence. No lock is held while
+        // draining: releasePacket() and the observer are overridable/application code.
+        if (!closed.compareAndSet(false, true))
         {
-            closed = true;
+            return;
+        }
 
-            asyncQueueHandler.cancel();
+        asyncQueueHandler.cancel();
 
-            T item;
-            while ((item = queue.poll()) != null) {
-                releasePacket(item);
+        drain();
+    }
+
+    /**
+     * Removes all items from the queue and releases them. They are reported to the observer as removed rather
+     * than dropped: the queue is closing, which is normal lifecycle rather than loss to overload, and dropped
+     * counts are what operators watch for the latter.
+     */
+    private void drain()
+    {
+        T item;
+        while ((item = queue.poll()) != null)
+        {
+            if (observer != null)
+            {
+                observer.removed(item);
             }
+            releasePacket(item);
         }
     }
 
     /**
-     * Releases packet when it is handled by provided packet handler.
-     * This method is not called when <tt>PacketQueue</tt> was created without
-     * handler and hence no automatic queue processing is done.
+     * @return whether {@link #close()} has been called.
+     */
+    protected boolean isClosed()
+    {
+        return closed.get();
+    }
+
+    /**
+     * Releases a packet which was accepted by {@link #tryAdd(Object)} but will not be passed to the packet handler:
+     * either because it was dropped from a full queue, or because it was still queued when the queue was closed.
      * Default implementation is empty, but it might be used to implement
      * packet pooling to re-use them.
      * @param pkt packet to release
@@ -313,7 +368,7 @@ public class PacketQueue<T>
         ObjectNode debugState = JsonNodeFactory.instance.objectNode();
         debugState.put("id", id);
         debugState.put("capacity", capacity);
-        debugState.put("closed", closed);
+        debugState.put("closed", closed.get());
         if (observer == null)
         {
             debugState.putNull("statistics");

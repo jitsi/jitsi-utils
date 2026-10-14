@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
+import java.time.*;
+import com.fasterxml.jackson.databind.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
 
@@ -363,5 +365,292 @@ public class PacketQueueTests
         }
 
         blockedExecutor.shutdown();
+    }
+
+    @Test
+    public void testCloseReleasesQueuedItems()
+    {
+        final BlockedExecutor blockedExecutor = new BlockedExecutor();
+        final List<DummyQueue.Dummy> released = new ArrayList<>();
+        final DummyQueue dummyQueue = new DummyQueue(10, pkt -> true, blockedExecutor)
+        {
+            @Override
+            protected void releasePacket(Dummy pkt)
+            {
+                released.add(pkt);
+            }
+        };
+
+        final List<DummyQueue.Dummy> added = new ArrayList<>();
+        for (int i = 0; i < 3; i++)
+        {
+            DummyQueue.Dummy dummy = new DummyQueue.Dummy();
+            Assertions.assertTrue(dummyQueue.tryAdd(dummy));
+            added.add(dummy);
+        }
+        Assertions.assertTrue(released.isEmpty());
+
+        /* The executor never ran, so all items are still queued and must be released by close(). */
+        dummyQueue.close();
+        Assertions.assertEquals(added, released);
+
+        blockedExecutor.shutdown();
+    }
+
+    @Test
+    public void testAddAfterCloseIsRejected()
+    {
+        final BlockedExecutor blockedExecutor = new BlockedExecutor();
+        final List<DummyQueue.Dummy> released = new ArrayList<>();
+        final DummyQueue dummyQueue = new DummyQueue(10, pkt -> true, blockedExecutor)
+        {
+            @Override
+            protected void releasePacket(Dummy pkt)
+            {
+                released.add(pkt);
+            }
+        };
+
+        dummyQueue.close();
+
+        /* The caller keeps ownership of a rejected item: it is neither queued nor released. */
+        Assertions.assertFalse(dummyQueue.tryAdd(new DummyQueue.Dummy()));
+        Assertions.assertEquals(0, dummyQueue.size());
+        Assertions.assertTrue(released.isEmpty());
+
+        blockedExecutor.shutdown();
+    }
+
+    /**
+     * Adds items from several threads while another thread closes the queue, and checks that every item which
+     * tryAdd() accepted was either handled or released exactly once, and that no rejected item was.
+     */
+    @Test
+    public void testConcurrentAddAndClose()
+        throws Exception
+    {
+        final int producers = 8;
+        final int itemsPerProducer = 500;
+        final int iterations = 50;
+
+        for (int iteration = 0; iteration < iterations; iteration++)
+        {
+            final ExecutorService executor = Executors.newFixedThreadPool(2);
+            final ConcurrentHashMap<DummyQueue.Dummy, AtomicInteger> handled = new ConcurrentHashMap<>();
+            final ConcurrentHashMap<DummyQueue.Dummy, AtomicInteger> released = new ConcurrentHashMap<>();
+            final DummyQueue dummyQueue = new DummyQueue(
+                64,
+                pkt -> {
+                    handled.computeIfAbsent(pkt, k -> new AtomicInteger()).incrementAndGet();
+                    return true;
+                },
+                executor)
+            {
+                @Override
+                protected void releasePacket(Dummy pkt)
+                {
+                    released.computeIfAbsent(pkt, k -> new AtomicInteger()).incrementAndGet();
+                }
+            };
+
+            final ConcurrentHashMap<DummyQueue.Dummy, Boolean> accepted = new ConcurrentHashMap<>();
+            final CountDownLatch start = new CountDownLatch(1);
+            // Tripped by a producer part way through, so that close() runs while items are still being added. That
+            // producer then waits for close() to complete before continuing, so its remaining adds are guaranteed
+            // to be rejected (the other producers keep racing with close()).
+            final CountDownLatch closeNow = new CountDownLatch(1);
+            final CountDownLatch closeDone = new CountDownLatch(1);
+            final int closeAfterItems = 1 + (iteration * 97) % (itemsPerProducer / 2);
+            final List<Thread> threads = new ArrayList<>();
+            for (int p = 0; p < producers; p++)
+            {
+                Thread t = new Thread(() -> {
+                    try
+                    {
+                        start.await();
+                    }
+                    catch (InterruptedException e)
+                    {
+                        return;
+                    }
+                    for (int i = 0; i < itemsPerProducer; i++)
+                    {
+                        DummyQueue.Dummy dummy = new DummyQueue.Dummy();
+                        accepted.put(dummy, dummyQueue.tryAdd(dummy));
+                        if (i == closeAfterItems)
+                        {
+                            closeNow.countDown();
+                            try
+                            {
+                                closeDone.await(10, TimeUnit.SECONDS);
+                            }
+                            catch (InterruptedException e)
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    // In case this producer never reached closeAfterItems (it must not block the closer).
+                    closeNow.countDown();
+                });
+                threads.add(t);
+                t.start();
+            }
+            Thread closer = new Thread(() -> {
+                try
+                {
+                    closeNow.await();
+                }
+                catch (InterruptedException e)
+                {
+                    return;
+                }
+                dummyQueue.close();
+                closeDone.countDown();
+            });
+            threads.add(closer);
+            closer.start();
+
+            start.countDown();
+            for (Thread t : threads)
+            {
+                t.join(10000);
+                Assertions.assertFalse(
+                    t.isAlive(),
+                    "Thread did not finish: " + t.getName() + " " + Arrays.toString(t.getStackTrace()));
+            }
+            executor.shutdown();
+            Assertions.assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+
+            Assertions.assertEquals(producers * itemsPerProducer, accepted.size());
+            int acceptedCount = 0;
+            for (Map.Entry<DummyQueue.Dummy, Boolean> e : accepted.entrySet())
+            {
+                int h = handled.getOrDefault(e.getKey(), new AtomicInteger()).get();
+                int r = released.getOrDefault(e.getKey(), new AtomicInteger()).get();
+                if (e.getValue())
+                {
+                    acceptedCount++;
+                    Assertions.assertEquals(1, h + r,
+                        "Accepted item must be handled or released exactly once (handled=" + h + ", released=" + r
+                            + ")");
+                }
+                else
+                {
+                    Assertions.assertEquals(0, h + r, "Rejected item must be neither handled nor released");
+                }
+            }
+            /* Sanity check that the close happened while items were still being added. */
+            Assertions.assertTrue(acceptedCount > 0);
+            Assertions.assertTrue(accepted.containsValue(false), "close() must have run before production finished");
+            Assertions.assertEquals(0, dummyQueue.size());
+        }
+    }
+
+    /**
+     * Deterministically exercises the window between tryAdd() deciding the queue is open and the item landing in the
+     * underlying queue: close() runs (and drains) in that window, and the item must still end up released rather
+     * than stranded. The observer's added() callback is invoked inside that window, so a test observer is used to
+     * block there until close() has run.
+     */
+    @Test
+    public void testCloseDuringAddReleasesItem()
+        throws Exception
+    {
+        final BlockedExecutor blockedExecutor = new BlockedExecutor();
+        final CountDownLatch insideAdd = new CountDownLatch(1);
+        final CountDownLatch closed = new CountDownLatch(1);
+        final List<DummyQueue.Dummy> released = new ArrayList<>();
+        final PacketQueue<DummyQueue.Dummy> queue = new PacketQueue<DummyQueue.Dummy>(
+            10, true, "test", pkt -> true, blockedExecutor)
+        {
+            @Override
+            protected Observer<DummyQueue.Dummy> createObserver(Clock clock)
+            {
+                return new Observer<DummyQueue.Dummy>()
+                {
+                    @Override
+                    public void added(DummyQueue.Dummy pkt)
+                    {
+                        insideAdd.countDown();
+                        try
+                        {
+                            closed.await(5, TimeUnit.SECONDS);
+                        }
+                        catch (InterruptedException ignored)
+                        {
+                        }
+                    }
+
+                    @Override
+                    public void removed(DummyQueue.Dummy pkt) { }
+
+                    @Override
+                    public void dropped(DummyQueue.Dummy pkt) { }
+
+                    @Override
+                    public JsonNode getStats()
+                    {
+                        return null;
+                    }
+                };
+            }
+
+            @Override
+            protected void releasePacket(DummyQueue.Dummy pkt)
+            {
+                synchronized (released)
+                {
+                    released.add(pkt);
+                }
+            }
+        };
+
+        final DummyQueue.Dummy dummy = new DummyQueue.Dummy();
+        final AtomicBoolean result = new AtomicBoolean();
+        Thread adder = new Thread(() -> result.set(queue.tryAdd(dummy)));
+        adder.start();
+
+        Assertions.assertTrue(insideAdd.await(5, TimeUnit.SECONDS));
+        queue.close();
+        closed.countDown();
+        adder.join(5000);
+
+        /* tryAdd() had already committed to adding, so the queue owns the item and must have released it. */
+        Assertions.assertTrue(result.get());
+        Assertions.assertEquals(Collections.singletonList(dummy), released);
+        Assertions.assertEquals(0, queue.size());
+
+        blockedExecutor.shutdown();
+    }
+
+    /**
+     * Once cancelled, the reader must not be rescheduled by a racing handleQueueItemsUntilEmpty(), otherwise items
+     * can be handled after the queue was closed.
+     */
+    @Test
+    public void testReaderIsNotRescheduledAfterCancel()
+    {
+        final AtomicInteger submissions = new AtomicInteger();
+        final ExecutorService executor = new ThreadPoolExecutor(
+            1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>())
+        {
+            @Override
+            public Future<?> submit(Runnable task)
+            {
+                submissions.incrementAndGet();
+                return super.submit(task);
+            }
+        };
+        final BlockingQueue<DummyQueue.Dummy> queue = new LinkedBlockingQueue<>();
+        final AsyncQueueHandler<DummyQueue.Dummy> handler
+            = new AsyncQueueHandler<>(queue, item -> { }, "test", executor, 0, false);
+
+        handler.cancel();
+        queue.add(new DummyQueue.Dummy());
+        handler.handleQueueItemsUntilEmpty();
+
+        Assertions.assertEquals(0, submissions.get());
+        executor.shutdown();
     }
 }
