@@ -86,8 +86,8 @@ public class PacketQueue<T>
     @NotNull private final String id;
 
     /**
-     * Whether this queue has been closed. Field is denoted as volatile,
-     * because it is set in one thread and could be read in while loop in other.
+     * Whether this queue has been closed. Set once, with compare-and-set, by {@link #close()}; read without a lock
+     * by {@link #tryAdd(Object)}.
      */
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
