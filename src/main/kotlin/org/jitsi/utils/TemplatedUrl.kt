@@ -16,6 +16,7 @@
 package org.jitsi.utils
 
 import java.net.URI
+import java.util.Objects
 
 class TemplatedUrl(
     private val template: String,
@@ -48,4 +49,13 @@ class TemplatedUrl(
         }
         return URI(resolvedUrl)
     }
+
+    /**
+     * Two instances are equal when they have the same template, the same values and the same required keys. The
+     * values can change with [set], so do not use an instance as a key in a hash map or a set if its values can change.
+     */
+    override fun equals(other: Any?): Boolean = this === other ||
+        (other is TemplatedUrl && template == other.template && map == other.map && requiredKeys == other.requiredKeys)
+
+    override fun hashCode(): Int = Objects.hash(template, map, requiredKeys)
 }
