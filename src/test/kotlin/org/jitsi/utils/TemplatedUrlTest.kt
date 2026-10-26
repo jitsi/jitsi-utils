@@ -131,4 +131,34 @@ class TemplatedUrlTest : ShouldSpec({
             m shouldBe mapOf("key1" to "value1", "key2" to "value2")
         }
     }
+    context("Equality") {
+        val template = "wss://{{host}}/{{path}}"
+        should("be equal for the same template, values and required keys") {
+            val a = TemplatedUrl(template, mapOf("host" to "example.com"), requiredKeys = setOf("path"))
+            val b = TemplatedUrl(template, requiredKeys = setOf("path")).apply { set("host", "example.com") }
+
+            (a == b) shouldBe true
+            a.hashCode() shouldBe b.hashCode()
+        }
+        should("not be equal for a different template") {
+            (TemplatedUrl(template) == TemplatedUrl("wss://{{host}}/other")) shouldBe false
+        }
+        should("not be equal for a different value") {
+            val a = TemplatedUrl(template, mapOf("host" to "example.com"))
+            val b = TemplatedUrl(template, mapOf("host" to "example.org"))
+
+            (a == b) shouldBe false
+        }
+        should("not be equal for different required keys") {
+            (TemplatedUrl(template, requiredKeys = setOf("path")) == TemplatedUrl(template)) shouldBe false
+        }
+        should("use the values after set()") {
+            val a = TemplatedUrl(template, mapOf("host" to "example.com"))
+            val b = TemplatedUrl(template)
+
+            (a == b) shouldBe false
+            b.set("host", "example.com")
+            (a == b) shouldBe true
+        }
+    }
 })
