@@ -160,8 +160,11 @@ public class PacketQueueTests
         final CountDownLatch completionGuard
             = new CountDownLatch(2 * queueCapacity);
 
-        final ExecutorService singleThreadExecutor
-            = Executors.newSingleThreadExecutor();
+        // The executor does not run any task until start() is called, so both queues are full before the first item
+        // is handled. If the executor ran while items were still being added, a reader could yield and be
+        // rescheduled before the other queue had submitted its reader, and then handle two items in a row.
+        final BlockedExecutor singleThreadExecutor
+            = new BlockedExecutor();
 
         final AtomicInteger queue1Counter = new AtomicInteger();
 
@@ -212,6 +215,8 @@ public class PacketQueueTests
             queue1.add(new DummyQueue.Dummy());
             queue2.add(new DummyQueue.Dummy());
         }
+
+        singleThreadExecutor.start();
 
         final boolean completed
             = completionGuard.await(1, TimeUnit.SECONDS);
