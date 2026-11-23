@@ -23,6 +23,8 @@ import java.time.*;
 import com.fasterxml.jackson.databind.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.*;
+import org.junit.jupiter.params.provider.*;
 
 /**
  * Test various aspects of {@link PacketQueue} implementation.
@@ -58,7 +60,9 @@ public class PacketQueueTests
 
         blockedExecutor.start();
 
-        Thread.sleep(200);
+        // The executor is single-threaded and runs tasks in FIFO order, so when this task completes, every task that
+        // the queue submitted before close() has already run (or was cancelled).
+        blockedExecutor.submit(() -> { }).get(5, TimeUnit.SECONDS);
 
         /* No tasks executed */
         Assertions.assertEquals(tasksExecuted.get(), 0);
@@ -80,29 +84,41 @@ public class PacketQueueTests
         final int capacity = 10;
         final BlockedExecutor blockedExecutor
             = new BlockedExecutor();
-        final AtomicInteger tasksExecuted = new AtomicInteger(0);
+        // The handler runs on the executor thread, where a failed assertion is only logged. Record the IDs there and
+        // assert on them from the test thread.
+        final List<Integer> handledIds = Collections.synchronizedList(new ArrayList<>());
+        final CountDownLatch allHandled = new CountDownLatch(capacity);
 
         final DummyQueue dummyQueue = new DummyQueue(capacity,
             pkt -> {
-                Assertions.assertNotEquals(0, pkt.id,
-                    "Item with id 0 should have been removed from the queue");
-                tasksExecuted.incrementAndGet();
+                handledIds.add(pkt.id);
+                allHandled.countDown();
                 return true;
             },
             blockedExecutor);
 
+        final List<Integer> expectedIds = new ArrayList<>();
         for (int i = 0; i < capacity + 1; i++)
         {
             DummyQueue.Dummy item = new DummyQueue.Dummy();
             item.id = i;
 
             dummyQueue.add(item);
+            if (i > 0)
+            {
+                expectedIds.add(i);
+            }
         }
 
         blockedExecutor.start();
 
-        Thread.sleep(200);
-        Assertions.assertEquals(10, tasksExecuted.get());
+        Assertions.assertTrue(allHandled.await(10, TimeUnit.SECONDS), "Expected all queued items to be handled");
+        // The executor is single-threaded and FIFO, so this task runs after the reader has exited. No more items can
+        // be handled after it completes.
+        blockedExecutor.submit(() -> { }).get(5, TimeUnit.SECONDS);
+
+        // Item 0 was removed from the queue when item 10 was added at full capacity.
+        Assertions.assertEquals(expectedIds, new ArrayList<>(handledIds));
 
         dummyQueue.close();
         blockedExecutor.shutdown();
@@ -127,7 +143,7 @@ public class PacketQueueTests
 
         queue.add(new DummyQueue.Dummy());
 
-        final boolean completed = queueCompletion.await(200, TimeUnit.MILLISECONDS);
+        final boolean completed = queueCompletion.await(5, TimeUnit.SECONDS);
         Assertions
             .assertTrue(completed, "Expected all queued items are handled at this time point");
 
@@ -138,7 +154,7 @@ public class PacketQueueTests
 
         try
         {
-            executorCompletion.get(200, TimeUnit.MILLISECONDS);
+            executorCompletion.get(5, TimeUnit.SECONDS);
         }
         catch (TimeoutException e)
         {
@@ -219,7 +235,7 @@ public class PacketQueueTests
         singleThreadExecutor.start();
 
         final boolean completed
-            = completionGuard.await(1, TimeUnit.SECONDS);
+            = completionGuard.await(10, TimeUnit.SECONDS);
         Assertions
             .assertTrue(completed, "Expected all queued items are handled "
                 + "at this time point");
@@ -230,6 +246,124 @@ public class PacketQueueTests
                 + " multi-tasking must yield execution to be processed evenly");
 
         singleThreadExecutor.shutdownNow();
+    }
+
+    /**
+     * Two queues share one executor thread while producers add items concurrently. Each executor task must handle
+     * at most maxSequentiallyProcessedPackets items before it yields, and all items must be handled without close().
+     * The executor is held until each producer has added some items, so the first reader of each queue always finds
+     * more items than the limit, also when the executor is faster than the producers.
+     */
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 3 })
+    public void testQueuesYieldWhileItemsArrive(int maxSequentiallyProcessedPackets)
+        throws Exception
+    {
+        final int itemsPerQueue = 10_000;
+        final AtomicInteger itemsInCurrentTask = new AtomicInteger();
+        final AtomicInteger maxItemsInOneTask = new AtomicInteger();
+        final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>())
+        {
+            @Override
+            protected void beforeExecute(Thread t, Runnable r)
+            {
+                itemsInCurrentTask.set(0);
+            }
+
+            @Override
+            protected void afterExecute(Runnable r, Throwable t)
+            {
+                maxItemsInOneTask.accumulateAndGet(itemsInCurrentTask.get(), Math::max);
+            }
+        };
+
+        final CountDownLatch allHandled = new CountDownLatch(2 * itemsPerQueue);
+        final PacketQueue.PacketHandler<DummyQueue.Dummy> handler = new PacketQueue.PacketHandler<DummyQueue.Dummy>()
+        {
+            @Override
+            public boolean handlePacket(DummyQueue.Dummy pkt)
+            {
+                itemsInCurrentTask.incrementAndGet();
+                allHandled.countDown();
+                return true;
+            }
+
+            @Override
+            public long maxSequentiallyProcessedPackets()
+            {
+                return maxSequentiallyProcessedPackets;
+            }
+        };
+
+        // The capacity holds all items, so no item is dropped.
+        final DummyQueue queue1 = new DummyQueue(itemsPerQueue, handler, executor);
+        final DummyQueue queue2 = new DummyQueue(itemsPerQueue, handler, executor);
+
+        // The first task on the executor waits until each producer has added backlogItems items. The readers are
+        // queued behind it, so each of them starts with a backlog, and the producers keep adding while they run.
+        final int backlogItems = 100;
+        final CountDownLatch backlogReady = new CountDownLatch(2);
+        final AtomicBoolean backlogFormed = new AtomicBoolean();
+        executor.execute(() -> {
+            try
+            {
+                backlogFormed.set(backlogReady.await(30, TimeUnit.SECONDS));
+            }
+            catch (InterruptedException ignored)
+            {
+            }
+        });
+
+        final CountDownLatch start = new CountDownLatch(1);
+        final List<Thread> producers = new ArrayList<>();
+        for (DummyQueue queue : Arrays.asList(queue1, queue2))
+        {
+            Thread producer = new Thread(() -> {
+                try
+                {
+                    start.await();
+                }
+                catch (InterruptedException e)
+                {
+                    return;
+                }
+                for (int i = 0; i < itemsPerQueue; i++)
+                {
+                    queue.add(new DummyQueue.Dummy());
+                    if (i == backlogItems - 1)
+                    {
+                        backlogReady.countDown();
+                    }
+                }
+            });
+            producers.add(producer);
+            producer.start();
+        }
+
+        start.countDown();
+        for (Thread producer : producers)
+        {
+            producer.join(30_000);
+            Assertions.assertFalse(producer.isAlive(), "Producer did not finish");
+        }
+
+        Assertions.assertTrue(allHandled.await(30, TimeUnit.SECONDS), "Expected all queued items to be handled");
+
+        // Wait for afterExecute() of the last task.
+        executor.shutdown();
+        Assertions.assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+
+        Assertions.assertTrue(backlogFormed.get(), "The producers did not add the backlog items");
+        // A reader that starts with a backlog handles exactly the limit before it yields. A higher value means that a
+        // reader did not yield.
+        Assertions.assertEquals(maxSequentiallyProcessedPackets, maxItemsInOneTask.get(),
+            "Maximum number of items that one executor task handled");
+        Assertions.assertEquals(0, queue1.size());
+        Assertions.assertEquals(0, queue2.size());
+
+        queue1.close();
+        queue2.close();
     }
 
     @Test
@@ -265,7 +399,7 @@ public class PacketQueueTests
         }
 
         final boolean completed
-            = completionGuard.await(1, TimeUnit.SECONDS);
+            = completionGuard.await(60, TimeUnit.SECONDS);
         Assertions
             .assertTrue(completed, "Expected all queued items are handled "
                 + "at this time point");
@@ -620,6 +754,7 @@ public class PacketQueueTests
         queue.close();
         closed.countDown();
         adder.join(5000);
+        Assertions.assertFalse(adder.isAlive(), "tryAdd() did not return");
 
         /* tryAdd() had already committed to adding, so the queue owns the item and must have released it. */
         Assertions.assertTrue(result.get());
